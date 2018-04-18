@@ -3,12 +3,12 @@ package apilibrary
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
+	//"io/ioutil"
+	//"log"
+	//"net/http"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 )
 
 type Ubike struct {
