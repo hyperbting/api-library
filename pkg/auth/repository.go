@@ -18,8 +18,12 @@ const (
 )
 
 // Key Formatter Helpers
-func fmtSessionKey(userID string) string {
-	return fmt.Sprintf("%s%s", RedisSessionKey, userID) // Produces "auth:session:player_12345"
+func fmtSessionKey(userID, jti string) string {
+	return fmt.Sprintf("%s%s:%s", RedisSessionKey, userID, jti) // Produces "auth:session:player_12345:rt_uuid_998877"
+}
+
+func fmtUserSessionPattern(userID string) string {
+	return fmt.Sprintf("%s%s:*", RedisSessionKey, userID) // Produces "auth:session:player_12345:*"
 }
 
 func fmtDeviceKey(userID string) string {
@@ -32,8 +36,9 @@ func fmtBlacklistKey(jti string) string {
 
 type SessionRepository interface {
 	Save(ctx context.Context, session *Session, ttl time.Duration) error
-	Get(ctx context.Context, userID string) (*Session, error)
-	Delete(ctx context.Context, userID string) error
+	Get(ctx context.Context, userID, jti string) (*Session, error)
+	Delete(ctx context.Context, userID, jti string) error
+	DeleteAll(ctx context.Context, userID string) error
 }
 
 type sessionRepoImpl struct {
@@ -51,12 +56,12 @@ func (r *sessionRepoImpl) Save(ctx context.Context, session *Session, ttl time.D
 	if err != nil {
 		return err
 	}
-	key := fmtSessionKey(session.UserID)
+	key := fmtSessionKey(session.UserID, session.JTI)
 	return r.rdb.Set(ctx, key, data, ttl).Err()
 }
 
-func (r *sessionRepoImpl) Get(ctx context.Context, userID string) (*Session, error) {
-	key := fmtSessionKey(userID)
+func (r *sessionRepoImpl) Get(ctx context.Context, userID, jti string) (*Session, error) {
+	key := fmtSessionKey(userID, jti)
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -69,7 +74,18 @@ func (r *sessionRepoImpl) Get(ctx context.Context, userID string) (*Session, err
 	return &sess, nil
 }
 
-func (r *sessionRepoImpl) Delete(ctx context.Context, userID string) error {
-	key := fmtSessionKey(userID)
+func (r *sessionRepoImpl) Delete(ctx context.Context, userID, jti string) error {
+	key := fmtSessionKey(userID, jti)
 	return r.rdb.Del(ctx, key).Err()
+}
+
+func (r *sessionRepoImpl) DeleteAll(ctx context.Context, userID string) error {
+	pattern := fmtUserSessionPattern(userID)
+	iter := r.rdb.Scan(ctx, 0, pattern, 0).Iterator()
+	for iter.Next(ctx) {
+		if err := r.rdb.Del(ctx, iter.Val()).Err(); err != nil {
+			return err
+		}
+	}
+	return iter.Err()
 }
