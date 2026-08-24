@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func FiberMiddleware(tm TokenManager) fiber.Handler {
+func AuthV2Middleware(tm TokenManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")

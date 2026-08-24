@@ -6,8 +6,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// Middleware returns a GoFiber v3 middleware handler
-func Middleware(tm TokenManager) fiber.Handler {
+// AuthV3Middleware returns a GoFiber v3 middleware handler
+func AuthV3Middleware(tm TokenManager) fiber.Handler {
 	// Notice: fiber.Ctx is passed by VALUE in v3
 	return func(c fiber.Ctx) error {
 		// 1. Extract Authorization Header

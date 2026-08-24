@@ -15,11 +15,14 @@ const (
 	RedisSessionKey   = RedisKeyPrefixes + "session:"   // Key pattern for active sessions
 	RedisDeviceKey    = RedisKeyPrefixes + "device:"    // Key pattern for tracking devices per user
 	RedisBlacklistKey = RedisKeyPrefixes + "blacklist:" // Key pattern for blacklisted tokens
+
+	AccessTokenTTL  = 15 * time.Minute
+	RefreshTokenTTL = 24 * time.Hour
 )
 
 // Key Formatter Helpers
 func fmtSessionKey(userID, jti string) string {
-	return fmt.Sprintf("%s%s:%s", RedisSessionKey, userID, jti) // Produces "auth:session:player_12345:rt_uuid_998877"
+	return fmt.Sprintf("%s%s:%s", RedisSessionKey, userID, jti) // Produces "auth:session:player_12345s:rt_uuid_998877"
 }
 
 func fmtUserSessionPattern(userID string) string {
@@ -35,6 +38,7 @@ func fmtBlacklistKey(jti string) string {
 }
 
 type SessionRepository interface {
+	SaveSession(ctx context.Context, session *Session) error
 	Save(ctx context.Context, session *Session, ttl time.Duration) error
 	Get(ctx context.Context, userID, jti string) (*Session, error)
 	Delete(ctx context.Context, userID, jti string) error
@@ -49,6 +53,10 @@ func NewSessionRepository(rdb *redis.Client) SessionRepository {
 	return &sessionRepoImpl{
 		rdb: rdb,
 	}
+}
+
+func (r *sessionRepoImpl) SaveSession(ctx context.Context, session *Session) error {
+	return r.Save(ctx, session, RefreshTokenTTL)
 }
 
 func (r *sessionRepoImpl) Save(ctx context.Context, session *Session, ttl time.Duration) error {

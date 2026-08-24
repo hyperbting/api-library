@@ -1,9 +1,12 @@
 package user
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -113,31 +116,56 @@ type DeviceStatus struct {
 	DeviceUUID string `gorm:"type:varchar(128)" validate:"omitempty,max=128"`
 }
 
+type IPList []string
+
+// Value interface converts IPList to JSON string for the DB
+func (ip *IPList) Value() (driver.Value, error) {
+	if ip == nil {
+		return "[]", nil
+	}
+	return json.Marshal(ip)
+}
+
+// Scan interface parses JSON string from the DB back into IPList
+func (ip *IPList) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, ip)
+}
+
 type User struct {
 	gorm.Model
+	Name         string `gorm:"type:varchar(256)"`
+	LastIPs      IPList `gorm:"type:json"`
 	UserIdentity `gorm:"embedded"`
 	AppStatus    `gorm:"embedded"`
 	DeviceStatus `gorm:"embedded"`
 
-	Name         string  `gorm:"type:varchar(256)" validate:"omitempty,max=256"`
-	Email        *string `gorm:"type:varchar(255);uniqueIndex:idx_users_email" validate:"omitempty,email,max=255"`
-	PasswordHash *string `gorm:"type:varchar(512)" validate:"omitempty,max=512"`
-	LastIPs      string  `gorm:"type:varchar(128)" validate:"omitempty,ip|max=128"`
+	// optional account/password auth info
+	Email           *string    `gorm:"type:varchar(255);uniqueIndex:idx_users_email"`
+	EmailVerifiedAt *time.Time `gorm:"type:timestamp"` // NULL means unverified
+	PasswordHash    *string    `gorm:"type:varchar(512)"`
 }
 
 func (u *User) HasPassword() bool {
-	return u.PasswordHash != nil
+	return u.PasswordHash != nil && *u.PasswordHash != ""
 }
 
 func (u *User) HasEmail() bool {
 	return u.Email != nil && *u.Email != ""
 }
 
+func (u *User) IsEmailVerified() bool {
+	return u.Email != nil && u.EmailVerifiedAt != nil
+}
+
 // VerifyPassword checks if the provided plain text password matches the hash
 // It assumes a bcrypt implementation where the hash includes the salt and algorithm
 func (u *User) VerifyPassword(plainPassword string) (bool, error) {
-	if u.PasswordHash == nil || *u.PasswordHash == "" {
-		return false, errors.New("user has no password set")
+	if !u.HasPassword() {
+		return false, ErrNoPassword
 	}
 
 	// Compare the plain text password with the stored hash
@@ -180,7 +208,7 @@ func NewEmailUser(email string) (*User, error) {
 // NewEmailPasswordUser constructs an email user with a hashed password
 func NewEmailPasswordUser(email, rawPassword string) (*User, error) {
 	if rawPassword == "" {
-		return nil, fmt.Errorf("password cannot be empty")
+		return nil, ErrPasswordEmpty
 	}
 
 	usrPtr, err := NewEmailUser(email)
@@ -190,7 +218,7 @@ func NewEmailPasswordUser(email, rawPassword string) (*User, error) {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("%w: %s", ErrPasswordHashFailed, err.Error())
 	}
 
 	hashedPassword := string(hash)

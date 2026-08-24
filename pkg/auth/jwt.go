@@ -10,11 +10,11 @@ import (
 
 // TokenManager defines the contract for creating and validating tokens[cite: 1]
 type TokenManager interface {
-	GenerateTokenPair(userID string, roles []string) (accessToken string, refreshToken string, jti string, err error)
+	GenerateTokenPair(userID string, roles []string) (tp *TokenPair, err error)
 	ValidateAccessToken(tokenStr string) (*AccessClaims, error)
 	ValidateRefreshToken(tokenStr string) (*RefreshClaims, error)
-	RefreshTTL() time.Duration
-	RefreshExpiration(issuedAt time.Time) time.Time
+	// RefreshTTL() time.Duration
+	// RefreshExpiration(issuedAt time.Time) time.Time
 }
 
 // Config holds settings for JWT generation
@@ -46,16 +46,32 @@ func NewTokenManager(cfg Config) TokenManager {
 	}
 }
 
-func (m *manager) RefreshTTL() time.Duration {
-	return m.refreshTTL
-}
+// func (m *manager) AccessTTL() time.Duration {
+// 	return m.accessTTL
+// }
 
-func (m *manager) RefreshExpiration(issuedAt time.Time) time.Time {
-	return issuedAt.Add(m.refreshTTL)
+// func (m *manager) AccessExpiration(issuedAt time.Time) time.Time {
+// 	return issuedAt.Add(m.accessTTL)
+// }
+
+// func (m *manager) RefreshTTL() time.Duration {
+// 	return m.refreshTTL
+// }
+
+// func (m *manager) RefreshExpiration(issuedAt time.Time) time.Time {
+// 	return issuedAt.Add(m.refreshTTL)
+// }
+
+type TokenPair struct {
+	AccessToken      string
+	RefreshToken     string
+	JTI              string
+	AccessExpiresAt  time.Time
+	RefreshExpiresAt time.Time
 }
 
 // GenerateTokenPair creates both short-lived AT and long-lived RT
-func (m *manager) GenerateTokenPair(userID string, roles []string) (accessTokenJWT string, refreshTokenJWT string, jti string, err error) {
+func (m *manager) GenerateTokenPair(userID string, roles []string) (tp *TokenPair, err error) {
 	now := time.Now()
 
 	// 1. Generate Access Token Claims
@@ -69,13 +85,15 @@ func (m *manager) GenerateTokenPair(userID string, roles []string) (accessTokenJ
 			ExpiresAt: jwt.NewNumericDate(now.Add(m.accessTTL)),
 		},
 	}
+
+	var accessTokenJWT string
 	if accessTokenJWT, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(m.secretKey); err != nil {
 		err = fmt.Errorf("failed to sign access token: %w", err)
 		return
 	}
 
 	// 2. Generate Refresh Token Claims (with unique JTI)
-	jti = uuid.NewString()
+	jti := uuid.NewString()
 	refreshClaims := RefreshClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -86,9 +104,19 @@ func (m *manager) GenerateTokenPair(userID string, roles []string) (accessTokenJ
 			ExpiresAt: jwt.NewNumericDate(now.Add(m.refreshTTL)),
 		},
 	}
+
+	var refreshTokenJWT string
 	if refreshTokenJWT, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(m.secretKey); err != nil {
 		err = fmt.Errorf("failed to sign refresh token: %w", err)
 		return
+	}
+
+	tp = &TokenPair{
+		AccessToken:      accessTokenJWT,
+		RefreshToken:     refreshTokenJWT,
+		JTI:              jti,
+		AccessExpiresAt:  accessClaims.ExpiresAt.Time,
+		RefreshExpiresAt: refreshClaims.ExpiresAt.Time,
 	}
 
 	return
