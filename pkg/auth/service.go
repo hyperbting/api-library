@@ -79,7 +79,7 @@ func (s *authServiceImpl) RegisterEmailPassword(ctx context.Context, email, rawP
 	}
 
 	var tp *TokenPair
-	if tp, err = s.tokenMgr.GenerateTokenPair(createdUsr.UserIdentity.String(), []string{"email", "player"}); err != nil {
+	if tp, err = s.tokenMgr.GenerateTokenPair(createdUsr.UserIdentity.String(), createdUsr.Roles.Strings()); err != nil {
 		return
 	}
 
@@ -122,7 +122,7 @@ func (s *authServiceImpl) LoginEmailPassword(ctx context.Context, email, rawPass
 
 	// Generate session/token
 	var tp *TokenPair
-	if tp, err = s.tokenMgr.GenerateTokenPair(retrievedUsr.UserIdentity.String(), []string{"email", "player"}); err != nil {
+	if tp, err = s.tokenMgr.GenerateTokenPair(retrievedUsr.UserIdentity.String(), retrievedUsr.Roles.Strings()); err != nil {
 		return
 	}
 
@@ -163,7 +163,7 @@ func (s *authServiceImpl) LoginSocial(ctx context.Context, platform user.DeviceP
 
 	// Step C: Generate session/token
 	var tp *TokenPair
-	if tp, err = s.tokenMgr.GenerateTokenPair(targetUsr.UserIdentity.String(), []string{"platform", "player"}); err != nil {
+	if tp, err = s.tokenMgr.GenerateTokenPair(targetUsr.UserIdentity.String(), targetUsr.Roles.Strings()); err != nil {
 		return
 	}
 	session := &Session{
@@ -213,11 +213,23 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, refreshTokenStr stri
 		return "", "", ErrTokenRevoked
 	}
 
-	//TODO: fetch roles []string from DB??
-	fetchedRoles := []string{"player"}
+	var usrIdentity *user.UserIdentity
+	if usrIdentity, err = user.ParseUserIdentity(claims.UserID); err != nil {
+		return
+	}
+
+	var usr *user.User
+	if usr, err = s.usrSvc.GetByIdentity(ctx, usrIdentity.Platform, usrIdentity.PlatformUUID); err != nil {
+		return
+	}
+	if usr == nil {
+		err = user.ErrUserNotFound
+		return
+	}
+
 	// 4. Generate new token pair via jwt.go
 	var tp *TokenPair
-	if tp, err = s.tokenMgr.GenerateTokenPair(claims.UserID, fetchedRoles); err != nil {
+	if tp, err = s.tokenMgr.GenerateTokenPair(claims.UserID, usr.Roles.Strings()); err != nil {
 		return
 	}
 

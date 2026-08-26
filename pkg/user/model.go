@@ -1,110 +1,20 @@
 package user
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-type DevicePlatform string
+type AccountStatus string
 
 const (
-	DevicePlatformWeb   DevicePlatform = "web"   // account/password
-	DevicePlatformEMAIL DevicePlatform = "email" // account with email TOTP
-
-	DevicePlatformGOOGLE DevicePlatform = "google"
-	DevicePlatformAPPLE  DevicePlatform = "apple"
-	DevicePlatformOCULUS DevicePlatform = "oculus"
-	DevicePlatformSTEAM  DevicePlatform = "steam"
-	DevicePlatformPICO   DevicePlatform = "pico"
-
-	DevicePlatformWORKER DevicePlatform = "worker" // reserved, can only be created by ADMIN
-
-	spacer = "|"
+	AccountStatusActive    AccountStatus = "active"
+	AccountStatusSuspended AccountStatus = "suspended"
+	AccountStatusBanned    AccountStatus = "banned"
 )
-
-var (
-	DevicePlatformList = []DevicePlatform{
-		DevicePlatformWeb,
-		DevicePlatformEMAIL,
-		DevicePlatformGOOGLE,
-		DevicePlatformAPPLE,
-		DevicePlatformOCULUS,
-		DevicePlatformSTEAM,
-		DevicePlatformPICO,
-	}
-
-	DevicePlatformOAuthList = []DevicePlatform{
-		DevicePlatformGOOGLE,
-		DevicePlatformAPPLE,
-		DevicePlatformOCULUS,
-		DevicePlatformSTEAM,
-		DevicePlatformPICO,
-	}
-
-	DevicePlatformAcronym = map[DevicePlatform]string{
-		DevicePlatformWeb:    "w",
-		DevicePlatformEMAIL:  "e",
-		DevicePlatformGOOGLE: "g",
-		DevicePlatformAPPLE:  "a",
-		DevicePlatformOCULUS: "o",
-		DevicePlatformSTEAM:  "s",
-		DevicePlatformPICO:   "p",
-		DevicePlatformWORKER: "w",
-	}
-
-	AcronymToDevicePlatform = map[string]DevicePlatform{
-		DevicePlatformAcronym[DevicePlatformWeb]:    DevicePlatformWeb,
-		DevicePlatformAcronym[DevicePlatformEMAIL]:  DevicePlatformEMAIL,
-		DevicePlatformAcronym[DevicePlatformGOOGLE]: DevicePlatformGOOGLE,
-		DevicePlatformAcronym[DevicePlatformAPPLE]:  DevicePlatformAPPLE,
-		DevicePlatformAcronym[DevicePlatformOCULUS]: DevicePlatformOCULUS,
-		DevicePlatformAcronym[DevicePlatformSTEAM]:  DevicePlatformSTEAM,
-		DevicePlatformAcronym[DevicePlatformPICO]:   DevicePlatformPICO,
-		DevicePlatformAcronym[DevicePlatformWORKER]: DevicePlatformWORKER,
-	}
-)
-
-type UserIdentity struct {
-	Platform     DevicePlatform `gorm:"type:varchar(32);not null;index:idx_platform_id,unique" validate:"required,max=32"`
-	PlatformUUID string         `gorm:"type:varchar(128);not null;index:idx_platform_id,unique" validate:"required,min=1,max=128"`
-}
-
-func (u *UserIdentity) String() string {
-	if u == nil {
-		return ""
-	}
-	acronym := DevicePlatformAcronym[u.Platform]
-	return fmt.Sprintf("%s%s%s", acronym, spacer, u.PlatformUUID)
-}
-
-func NewUserIdentity(platform, platformUUID string) (*UserIdentity, error) {
-	dp := DevicePlatform(platform)
-	if _, ok := DevicePlatformAcronym[dp]; !ok {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidPlatform, platform)
-	}
-	return &UserIdentity{Platform: dp, PlatformUUID: platformUUID}, nil
-}
-
-func ParseUserIdentity(uuid string) (*UserIdentity, error) {
-	parts := strings.SplitN(uuid, spacer, 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidIdentity, uuid)
-	}
-
-	platform, ok := AcronymToDevicePlatform[parts[0]]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrUnknownPlatformAcronym, parts[0])
-	}
-
-	return &UserIdentity{Platform: platform, PlatformUUID: parts[1]}, nil
-}
 
 type AppStatus struct {
 	Region  string `gorm:"type:varchar(32);not null" validate:"required,max=32"`
@@ -116,32 +26,15 @@ type DeviceStatus struct {
 	DeviceUUID string `gorm:"type:varchar(128)" validate:"omitempty,max=128"`
 }
 
-type IPList []string
-
-// Value interface converts IPList to JSON string for the DB
-func (ip *IPList) Value() (driver.Value, error) {
-	if ip == nil {
-		return "[]", nil
-	}
-	return json.Marshal(ip)
-}
-
-// Scan interface parses JSON string from the DB back into IPList
-func (ip *IPList) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-	return json.Unmarshal(bytes, ip)
-}
-
 type User struct {
 	gorm.Model
-	Name         string `gorm:"type:varchar(256)"`
-	LastIPs      IPList `gorm:"type:json"`
+	Name         string    `gorm:"type:varchar(256)"`
+	Roles        UserRoles `gorm:"serializer:json;type:json"`
+	LastIPs      []string  `gorm:"serializer:json;type:json"`
 	UserIdentity `gorm:"embedded"`
 	AppStatus    `gorm:"embedded"`
 	DeviceStatus `gorm:"embedded"`
+	Status       AccountStatus `gorm:"type:varchar(32);default:'active'"`
 
 	// optional account/password auth info
 	Email           *string    `gorm:"type:varchar(255);uniqueIndex:idx_users_email"`
@@ -191,6 +84,7 @@ func NewPlatformUser(platform DevicePlatform, platformUUID string) (*User, error
 			Platform:     platform,
 			PlatformUUID: platformUUID,
 		},
+		Roles: UserRoles{UserRolePlayer},
 	}, nil
 }
 
