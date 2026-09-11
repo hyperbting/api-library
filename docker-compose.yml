@@ -1,0 +1,97 @@
+version: '3.8'
+
+networks:
+  game-net:
+    name: game-net
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Service
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:18-alpine
+    container_name: game_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: game_db
+      POSTGRES_USER: game_user
+      POSTGRES_PASSWORD: game_password
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - game-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U game_user -d game_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis Service (In-Memory Data / Presence / Caching)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:8-alpine
+    container_name: game_redis
+    restart: always
+    # Enables AOF (Append Only File) persistence for presence/session safety
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - game-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "redis_password", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Adminer - Lightweight SQL UI
+  adminer:
+    image: adminer:latest
+    container_name: game_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - game-net
+    depends_on:
+      - postgres
+
+  # pgAdmin4 - Official PostgreSQL GUI
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: game_pgadmin
+  #   restart: always
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin_password
+  #   ports:
+  #     - "5050:80"
+  #   networks:
+  #     - gofiber-net
+  #   depends_on:
+  #     - postgres
+
+  # Redis Commander - Web UI for Redis
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: game_redis_commander
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:redis_password
+    ports:
+      - "8081:8081"
+    networks:
+      - game-net
+    depends_on:
+      - redis
