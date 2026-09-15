@@ -1,5 +1,7 @@
 package presence
 
+import "strings"
+
 // PhotonRoomDetails holds optional/session-specific game state
 type PhotonRoomDetails struct {
 	Region      string `json:"reg" validate:"required,max=32"`
@@ -29,6 +31,14 @@ func (p *PlayerPrivacySettings) SetDefaults() {
 	if p.Visibility == nil || *p.Visibility == "" {
 		p.Visibility = &defaultOffline
 	}
+}
+
+func (p *PlayerPrivacySettings) ConsideredAsOffline() bool {
+	return strings.EqualFold(*p.Visibility, "offline")
+}
+
+func (p *PlayerPrivacySettings) ConsideredAsOnline() bool {
+	return !p.ConsideredAsOffline()
 }
 
 // HeartbeatPayload embeds the sub-structs while preserving the top-level JSON structure
