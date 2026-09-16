@@ -1,6 +1,10 @@
 package presence
 
-import "strings"
+import (
+	"strings"
+
+	"golang.org/x/mod/semver"
+)
 
 // PhotonRoomDetails holds optional/session-specific game state
 type PhotonRoomDetails struct {
@@ -46,4 +50,35 @@ type HeartbeatPayload struct {
 	AppVersion            string `json:"ver" validate:"required,max=32"`
 	PhotonRoomDetails     `validate:"structonly"`
 	PlayerPrivacySettings `validate:"structonly"`
+}
+
+const (
+	SpecificClientNameEditor = "editor"
+)
+
+func normalizeSemver(v string) string {
+	if !strings.HasPrefix(v, "v") && !strings.HasPrefix(v, "V") {
+		v = "v" + v
+	}
+	return v
+}
+
+func (p *HeartbeatPayload) compareVersions(othersVersion string, extractor func(string) string) bool {
+	if strings.EqualFold(p.AppVersion, SpecificClientNameEditor) || strings.EqualFold(othersVersion, SpecificClientNameEditor) {
+		return true
+	}
+	v1 := extractor(normalizeSemver(p.AppVersion))
+	v2 := extractor(normalizeSemver(othersVersion))
+	if v1 == "" || v2 == "" {
+		return strings.EqualFold(p.AppVersion, othersVersion)
+	}
+	return v1 == v2
+}
+
+func (p *HeartbeatPayload) AppVersionMajorMatch(othersVersion string) bool {
+	return p.compareVersions(othersVersion, semver.Major)
+}
+
+func (p *HeartbeatPayload) AppVersionMajorMinorMatch(othersVersion string) bool {
+	return p.compareVersions(othersVersion, semver.MajorMinor)
 }

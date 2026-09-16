@@ -16,7 +16,7 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: game_postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: game_db
       POSTGRES_USER: game_user
@@ -40,7 +40,7 @@ services:
   redis:
     image: redis:8-alpine
     container_name: game_redis
-    restart: always
+    restart: unless-stopped
     # Enables AOF (Append Only File) persistence for presence/session safety
     command: redis-server --appendonly yes --requirepass redis_password
     ports:
@@ -59,7 +59,7 @@ services:
   adminer:
     image: adminer:latest
     container_name: game_adminer
-    restart: always
+    restart: unless-stopped
     ports:
       - "8080:8080"
     networks:
@@ -86,7 +86,7 @@ services:
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: game_redis_commander
-    restart: always
+    restart: unless-stopped
     environment:
       - REDIS_HOSTS=local:redis:6379:0:redis_password
     ports:
