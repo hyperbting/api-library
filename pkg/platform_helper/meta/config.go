@@ -3,6 +3,7 @@ package meta
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -20,12 +21,19 @@ var (
 )
 
 type OCULUSPlatformConfig struct {
-	AppID     string
-	AppSecret string
+	PlatformServer string
+	AppID          string
+	AppSecret      string
+
+	once        sync.Once
+	accessToken string
 }
 
-func (c *OCULUSPlatformConfig) FormAccessToken() (oculusPlatformAccessToken string) {
-	oculusPlatformAccessToken = fmt.Sprintf("OC|%v|%v", c.AppID, c.AppSecret)
-	log.Printf("FormAccessToken using %v %v: %v", c.AppID, c.AppSecret, oculusPlatformAccessToken)
-	return
+func (c *OCULUSPlatformConfig) FormAccessToken() string {
+	c.once.Do(func() {
+		c.accessToken = fmt.Sprintf("OC|%v|%v", c.AppID, c.AppSecret)
+		log.Printf("FormAccessToken using %v %v: %v", c.AppID, c.AppSecret, c.accessToken)
+	})
+	return c.accessToken
 }
+

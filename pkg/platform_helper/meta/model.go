@@ -38,7 +38,7 @@ type VerifyItemOwnershipQuery struct {
 	UsrID string `json:"user_id"`
 }
 
-func (v *VerifyItemOwnershipQuery) BuildQuery(cfg OCULUSPlatformConfig) url.Values {
+func (v *VerifyItemOwnershipQuery) BuildQuery(cfg *OCULUSPlatformConfig) url.Values {
 	params := url.Values{}
 	params.Add("sku", v.SKU)
 	params.Add("access_token", cfg.FormAccessToken())
@@ -55,7 +55,7 @@ type RetrieveItemsOwnedQuery struct {
 	Fields      []string `json:"fields"`
 }
 
-func (r *RetrieveItemsOwnedQuery) BuildQuery(cfg OCULUSPlatformConfig) url.Values {
+func (r *RetrieveItemsOwnedQuery) BuildQuery(cfg *OCULUSPlatformConfig) url.Values {
 	params := url.Values{}
 	params.Add("access_token", cfg.FormAccessToken())
 	params.Add("user_id", r.OrgScopedID)
@@ -131,7 +131,7 @@ type GetOculusOrgScopedIDResponseQuery struct {
 	Fields []string `json:"fields"`
 }
 
-func (r *GetOculusOrgScopedIDResponseQuery) BuildQuery(cfg OCULUSPlatformConfig) url.Values {
+func (r *GetOculusOrgScopedIDResponseQuery) BuildQuery(cfg *OCULUSPlatformConfig) url.Values {
 	params := url.Values{}
 	params.Add("access_token", cfg.FormAccessToken())
 	params.Add("fields", strings.Join(r.Fields, ","))

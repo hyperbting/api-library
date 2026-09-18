@@ -20,18 +20,18 @@ type MetaApiRepository interface {
 	RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error)
 }
 
-func NewMetaApiRepository(cfg OCULUSPlatformConfig) MetaApiRepository {
+func NewMetaApiRepository(cfg *OCULUSPlatformConfig) MetaApiRepository {
 	return &metaApiRepositoryImpl{
-		AccessToken: cfg,
+		metaCFG: cfg,
 	}
 }
 
 type metaApiRepositoryImpl struct {
-	AccessToken OCULUSPlatformConfig
+	metaCFG *OCULUSPlatformConfig
 }
 
 func (m *metaApiRepositoryImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwnershipQuery) (OculusResp OCULUSResponseBase, err error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.AccessToken.AppID, VerifyItemOwnershipUrl, q.BuildQuery(m.AccessToken).Encode()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, VerifyItemOwnershipUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
 	}
@@ -54,7 +54,7 @@ func (m *metaApiRepositoryImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwn
 }
 
 func (m *metaApiRepositoryImpl) RequestOculusRetrieveItemsOwned(q RetrieveItemsOwnedQuery) (oculusResp RetrieveItemsOwnedResponse, err error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.AccessToken.AppID, RetrieveItemsOwnedUrl, q.BuildQuery(m.AccessToken).Encode()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, RetrieveItemsOwnedUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
 	}
@@ -83,7 +83,7 @@ func (m *metaApiRepositoryImpl) RequestOculusRetrieveItemsOwned(q RetrieveItemsO
 }
 
 func (m *metaApiRepositoryImpl) RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.AccessToken.AppID, ConsumeIAPItemUrl, q.BuildQuery(m.AccessToken).Encode()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, ConsumeIAPItemUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
 	}
@@ -141,7 +141,7 @@ func (m *metaApiRepositoryImpl) RequestOculusUserNonceValidate(q UserNonceValida
 }
 
 func (m *metaApiRepositoryImpl) GetOculusOrgScopedID(oculusUsrID string, q GetOculusOrgScopedIDResponseQuery) (respOrgScopedID GetOculusOrgScopedIDResponse, err error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v?%v", OculusPlatformServer, oculusUsrID, q.BuildQuery(m.AccessToken).Encode()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v?%v", OculusPlatformServer, oculusUsrID, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
 	}
