@@ -1,4 +1,4 @@
-package picoapiwrapper
+package pico
 
 import (
 	"bytes"
