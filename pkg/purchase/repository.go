@@ -13,10 +13,10 @@ type PurchaseRepository interface {
 	// CreatePlatformTransaction(ctx context.Context, tx *PlatformTransaction) error
 	// CreateCoinTransaction(ctx context.Context, tx *CoinTransaction) error
 
-	GetBalance(ctx context.Context, userID uint64) (uint64, error)
-	GetLatestTransactionBalance(ctx context.Context, userID uint64) (uint64, error)
-	ModifyBalanceTx(ctx context.Context, tx *gorm.DB, userID uint64, amount int64, reason string) (*model.CoinTransaction, error)
-	GetLedgerHistory(ctx context.Context, userID uint64, limit, offset int) ([]model.CoinTransaction, error)
+	GetBalance(ctx context.Context, userID uint) (uint64, error)
+	GetLatestTransactionBalance(ctx context.Context, userID uint) (uint64, error)
+	ModifyBalanceTx(ctx context.Context, tx *gorm.DB, userID uint, amount int64, reason string) (*CoinTransaction, error)
+	GetLedgerHistory(ctx context.Context, userID uint, limit, offset int) ([]CoinTransaction, error)
 }
 
 type purchaseRepositoryImpl struct {
@@ -30,8 +30,8 @@ func NewPurchaseRepository(db *gorm.DB) PurchaseRepository {
 }
 
 // GetBalance reads the hot-path single row balance directly from player_balances
-func (r *purchaseRepositoryImpl) GetBalance(ctx context.Context, userID uint64) (uint64, error) {
-	var balance model.PlayerBalance
+func (r *purchaseRepositoryImpl) GetBalance(ctx context.Context, userID uint) (uint64, error) {
+	var balance PlayerBalance
 	err := r.db.WithContext(ctx).
 		Select("coins").
 		Where("user_id = ?", userID).
@@ -44,8 +44,8 @@ func (r *purchaseRepositoryImpl) GetBalance(ctx context.Context, userID uint64) 
 }
 
 // GetLatestTransactionBalance fetches the last balance state strictly from the ledger
-func (r *purchaseRepositoryImpl) GetLatestTransactionBalance(ctx context.Context, userID uint64) (uint64, error) {
-	var lastTx model.CoinTransaction
+func (r *purchaseRepositoryImpl) GetLatestTransactionBalance(ctx context.Context, userID uint) (uint64, error) {
+	var lastTx CoinTransaction
 	err := r.db.WithContext(ctx).
 		Select("balance_after").
 		Where("user_id = ?", userID).
@@ -59,14 +59,14 @@ func (r *purchaseRepositoryImpl) GetLatestTransactionBalance(ctx context.Context
 }
 
 // ModifyBalanceTx handles atomic credit/debit, row locking, and ledger entry generation
-func (r *purchaseRepositoryImpl) ModifyBalanceTx(ctx context.Context, tx *gorm.DB, userID uint64, amount int64, reason string) (*model.CoinTransaction, error) {
-	var balance model.PlayerBalance
+func (r *purchaseRepositoryImpl) ModifyBalanceTx(ctx context.Context, tx *gorm.DB, userID uint, amount int64, reason string) (*CoinTransaction, error) {
+	var balance PlayerBalance
 
 	// 1. Lock the balance row for UPDATE to prevent race conditions
 	err := tx.WithContext(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("user_id = ?", userID).
-		FirstOrCreate(&balance, model.PlayerBalance{UserID: userID, Coins: 0}).Error
+		FirstOrCreate(&balance, PlayerBalance{UserID: userID, Coins: 0}).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to lock balance row: %w", err)
 	}
@@ -89,7 +89,7 @@ func (r *purchaseRepositoryImpl) ModifyBalanceTx(ctx context.Context, tx *gorm.D
 	}
 
 	// 4. Create immutable ledger record
-	coinTx := model.CoinTransaction{
+	coinTx := CoinTransaction{
 		UserID:       userID,
 		Amount:       amount,
 		BalanceAfter: newBalance,
@@ -104,8 +104,8 @@ func (r *purchaseRepositoryImpl) ModifyBalanceTx(ctx context.Context, tx *gorm.D
 }
 
 // GetLedgerHistory retrieves paginated transactions using the idx_user_ledger index
-func (r *purchaseRepositoryImpl) GetLedgerHistory(ctx context.Context, userID uint64, limit, offset int) ([]model.CoinTransaction, error) {
-	var txs []model.CoinTransaction
+func (r *purchaseRepositoryImpl) GetLedgerHistory(ctx context.Context, userID uint, limit, offset int) ([]CoinTransaction, error) {
+	var txs []CoinTransaction
 	err := r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
 		Order("created_at DESC, id DESC").
