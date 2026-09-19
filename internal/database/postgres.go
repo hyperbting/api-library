@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"api-library/config"
+	"api-library/internal/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )

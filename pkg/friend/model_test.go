@@ -1,7 +1,7 @@
 package friend
 
 import (
-	myCFG "api-library/config"
+	myCFG "api-library/internal/config"
 	myDB "api-library/internal/database"
 	"database/sql"
 	"log"
