@@ -35,7 +35,11 @@ func (c *metaAttestationClientImpl) RequestOculusVerifyAttestationToken(ctx cont
 
 	var req *http.Request
 
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg), nil); err != nil {
+	url, err := q.formUrl(c.cfg)
+	if err != nil {
+		return
+	}
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
 		return
 	}
 
@@ -61,7 +65,11 @@ func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx contex
 
 	var req *http.Request
 
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg), nil); err != nil {
+	url, err := q.formUrl(c.cfg)
+	if err != nil {
+		return
+	}
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
 		return
 	}
 

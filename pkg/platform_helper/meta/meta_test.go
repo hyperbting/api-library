@@ -180,7 +180,10 @@ func TestFormUrl_QueryParams(t *testing.T) {
 
 	t.Run("VerifyAttestationTokenQuery", func(t *testing.T) {
 		q := NewVerifyAttestationTokenQueryDTO("token_xyz")
-		urlStr := q.formUrl(cfg)
+		urlStr, err := q.formUrl(cfg)
+		if err != nil {
+			t.Fatalf("failed to form url: %v", err)
+		}
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -199,7 +202,10 @@ func TestFormUrl_QueryParams(t *testing.T) {
 
 	t.Run("BanStatusRequestDTO_WithBanId", func(t *testing.T) {
 		q := BanStatusRequestDTO{BanId: "ban_001"}
-		urlStr := q.formUrl(cfg)
+		urlStr, err := q.formUrl(cfg)
+		if err != nil {
+			t.Fatalf("failed to form url: %v", err)
+		}
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -218,7 +224,10 @@ func TestFormUrl_QueryParams(t *testing.T) {
 
 	t.Run("BanStatusRequestDTO_WithUniqueId", func(t *testing.T) {
 		q := BanStatusRequestDTO{UniqueId: "uid_999"}
-		urlStr := q.formUrl(cfg)
+		urlStr, err := q.formUrl(cfg)
+		if err != nil {
+			t.Fatalf("failed to form url: %v", err)
+		}
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -334,7 +343,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 	t.Run("AttestationBan", func(t *testing.T) {
 		res, err := client.RequestOculusAttestationBan(ctx, &DeviceBanRequestDTO{
 			DeviceBanDTO: DeviceBanDTO{IsBanned: true, RemainingBanTime: 30},
-			UniqueId:  "mock_uid",
+			UniqueId:     "mock_uid",
 		})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)

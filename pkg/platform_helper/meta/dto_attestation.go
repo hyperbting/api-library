@@ -20,19 +20,19 @@ type VerifyAttestationTokenQueryDTO struct {
 	AttestationToken string `json:"attestation_token"`
 }
 
-func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *OCULUSPlatformConfig) string {
+func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *OCULUSPlatformConfig) (string, error) {
 	//https://graph.oculus.com/platform_integrity/verify?token=<attestation_token>&access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
 	urlOnly, err := url.JoinPath(cfg.PlatformServer, VerifyAttestationTokenPath)
 	if err != nil {
-		panic(err) // Handle error appropriately
+		return "", err
 	}
 
 	// Create a new URL object.
 	u, err := url.Parse(urlOnly)
 	if err != nil {
-		panic(err) // Handle error appropriately
+		return "", err
 	}
 
 	// Create a url.Values map to hold query parameters. This automatically handles URL encoding.
@@ -43,7 +43,7 @@ func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *OCULUSPlatformConfig) str
 	// Encode the query parameters and assign them to the URL.
 	u.RawQuery = q.Encode()
 
-	return u.String()
+	return u.String(), nil
 }
 
 func NewVerifyAttestationTokenQueryDTO(attestationToken string) VerifyAttestationTokenQueryDTO {
@@ -118,7 +118,7 @@ func (bsr *BanStatusRequestDTO) HasBanId() bool {
 	return bsr.BanId != ""
 }
 
-func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
+func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) (string, error) {
 	//https://graph.oculus.com/platform_integrity/device_ban_status?
 	//unique_id =<unique_id>&
 	//access_token=<access_token>
@@ -126,13 +126,13 @@ func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
 	// Join the base URL and the path safely using url.JoinPath.
 	urlOnly, err := url.JoinPath(cfg.PlatformServer, DeviceBanStatusCheckPath)
 	if err != nil {
-		panic(err) // Handle error appropriately
+		return "", err
 	}
 
 	// Create a new URL object.
 	u, err := url.Parse(urlOnly)
 	if err != nil {
-		panic(err) // Handle error appropriately
+		return "", err
 	}
 
 	// Create a url.Values map to hold query parameters. This automatically handles URL encoding.
@@ -148,7 +148,7 @@ func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
 	// Encode the query parameters and assign them to the URL.
 	u.RawQuery = q.Encode()
 
-	return u.String()
+	return u.String(), nil
 }
 
 type BanStatusResponseDTO struct {
