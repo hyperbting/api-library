@@ -35,7 +35,7 @@ func (c *metaAttestationClientImpl) RequestOculusVerifyAttestationToken(ctx cont
 
 	var req *http.Request
 
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg.PlatformServer, c.cfg.FormAccessToken()), nil); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg), nil); err != nil {
 		return
 	}
 
@@ -61,7 +61,7 @@ func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx contex
 
 	var req *http.Request
 
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg.PlatformServer, c.cfg.FormAccessToken()), nil); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, q.formUrl(c.cfg), nil); err != nil {
 		return
 	}
 
@@ -85,7 +85,7 @@ func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx contex
 func (c *metaAttestationClientImpl) RequestOculusAttestationBan(ctx context.Context, q *DeviceBanRequestDTO) (oculusResp BanResponseDTO, err error) {
 	// https://developers.meta.com/horizon/documentation/spatial-sdk/ps-attestation-api/#how-to-ban-a-device
 
-	reqURL := q.formUrl(c.cfg.PlatformServer, c.cfg.FormAccessToken())
+	reqURL := q.formUrl(c.cfg)
 
 	// Pass context for proper timeout/cancellation handling
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, nil)

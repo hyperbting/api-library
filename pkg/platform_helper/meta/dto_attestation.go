@@ -20,11 +20,11 @@ type VerifyAttestationTokenQueryDTO struct {
 	AttestationToken string `json:"attestation_token"`
 }
 
-func (tq *VerifyAttestationTokenQueryDTO) formUrl(platformServer string, accessToken string) string {
+func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *OCULUSPlatformConfig) string {
 	//https://graph.oculus.com/platform_integrity/verify?token=<attestation_token>&access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
-	urlOnly, err := url.JoinPath(platformServer, VerifyAttestationTokenPath)
+	urlOnly, err := url.JoinPath(cfg.PlatformServer, VerifyAttestationTokenPath)
 	if err != nil {
 		panic(err) // Handle error appropriately
 	}
@@ -38,7 +38,7 @@ func (tq *VerifyAttestationTokenQueryDTO) formUrl(platformServer string, accessT
 	// Create a url.Values map to hold query parameters. This automatically handles URL encoding.
 	q := u.Query()
 	q.Add("token", tq.AttestationToken)
-	q.Add("access_token", accessToken)
+	q.Add("access_token", cfg.FormAccessToken())
 
 	// Encode the query parameters and assign them to the URL.
 	u.RawQuery = q.Encode()
@@ -118,13 +118,13 @@ func (bsr *BanStatusRequestDTO) HasBanId() bool {
 	return bsr.BanId != ""
 }
 
-func (bsr *BanStatusRequestDTO) formUrl(platformServer string, accessToken string) string {
+func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
 	//https://graph.oculus.com/platform_integrity/device_ban_status?
 	//unique_id =<unique_id>&
 	//access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
-	urlOnly, err := url.JoinPath(platformServer, DeviceBanStatusCheckPath)
+	urlOnly, err := url.JoinPath(cfg.PlatformServer, DeviceBanStatusCheckPath)
 	if err != nil {
 		panic(err) // Handle error appropriately
 	}
@@ -137,7 +137,7 @@ func (bsr *BanStatusRequestDTO) formUrl(platformServer string, accessToken strin
 
 	// Create a url.Values map to hold query parameters. This automatically handles URL encoding.
 	q := u.Query()
-	q.Add("access_token", accessToken)
+	q.Add("access_token", cfg.FormAccessToken())
 
 	if bsr.HasBanId() {
 		q.Add("ban_id", bsr.BanId)
@@ -208,7 +208,7 @@ func (dbr *DeviceBanRequestDTO) HasBanId() bool {
 	return dbr.BanId != ""
 }
 
-func (dbr *DeviceBanRequestDTO) formUrl(platformServer string, accessToken string) string {
+func (dbr *DeviceBanRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
 	//https://graph.oculus.com/platform_integrity/device_ban?
 	//method=POST&
 	//unique_id=<unique_id>&
@@ -217,7 +217,7 @@ func (dbr *DeviceBanRequestDTO) formUrl(platformServer string, accessToken strin
 	//access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
-	urlOnly, err := url.JoinPath(platformServer, BanWithAttestationPath)
+	urlOnly, err := url.JoinPath(cfg.PlatformServer, BanWithAttestationPath)
 	if err != nil {
 		panic(err) // Handle error appropriately
 	}
@@ -232,7 +232,7 @@ func (dbr *DeviceBanRequestDTO) formUrl(platformServer string, accessToken strin
 	q := u.Query()
 	q.Add("method", "POST")
 	q.Add("is_banned", dbr.IsCurrentlyBanned())
-	q.Add("access_token", accessToken)
+	q.Add("access_token", cfg.FormAccessToken())
 
 	if dbr.HasBanId() {
 		q.Add("ban_id", dbr.BanId)

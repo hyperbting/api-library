@@ -171,12 +171,16 @@ func TestVerifyAttestationToken_IsDeviceBanned(t *testing.T) {
 }
 
 func TestFormUrl_QueryParams(t *testing.T) {
-	server := "https://graph.oculus.com"
-	accessToken := "OC|123|abc"
+	cfg := &OCULUSPlatformConfig{
+		PlatformServer: "https://graph.oculus.com",
+		AppID:          "123",
+		AppSecret:      "abc",
+	}
+	accessToken := cfg.FormAccessToken()
 
 	t.Run("VerifyAttestationTokenQuery", func(t *testing.T) {
 		q := NewVerifyAttestationTokenQueryDTO("token_xyz")
-		urlStr := q.formUrl(server, accessToken)
+		urlStr := q.formUrl(cfg)
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -195,7 +199,7 @@ func TestFormUrl_QueryParams(t *testing.T) {
 
 	t.Run("BanStatusRequestDTO_WithBanId", func(t *testing.T) {
 		q := BanStatusRequestDTO{BanId: "ban_001"}
-		urlStr := q.formUrl(server, accessToken)
+		urlStr := q.formUrl(cfg)
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -214,7 +218,7 @@ func TestFormUrl_QueryParams(t *testing.T) {
 
 	t.Run("BanStatusRequestDTO_WithUniqueId", func(t *testing.T) {
 		q := BanStatusRequestDTO{UniqueId: "uid_999"}
-		urlStr := q.formUrl(server, accessToken)
+		urlStr := q.formUrl(cfg)
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
@@ -233,7 +237,7 @@ func TestFormUrl_QueryParams(t *testing.T) {
 			},
 			UniqueId: "uid_123",
 		}
-		urlStr := q.formUrl(server, accessToken)
+		urlStr := q.formUrl(cfg)
 
 		parsed, err := url.Parse(urlStr)
 		if err != nil {
