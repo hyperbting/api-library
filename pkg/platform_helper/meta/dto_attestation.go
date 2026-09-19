@@ -16,11 +16,11 @@ const (
 	DeviceBanStatusCheckPath   = "/platform_integrity/device_ban_status"
 )
 
-type VerifyAttestationTokenQuery struct {
+type VerifyAttestationTokenQueryDTO struct {
 	AttestationToken string `json:"attestation_token"`
 }
 
-func (tq *VerifyAttestationTokenQuery) formUrl(platformServer string, accessToken string) string {
+func (tq *VerifyAttestationTokenQueryDTO) formUrl(platformServer string, accessToken string) string {
 	//https://graph.oculus.com/platform_integrity/verify?token=<attestation_token>&access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
@@ -46,21 +46,21 @@ func (tq *VerifyAttestationTokenQuery) formUrl(platformServer string, accessToke
 	return u.String()
 }
 
-func NewVerifyAttestationTokenQuery(attestationToken string) VerifyAttestationTokenQuery {
-	return VerifyAttestationTokenQuery{AttestationToken: attestationToken}
+func NewVerifyAttestationTokenQueryDTO(attestationToken string) VerifyAttestationTokenQueryDTO {
+	return VerifyAttestationTokenQueryDTO{AttestationToken: attestationToken}
 }
 
-type VerifyAttestationTokenResponse struct {
+type VerifyAttestationTokenResponseDTO struct {
 	Data []struct {
 		Message *string `json:"message" enums:"success,invalid signature,token expired"`
 		// Claims is a Base64-encoded JWS string containing DeviceId, Nonce, and Integrity status.
 		ClaimsInBase64 *string `json:"claims" extensions:"x-format=base64"`
 	} `json:"data"`
 
-	Claim *AttestationClaims `json:"-"`
+	Claim *AttestationClaimsDTO `json:"-"`
 }
 
-func (v *VerifyAttestationTokenResponse) IsDeviceBanned() bool {
+func (v *VerifyAttestationTokenResponseDTO) IsDeviceBanned() bool {
 
 	if len(v.Data) == 0 || v.Data[0].Message == nil {
 		// No data means we can't verify, treat as banned (or handle differently)
@@ -83,7 +83,7 @@ func (v *VerifyAttestationTokenResponse) IsDeviceBanned() bool {
 	return true
 }
 
-func (v *VerifyAttestationTokenResponse) ParseClaims(force bool) error {
+func (v *VerifyAttestationTokenResponseDTO) ParseClaims(force bool) error {
 	if v.Claim != nil && !force {
 		return nil
 	}
@@ -99,7 +99,7 @@ func (v *VerifyAttestationTokenResponse) ParseClaims(force bool) error {
 		return err
 	}
 
-	var claims AttestationClaims
+	var claims AttestationClaimsDTO
 	if err = json.Unmarshal(decoded, &claims); err != nil {
 		return err
 	}
@@ -108,17 +108,17 @@ func (v *VerifyAttestationTokenResponse) ParseClaims(force bool) error {
 	return nil
 }
 
-type BanStatusRequest struct {
+type BanStatusRequestDTO struct {
 	UniqueId string `json:"unique_id"`
 	BanId    string `json:"ban_id"`
 }
 
-func (bsr *BanStatusRequest) HasBanId() bool {
+func (bsr *BanStatusRequestDTO) HasBanId() bool {
 	// Returns true if BanId is not an empty string
 	return bsr.BanId != ""
 }
 
-func (bsr *BanStatusRequest) formUrl(platformServer string, accessToken string) string {
+func (bsr *BanStatusRequestDTO) formUrl(platformServer string, accessToken string) string {
 	//https://graph.oculus.com/platform_integrity/device_ban_status?
 	//unique_id =<unique_id>&
 	//access_token=<access_token>
@@ -151,12 +151,12 @@ func (bsr *BanStatusRequest) formUrl(platformServer string, accessToken string) 
 	return u.String()
 }
 
-type BanStatusResponse struct {
-	Data  []BanStatusData `json:"data,omitempty"`
-	Error *OCApiError     `json:"error,omitempty"`
+type BanStatusResponseDTO struct {
+	Data  []BanStatusDataDTO `json:"data,omitempty"`
+	Error *OCApiErrorDTO     `json:"error,omitempty"`
 }
 
-func (r *BanStatusResponse) Result() string {
+func (r *BanStatusResponseDTO) Result() string {
 	// 1. Handle API Errors
 	if r.Error != nil {
 		switch r.Error.ErrorSubcode {
@@ -181,34 +181,34 @@ func (r *BanStatusResponse) Result() string {
 	return "No status data available"
 }
 
-type BanStatusData struct {
+type BanStatusDataDTO struct {
 	Message                string `json:"message"`
 	IsBanned               bool   `json:"is_banned"`
 	RemainingTimeInMinutes int    `json:"remaining_time_in_minute"`
 }
 
-type DeviceBan struct {
+type DeviceBanDTO struct {
 	IsBanned         bool `json:"is_banned"`
 	RemainingBanTime int  `json:"remaining_time_in_minute" validate:"gte=0,lte=52560000"`
 }
 
-func (b *DeviceBan) IsCurrentlyBanned() string {
+func (b *DeviceBanDTO) IsCurrentlyBanned() string {
 	// Converts bool to "true" or "false" string
 	return strconv.FormatBool(b.IsBanned)
 }
 
-type DeviceBanRequest struct {
-	DeviceBan
+type DeviceBanRequestDTO struct {
+	DeviceBanDTO
 	UniqueId string `json:"unique_id"`
 	BanId    string `json:"ban_id"`
 }
 
-func (dbr *DeviceBanRequest) HasBanId() bool {
+func (dbr *DeviceBanRequestDTO) HasBanId() bool {
 	// Returns true if BanId is not an empty string
 	return dbr.BanId != ""
 }
 
-func (dbr *DeviceBanRequest) formUrl(platformServer string, accessToken string) string {
+func (dbr *DeviceBanRequestDTO) formUrl(platformServer string, accessToken string) string {
 	//https://graph.oculus.com/platform_integrity/device_ban?
 	//method=POST&
 	//unique_id=<unique_id>&
@@ -250,7 +250,7 @@ func (dbr *DeviceBanRequest) formUrl(platformServer string, accessToken string) 
 	return u.String()
 }
 
-type OCApiError struct {
+type OCApiErrorDTO struct {
 	Message      string                 `json:"message"`
 	Type         string                 `json:"type"`
 	Code         int                    `json:"code"`
@@ -259,13 +259,13 @@ type OCApiError struct {
 	ErrorData    map[string]interface{} `json:"error_data"`
 }
 
-type BanResponse struct {
-	Message string      `json:"message,omitempty"`
-	BanID   string      `json:"ban_id,omitempty"` // Empty string on reversal, populated on update
-	Error   *OCApiError `json:"error,omitempty"`
+type BanResponseDTO struct {
+	Message string         `json:"message,omitempty"`
+	BanID   string         `json:"ban_id,omitempty"` // Empty string on reversal, populated on update
+	Error   *OCApiErrorDTO `json:"error,omitempty"`
 }
 
-func (r *BanResponse) Result() string {
+func (r *BanResponseDTO) Result() string {
 	// 1. Priority: Handle Errors
 	if r.Error != nil {
 		switch r.Error.ErrorSubcode {
@@ -292,7 +292,7 @@ func (r *BanResponse) Result() string {
 	return "Unknown response state"
 }
 
-type AttestationClaims struct {
+type AttestationClaimsDTO struct {
 	RequestDetails struct {
 		Exp       int64  `json:"exp"`
 		Nonce     string `json:"nonce"`
@@ -311,11 +311,11 @@ type AttestationClaims struct {
 		UniqueId             string `json:"unique_id"`
 	} `json:"device_state"`
 
-	DeviceBan *DeviceBan `json:"device_ban,omitempty"`
-	BanId     string     `json:"ban_id,omitempty"`
+	DeviceBan *DeviceBanDTO `json:"device_ban,omitempty"`
+	BanId     string        `json:"ban_id,omitempty"`
 }
 
-func (c *AttestationClaims) IsDeviceBanned() bool {
+func (c *AttestationClaimsDTO) IsDeviceBanned() bool {
 
 	//Inside the token claims section the returned result will have a device_ban section only if the device is banned.
 	//Otherwise the device_ban section will be omitted.
@@ -326,9 +326,9 @@ func (c *AttestationClaims) IsDeviceBanned() bool {
 	return c.DeviceBan.IsBanned
 }
 
-type AttestationRecord struct {
-	PlatformID string            `json:"pfm_id"`
-	Timestamp  time.Time         `json:"timestamp"`
-	AppSource  string            `json:"app_source"`
-	Claims     AttestationClaims `json:"claims"`
+type AttestationRecordDTO struct {
+	PlatformID string               `json:"pfm_id"`
+	Timestamp  time.Time            `json:"timestamp"`
+	AppSource  string               `json:"app_source"`
+	Claims     AttestationClaimsDTO `json:"claims"`
 }

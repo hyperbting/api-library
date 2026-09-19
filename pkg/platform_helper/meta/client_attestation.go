@@ -11,9 +11,9 @@ import (
 
 // MetaAttestationClient handles Meta App Attestation & Device Ban platform APIs.
 type MetaAttestationClient interface {
-	RequestOculusVerifyAttestationToken(ctx context.Context, q VerifyAttestationTokenQuery) (VerifyAttestationTokenResponse, error)
-	RequestOculusAttestationBanStatus(ctx context.Context, q *BanStatusRequest) (BanStatusResponse, error)
-	RequestOculusAttestationBan(ctx context.Context, q *DeviceBanRequest) (BanResponse, error)
+	RequestOculusVerifyAttestationToken(ctx context.Context, q VerifyAttestationTokenQueryDTO) (VerifyAttestationTokenResponseDTO, error)
+	RequestOculusAttestationBanStatus(ctx context.Context, q *BanStatusRequestDTO) (BanStatusResponseDTO, error)
+	RequestOculusAttestationBan(ctx context.Context, q *DeviceBanRequestDTO) (BanResponseDTO, error)
 }
 
 type metaAttestationClientImpl struct {
@@ -30,7 +30,7 @@ func NewMetaAttestationClient(cfg *OCULUSPlatformConfig) MetaAttestationClient {
 	}
 }
 
-func (c *metaAttestationClientImpl) RequestOculusVerifyAttestationToken(ctx context.Context, q VerifyAttestationTokenQuery) (oculusResp VerifyAttestationTokenResponse, err error) {
+func (c *metaAttestationClientImpl) RequestOculusVerifyAttestationToken(ctx context.Context, q VerifyAttestationTokenQueryDTO) (oculusResp VerifyAttestationTokenResponseDTO, err error) {
 	// https://developers.meta.com/horizon/documentation/unity/ps-attestation-api
 
 	var req *http.Request
@@ -56,7 +56,7 @@ func (c *metaAttestationClientImpl) RequestOculusVerifyAttestationToken(ctx cont
 	return
 }
 
-func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx context.Context, q *BanStatusRequest) (oculusResp BanStatusResponse, err error) {
+func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx context.Context, q *BanStatusRequestDTO) (oculusResp BanStatusResponseDTO, err error) {
 	// https://developers.meta.com/horizon/documentation/spatial-sdk/ps-attestation-api/#how-to-ban-a-device
 
 	var req *http.Request
@@ -82,7 +82,7 @@ func (c *metaAttestationClientImpl) RequestOculusAttestationBanStatus(ctx contex
 	return
 }
 
-func (c *metaAttestationClientImpl) RequestOculusAttestationBan(ctx context.Context, q *DeviceBanRequest) (oculusResp BanResponse, err error) {
+func (c *metaAttestationClientImpl) RequestOculusAttestationBan(ctx context.Context, q *DeviceBanRequestDTO) (oculusResp BanResponseDTO, err error) {
 	// https://developers.meta.com/horizon/documentation/spatial-sdk/ps-attestation-api/#how-to-ban-a-device
 
 	reqURL := q.formUrl(c.cfg.PlatformServer, c.cfg.FormAccessToken())

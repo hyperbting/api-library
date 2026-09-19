@@ -55,7 +55,7 @@ func TestGenerateSHA256SignatureWithOculusSecret(t *testing.T) {
 }
 
 func TestVerifyAttestationToken_ParseClaims(t *testing.T) {
-	claims := AttestationClaims{
+	claims := AttestationClaimsDTO{
 		RequestDetails: struct {
 			Exp       int64  `json:"exp"`
 			Nonce     string `json:"nonce"`
@@ -92,7 +92,7 @@ func TestVerifyAttestationToken_ParseClaims(t *testing.T) {
 	b64Claims := base64.RawURLEncoding.EncodeToString(claimsBytes)
 	successMsg := "success"
 
-	resp := VerifyAttestationTokenResponse{
+	resp := VerifyAttestationTokenResponseDTO{
 		Data: []struct {
 			Message        *string `json:"message" enums:"success,invalid signature,token expired"`
 			ClaimsInBase64 *string `json:"claims" extensions:"x-format=base64"`
@@ -123,14 +123,14 @@ func TestVerifyAttestationToken_ParseClaims(t *testing.T) {
 
 func TestVerifyAttestationToken_IsDeviceBanned(t *testing.T) {
 	// Case 1: Empty Data
-	emptyResp := VerifyAttestationTokenResponse{}
+	emptyResp := VerifyAttestationTokenResponseDTO{}
 	if !emptyResp.IsDeviceBanned() {
 		t.Errorf("expected empty response to be treated as banned")
 	}
 
 	// Case 2: Message not success
 	failMsg := "invalid signature"
-	failResp := VerifyAttestationTokenResponse{
+	failResp := VerifyAttestationTokenResponseDTO{
 		Data: []struct {
 			Message        *string `json:"message" enums:"success,invalid signature,token expired"`
 			ClaimsInBase64 *string `json:"claims" extensions:"x-format=base64"`
@@ -143,8 +143,8 @@ func TestVerifyAttestationToken_IsDeviceBanned(t *testing.T) {
 	}
 
 	// Case 3: Claims indicate banned
-	bannedClaims := AttestationClaims{
-		DeviceBan: &DeviceBan{
+	bannedClaims := AttestationClaimsDTO{
+		DeviceBan: &DeviceBanDTO{
 			IsBanned:         true,
 			RemainingBanTime: 60,
 		},
@@ -153,7 +153,7 @@ func TestVerifyAttestationToken_IsDeviceBanned(t *testing.T) {
 	b64Banned := base64.RawURLEncoding.EncodeToString(bannedBytes)
 	successMsg := "success"
 
-	bannedResp := VerifyAttestationTokenResponse{
+	bannedResp := VerifyAttestationTokenResponseDTO{
 		Data: []struct {
 			Message        *string `json:"message" enums:"success,invalid signature,token expired"`
 			ClaimsInBase64 *string `json:"claims" extensions:"x-format=base64"`
@@ -175,7 +175,7 @@ func TestFormUrl_QueryParams(t *testing.T) {
 	accessToken := "OC|123|abc"
 
 	t.Run("VerifyAttestationTokenQuery", func(t *testing.T) {
-		q := NewVerifyAttestationTokenQuery("token_xyz")
+		q := NewVerifyAttestationTokenQueryDTO("token_xyz")
 		urlStr := q.formUrl(server, accessToken)
 
 		parsed, err := url.Parse(urlStr)
@@ -193,8 +193,8 @@ func TestFormUrl_QueryParams(t *testing.T) {
 		}
 	})
 
-	t.Run("BanStatusRequest_WithBanId", func(t *testing.T) {
-		q := BanStatusRequest{BanId: "ban_001"}
+	t.Run("BanStatusRequestDTO_WithBanId", func(t *testing.T) {
+		q := BanStatusRequestDTO{BanId: "ban_001"}
 		urlStr := q.formUrl(server, accessToken)
 
 		parsed, err := url.Parse(urlStr)
@@ -212,8 +212,8 @@ func TestFormUrl_QueryParams(t *testing.T) {
 		}
 	})
 
-	t.Run("BanStatusRequest_WithUniqueId", func(t *testing.T) {
-		q := BanStatusRequest{UniqueId: "uid_999"}
+	t.Run("BanStatusRequestDTO_WithUniqueId", func(t *testing.T) {
+		q := BanStatusRequestDTO{UniqueId: "uid_999"}
 		urlStr := q.formUrl(server, accessToken)
 
 		parsed, err := url.Parse(urlStr)
@@ -225,9 +225,9 @@ func TestFormUrl_QueryParams(t *testing.T) {
 		}
 	})
 
-	t.Run("DeviceBanRequest_BanActive", func(t *testing.T) {
-		q := DeviceBanRequest{
-			DeviceBan: DeviceBan{
+	t.Run("DeviceBanRequestDTO_BanActive", func(t *testing.T) {
+		q := DeviceBanRequestDTO{
+			DeviceBanDTO: DeviceBanDTO{
 				IsBanned:         true,
 				RemainingBanTime: 120,
 			},
@@ -258,7 +258,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 			successMsg := "success"
 			claimsJson := `{"device_state":{"unique_id":"device_mock"}}`
 			b64 := base64.RawURLEncoding.EncodeToString([]byte(claimsJson))
-			resp := VerifyAttestationTokenResponse{
+			resp := VerifyAttestationTokenResponseDTO{
 				Data: []struct {
 					Message        *string `json:"message" enums:"success,invalid signature,token expired"`
 					ClaimsInBase64 *string `json:"claims" extensions:"x-format=base64"`
@@ -273,8 +273,8 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(resp)
 
 		case DeviceBanStatusCheckPath:
-			resp := BanStatusResponse{
-				Data: []BanStatusData{
+			resp := BanStatusResponseDTO{
+				Data: []BanStatusDataDTO{
 					{
 						Message:                "ok",
 						IsBanned:               false,
@@ -286,7 +286,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(resp)
 
 		case BanWithAttestationPath:
-			resp := BanResponse{
+			resp := BanResponseDTO{
 				Message: "Success",
 				BanID:   "ban_mock_1",
 			}
@@ -308,7 +308,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("VerifyAttestationToken", func(t *testing.T) {
-		res, err := client.RequestOculusVerifyAttestationToken(ctx, NewVerifyAttestationTokenQuery("mock_token"))
+		res, err := client.RequestOculusVerifyAttestationToken(ctx, NewVerifyAttestationTokenQueryDTO("mock_token"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -318,7 +318,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 	})
 
 	t.Run("AttestationBanStatus", func(t *testing.T) {
-		res, err := client.RequestOculusAttestationBanStatus(ctx, &BanStatusRequest{UniqueId: "mock_uid"})
+		res, err := client.RequestOculusAttestationBanStatus(ctx, &BanStatusRequestDTO{UniqueId: "mock_uid"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -328,8 +328,8 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 	})
 
 	t.Run("AttestationBan", func(t *testing.T) {
-		res, err := client.RequestOculusAttestationBan(ctx, &DeviceBanRequest{
-			DeviceBan: DeviceBan{IsBanned: true, RemainingBanTime: 30},
+		res, err := client.RequestOculusAttestationBan(ctx, &DeviceBanRequestDTO{
+			DeviceBanDTO: DeviceBanDTO{IsBanned: true, RemainingBanTime: 30},
 			UniqueId:  "mock_uid",
 		})
 		if err != nil {
