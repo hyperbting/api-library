@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	"api-library/internal/config"
-
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func NewPostgreSQL(cfg config.DBConfig) (*sql.DB, error) {
+type DBConfig struct {
+	Host     string `mapstructure:"DB_HOST"`
+	Port     int    `mapstructure:"DB_PORT"`
+	User     string `mapstructure:"DB_USER"`
+	Password string `mapstructure:"DB_PASSWORD"`
+	DBName   string `mapstructure:"DB_NAME"`
+}
+
+func NewPostgreSQL(cfg *DBConfig) (*sql.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,

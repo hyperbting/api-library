@@ -1,19 +1,22 @@
 package config
 
-type DBConfig struct {
-	Host     string `mapstructure:"DB_HOST"`
-	Port     int    `mapstructure:"DB_PORT"`
-	User     string `mapstructure:"DB_USER"`
-	Password string `mapstructure:"DB_PASSWORD"`
-	DBName   string `mapstructure:"DB_NAME"`
+import (
+	"api-library/internal/database"
+	"os"
+)
+
+type AppConfig struct {
+	Database database.DBConfig
 }
 
-func NewDevDBConfig() *DBConfig {
-	return &DBConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "game_user",
-		Password: "game_password",
-		DBName:   "game_db",
-	}
+func Load() (*AppConfig, error) {
+	return &AppConfig{
+		Database: database.DBConfig{
+			Host:     os.Getenv("DB_HOST"),
+			Port:     5432,
+			User:     os.Getenv("DB_USER"),
+			Password: os.Getenv("DB_PASSWORD"),
+			DBName:   os.Getenv("DB_NAME"),
+		},
+	}, nil
 }
