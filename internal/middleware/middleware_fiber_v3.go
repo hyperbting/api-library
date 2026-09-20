@@ -1,14 +1,14 @@
 package middleware
 
 import (
-	"api-library/pkg/auth"
+	"api-library/pkg/session"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // AuthMiddleware returns a GoFiber v3 middleware handler
-func AuthMiddleware(tm auth.TokenManager) fiber.Handler {
+func AuthMiddleware(tm session.TokenManager) fiber.Handler {
 	// Notice: fiber.Ctx is passed by VALUE in v3
 	return func(c fiber.Ctx) error {
 		// 1. Extract Authorization Header
