@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -324,11 +323,4 @@ func (c *AttestationClaimsDTO) IsDeviceBanned() bool {
 	}
 
 	return c.DeviceBan.IsBanned
-}
-
-type AttestationRecordDTO struct {
-	PlatformID string               `json:"pfm_id"`
-	Timestamp  time.Time            `json:"timestamp"`
-	AppSource  string               `json:"app_source"`
-	Claims     AttestationClaimsDTO `json:"claims"`
 }
