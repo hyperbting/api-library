@@ -1,4 +1,4 @@
-package database
+package infrastructure
 
 func NewDevDBConfig() DBConfig {
 	return DBConfig{

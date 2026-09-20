@@ -1,8 +1,7 @@
 package friend
 
 import (
-	"api-library/internal/database"
-	myDB "api-library/internal/database"
+	"api-library/internal/infrastructure"
 	"database/sql"
 	"log"
 	"os"
@@ -17,11 +16,11 @@ var gormDB *gorm.DB
 
 func TestMain(m *testing.M) {
 	// 1. Load test/dev database config
-	cfg := database.NewDevDBConfig()
+	cfg := infrastructure.NewDevDBConfig()
 
 	// 2. Initialize database connection
 	var err error
-	db, err = myDB.NewPostgreSQL(&cfg)
+	db, err = infrastructure.NewPostgreSQL(&cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

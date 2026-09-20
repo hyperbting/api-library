@@ -14,3 +14,8 @@
 .glide/
 vendor/
 .idea/
+
+# 忽略所有實體環境變數檔
+.env
+.*.env
+!.env.example
