@@ -9,6 +9,7 @@ import (
 // Session represents the value stored in Redis under the key "session:<user_id>"
 type Session struct {
 	UserID    string    `json:"user_uuid"`
+	Roles     []string  `json:"roles"`
 	JTI       string    `json:"jti"`        // Unique ID of the active Refresh Token
 	Device    string    `json:"device"`     // Optional metadata (e.g., "iOS", "Web")
 	ExpiresAt time.Time `json:"expires_at"` // When the Refresh Token expires

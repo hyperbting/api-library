@@ -1,6 +1,6 @@
 package friend
 
-import "api-library/pkg/user"
+import "api-library/internal/user"
 
 // FriendHandler or Orchestration Service combining both packages
 type FriendHandler struct {

@@ -15,7 +15,8 @@ var (
 
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrEmailAlreadyExists = errors.New("email is already registered")
-	ErrUserNotFound       = errors.New("user not found")
 	ErrEmailNotFound      = errors.New("email not found")
+	ErrUserAlreadyExists  = errors.New("user already exists")
+	ErrUserNotFound       = errors.New("user not found")
 	ErrFailedToCreateUser = errors.New("failed to create user")
 )
