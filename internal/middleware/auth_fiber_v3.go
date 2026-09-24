@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"api-library/pkg/session"
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -15,7 +16,7 @@ func AuthMiddleware(tm session.TokenManager) fiber.Handler {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Missing authorization header",
+				"error": ErrMissingAuthHeader.Error(),
 			})
 		}
 
@@ -23,15 +24,19 @@ func AuthMiddleware(tm session.TokenManager) fiber.Handler {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenStr == authHeader {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token format, expected 'Bearer <token>'",
+				"error": ErrInvalidTokenFormat.Error(),
 			})
 		}
 
 		// 3. Validate Token via domain service
 		claims, err := tm.ValidateAccessToken(tokenStr)
 		if err != nil {
+			msg := "Invalid or expired token"
+			if errors.Is(err, session.ErrTokenRevoked) {
+				msg = "Token has been revoked"
+			}
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
+				"error": msg,
 			})
 		}
 
