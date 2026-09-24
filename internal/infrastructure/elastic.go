@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v8"
 )
 
 type ESConfig struct {
@@ -14,11 +14,11 @@ type ESConfig struct {
 }
 
 func NewElasticsearch(cfg *ESConfig) (*elasticsearch.TypedClient, error) {
-	client, err := elasticsearch.NewTypedClient(elasticsearch.Config{
-		Addresses: cfg.Addresses,
-		Username:  cfg.Username,
-		Password:  cfg.Password,
-	})
+
+	client, err := elasticsearch.NewTyped(
+		elasticsearch.WithAddresses(cfg.Addresses...),
+		elasticsearch.WithBasicAuth(cfg.Username, cfg.Password),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create elasticsearch client: %w", err)
 	}

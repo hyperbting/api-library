@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/elastic/go-elasticsearch/v9/typedapi"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/result"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/sortorder"
+	"github.com/elastic/go-elasticsearch/v8/typedapi"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/result"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 )
 
 const (

@@ -34,16 +34,21 @@ type manager struct {
 }
 
 // NewTokenManager creates a new instance of TokenManager[cite: 1]
-func NewTokenManager(cfg Config) TokenManager {
+func NewTokenManager(cfg *Config) (TokenManager, error) {
 	if cfg.SecretKey == "" {
-		panic("JWT secret key cannot be empty")
+		return nil, ErrSecretKeyEmpty
 	}
-	return &manager{
-		secretKey:  []byte(cfg.SecretKey),
-		issuer:     cfg.Issuer,
-		accessTTL:  cfg.AccessTTL,
-		refreshTTL: cfg.RefreshTTL,
+	if cfg.Issuer == "" {
+		return nil, ErrIssuerEmpty
 	}
+	if cfg.AccessTTL == 0 {
+		return nil, ErrTTLEmpty
+	}
+	if cfg.RefreshTTL == 0 {
+		return nil, ErrTTLEmpty
+	}
+
+	return &manager{secretKey: []byte(cfg.SecretKey), issuer: cfg.Issuer, accessTTL: cfg.AccessTTL, refreshTTL: cfg.RefreshTTL}, nil
 }
 
 // func (m *manager) AccessTTL() time.Duration {

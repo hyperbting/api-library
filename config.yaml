@@ -1,42 +1,41 @@
 # Application Configuration
 app:
   env: "development"
-  port: 8080
+  port: 3000
   version: "v99"
 
 # Database Configuration
 database:
   master:
-    host: "localhost"
+    host: "postgres"
     port: 5432
-    user: "postgres"
-    password: "password"
-    dbname: "db"
+    user: "game_user"
+    password: "game_password"
+    dbname: "game_db"
   readonly:
-    host: "localhost"
+    host: "postgres"
     port: 5432
-    user: "postgres"
-    password: "password"
-    dbname: "db"
+    user: "game_user"
+    password: "game_password"
+    dbname: "game_db"
 
 # Redis Configuration
 redis:
-  host: "localhost"
+  host: "redis"
   port: 6379
-  password: ""
+  password: "redis_password"
   db: 0
 
 # Elasticsearch Configuration
 elastic:
   addresses:
-    - "http://localhost:9200"
-    - "http://localhost:9201"
-  username: "user"
-  password: "password"
+    - "http://elasticsearch:9200"
+  username: "elastic"
+  password: "local_pass"
 
 # Session Configuration
 session:
-  secret_key: "[ENCRYPTION_KEY]"
+  secret_key: "c2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtMzA4OQ" # 32-bytes (256-bit) Base64 encoded secret
   issuer: "api-library"
-  access_ttl: 15m
-  refresh_ttl: 7d
+  access_ttl: "15m"
+  refresh_ttl: "168h"

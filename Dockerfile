@@ -18,5 +18,6 @@ RUN apk update && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 COPY --from=builder /app/api .
+COPY config.yaml ./config.yaml
 
 ENTRYPOINT ["./api"]

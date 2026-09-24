@@ -14,6 +14,7 @@ import (
 
 func main() {
 
+	// load env from config.yaml then config.local.yaml
 	appCfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("LoadConfig err: %+v", err)
@@ -41,8 +42,12 @@ func main() {
 		log.Fatalf("Cronjob ES init failed: %v", err)
 	}
 
-	tknManager := session.NewTokenManager(*appCfg.SessionJWT)
+	tknManager, err := session.NewTokenManager(appCfg.SessionJWT)
+	if err != nil {
+		log.Fatalf("Session Manager init failed: %v", err)
+	}
 
+	// Create container
 	container := app.NewContainer(
 		cache,
 		db,
@@ -53,11 +58,11 @@ func main() {
 	defer container.Close()
 	log.Printf("container %+v", container)
 
-	// 建立 Web 框架實例與註冊路由
+	// init fiber app and register routes
 	fiberApp := fiber.New()
 	route.RegisterRoutes(fiberApp, appCfg, container)
 
-	// 啟動 Server
+	// start server
 	addr := fmt.Sprintf(":%d", appCfg.App.Port)
 	if err := fiberApp.Listen(addr); err != nil {
 		log.Fatalf("[BOOT] Server failed to start: %v", err)

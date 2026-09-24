@@ -9,7 +9,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )

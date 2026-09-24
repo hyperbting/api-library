@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   game-net:
     name: game-net
@@ -8,8 +6,34 @@ networks:
 volumes:
   pgdata:
   redisdata:
+  esdata:
+  go-pkg-mod:
 
 services:
+  # ---------------------------------------------------------------------------
+  # API Service
+  # ---------------------------------------------------------------------------
+  api:
+    image: golang:1.26-alpine
+    container_name: game_api
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+      - go-pkg-mod:/go/pkg/mod # caches modules so it doesn't redownload on restart
+    ports:
+      - "3000:3000"
+    command: go run ./internal/cmd/api
+    networks:
+      - game-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
   # ---------------------------------------------------------------------------
   # PostgreSQL Service
   # ---------------------------------------------------------------------------
@@ -95,3 +119,48 @@ services:
       - game-net
     depends_on:
       - redis
+
+  # ---------------------------------------------------------------------------
+  # Elasticsearch Service
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: elasticsearch:8.19.22
+    container_name: game_elasticsearch
+    restart: unless-stopped
+    environment:
+      - node.name=game_elasticsearch
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=local_pass
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - game-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -u elastic:local_pass -s http://localhost:9200 >/dev/null || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Kibana Service
+  # ---------------------------------------------------------------------------
+  kibana:
+    image: kibana:8.19.22
+    container_name: game_kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=local_pass
+    ports:
+      - "5601:5601"
+    networks:
+      - game-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
