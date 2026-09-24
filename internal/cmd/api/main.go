@@ -5,7 +5,6 @@ import (
 	"api-library/internal/config"
 	"api-library/internal/infrastructure"
 	"api-library/internal/route"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -18,8 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("LoadConfig err: %+v", err)
 	}
-	jsonBytes, _ := json.MarshalIndent(appCfg, "", "  ")
-	log.Printf("Loaded appCfg %+v", string(jsonBytes))
+	_ = appCfg.DebugPrint()
 
 	// init infrastructures
 	cache, err := infrastructure.NewRedis(appCfg.Redis)

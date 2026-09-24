@@ -2,8 +2,10 @@ package friend
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type RelationshipRepository interface {
@@ -16,10 +18,10 @@ type RelationshipRepository interface {
 }
 
 type pgRelationshipRepoImpl struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPGRelationshipRepository(db *sql.DB) RelationshipRepository {
+func NewRepository(db *gorm.DB) RelationshipRepository {
 	return &pgRelationshipRepoImpl{db: db}
 }
 
@@ -89,47 +91,46 @@ func (r *pgRelationshipRepoImpl) FollowUser(ctx context.Context, actorID, target
 		return ErrSelfFollow
 	}
 
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	// 啟動 GORM 事務
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. 檢查 Block 關係 (於同一 tx 內執行)
+		var count int64
+		err := tx.Model(&UserRelationship{}).
+			Where("(actor_id = ? AND target_id = ? AND type = ?) OR (actor_id = ? AND target_id = ? AND type = ?)",
+				actorID, targetID, RelTypeBlock,
+				targetID, actorID, RelTypeBlock,
+			).Count(&count).Error
 
-	// 1. Check if Actor has blocked Target, OR Target has blocked Actor
-	checkQuery := `
-		SELECT actor_id, target_id 
-		FROM user_relationships 
-		WHERE (actor_id = $1 AND target_id = $2 AND type = $3)
-		   OR (actor_id = $2 AND target_id = $1 AND type = $3)`
-
-	rows, err := tx.QueryContext(ctx, checkQuery, actorID, targetID, RelTypeBlock)
-	if err != nil {
-		return fmt.Errorf("failed to check block status: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var blkActor, blkTarget uint64
-		if err := rows.Scan(&blkActor, &blkTarget); err != nil {
+		if err != nil {
 			return err
 		}
-		if blkActor == actorID {
-			return ErrUserBlocked // You blocked them, unblock first
+		if count > 0 {
+			return ErrUserBlocked // 被封鎖或已封鎖對方
 		}
-		return ErrTargetBlockedYou // They blocked you, deny action
-	}
 
-	// 2. Insert the follow relationship atomically
-	insertQuery := `
-		INSERT INTO user_relationships (actor_id, type, target_id) 
-		VALUES ($1, $3, $2) 
-		ON CONFLICT (actor_id, type, target_id) DO NOTHING`
+		// 2. 寫入 Follow 關係
+		rel := UserRelationship{
+			ActorID:  actorID,
+			TargetID: targetID,
+			Type:     RelTypeFollow,
+		}
 
-	if _, err := tx.ExecContext(ctx, insertQuery, actorID, targetID, RelTypeFollow); err != nil {
-		return fmt.Errorf("failed to insert follow: %w", err)
-	}
+		// 使用 Clause 處理併發插入衝突 (ON CONFLICT DO NOTHING)
+		result := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&rel)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	return tx.Commit()
+		// 若 RowsAffected == 0，代表紀錄已存在 (重複追蹤)
+		if result.RowsAffected == 0 {
+			return ErrAlreadyFollowing
+		}
+
+		// 3. (可選) 於同一 tx 內更新 User 追蹤數/粉絲數
+		// if err := tx.Model(&User{})... ; err != nil { return err }
+
+		return nil // 回傳 nil，GORM 會自動執行 tx.Commit()
+	})
 }
 
 // BlockUser handles Player A blocking Player B (cleans up any existing follows in either direction)
@@ -138,33 +139,39 @@ func (r *pgRelationshipRepoImpl) BlockUser(ctx context.Context, actorID, targetI
 		return ErrSelfBlock
 	}
 
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. 清除雙向的 Follow 關係 (A -> B 與 B -> A)
+		err := tx.Where("type = ?", RelTypeFollow).
+			Where(
+				"(actor_id = ? AND target_id = ?) OR (actor_id = ? AND target_id = ?)",
+				actorID, targetID, targetID, actorID,
+			).
+			Delete(&UserRelationship{}).Error
 
-	// 1. Delete existing follow rows in BOTH directions (A->B and B->A)
-	deleteFollowsQuery := `
-		DELETE FROM user_relationships 
-		WHERE type = $3 
-		  AND ((actor_id = $1 AND target_id = $2) OR (actor_id = $2 AND target_id = $1))`
+		if err != nil {
+			return fmt.Errorf("failed to clean existing follows: %w", err)
+		}
 
-	if _, err := tx.ExecContext(ctx, deleteFollowsQuery, actorID, targetID, RelTypeFollow); err != nil {
-		return fmt.Errorf("failed to clean existing follows: %w", err)
-	}
+		// 2. 建立 Block 關係
+		blockRel := UserRelationship{
+			ActorID:  actorID,
+			TargetID: targetID,
+			Type:     RelTypeBlock,
+		}
 
-	// 2. Insert the block relationship
-	insertBlockQuery := `
-		INSERT INTO user_relationships (actor_id, type, target_id) 
-		VALUES ($1, $3, $2) 
-		ON CONFLICT (actor_id, type, target_id) DO NOTHING`
+		// 使用 Clause 處理 ON CONFLICT DO NOTHING
+		result := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&blockRel)
+		if result.Error != nil {
+			return fmt.Errorf("failed to insert block: %w", result.Error)
+		}
 
-	if _, err := tx.ExecContext(ctx, insertBlockQuery, actorID, targetID, RelTypeBlock); err != nil {
-		return fmt.Errorf("failed to insert block: %w", err)
-	}
+		// 若 RowsAffected == 0 代表該 Block 紀錄已存在
+		if result.RowsAffected == 0 {
+			return ErrAlreadyBlocked
+		}
 
-	return tx.Commit()
+		return nil
+	})
 }
 
 // GetFriends returns mutual follow user IDs
@@ -210,23 +217,12 @@ func (r *pgRelationshipRepoImpl) GetBlockingUsers(ctx context.Context, userID ui
 
 // Helper scanner function for returning standard uint64 ID slices
 func (r *pgRelationshipRepoImpl) scanIDs(ctx context.Context, query string, args ...interface{}) ([]uint64, error) {
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	var ids []uint64
+
+	// 使用 GORM 的 Raw + Scan，自動處理 context、rows.Close() 與 rows.Err()
+	err := r.db.WithContext(ctx).Raw(query, args...).Scan(&ids).Error
 	if err != nil {
 		return nil, fmt.Errorf("query execution failed: %w", err)
-	}
-	defer rows.Close()
-
-	var ids []uint64
-	for rows.Next() {
-		var id uint64
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("row scan failed: %w", err)
-		}
-		ids = append(ids, id)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	return ids, nil

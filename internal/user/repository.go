@@ -29,7 +29,7 @@ type userRepoImpl struct {
 	writeDB    *gorm.DB
 }
 
-func NewUserRepository(readOnlyDB, writeDB *gorm.DB) UserRepository {
+func NewRepository(readOnlyDB, writeDB *gorm.DB) UserRepository {
 	return &userRepoImpl{readOnlyDB: readOnlyDB, writeDB: writeDB}
 }
 

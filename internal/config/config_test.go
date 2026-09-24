@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"api-library/internal/config"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -46,8 +45,7 @@ func TestLoadConfig_FromProjectRoot(t *testing.T) {
 		t.Errorf("Expected App.Env to be 'test-root', got '%s'", cfg.App.Env)
 	}
 
-	jsonBytes, _ := json.MarshalIndent(cfg, "", "  ")
-	t.Logf("Loaded CFG:\n%s", string(jsonBytes))
+	_ = cfg.DebugPrint()
 }
 
 // 建立暫存檔輔助函式

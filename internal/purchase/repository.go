@@ -23,7 +23,7 @@ type purchaseRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewPurchaseRepository(db *gorm.DB) PurchaseRepository {
+func NewRepository(db *gorm.DB) PurchaseRepository {
 	return &purchaseRepositoryImpl{
 		db: db,
 	}

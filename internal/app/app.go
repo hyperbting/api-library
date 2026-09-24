@@ -5,6 +5,8 @@ import (
 	"api-library/internal/presence"
 	"api-library/internal/purchase"
 	"api-library/internal/user"
+	"database/sql"
+	"log"
 
 	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/redis/go-redis/v9"
@@ -27,24 +29,45 @@ type Container struct {
 }
 
 func (c *Container) Close() {
+	var masterSQLDB *sql.DB
+
 	if c.DB != nil {
-		sqlDB, err := c.DB.DB()
-		if err == nil {
-			_ = sqlDB.Close()
+		if sqlDB, err := c.DB.DB(); err == nil {
+			masterSQLDB = sqlDB
+			if err := sqlDB.Close(); err != nil {
+				log.Printf("failed to close master db: %v", err)
+			}
 		}
 	}
 
 	if c.DBReadOnly != nil {
-		sqlDB, err := c.DBReadOnly.DB()
-		if err == nil {
-			_ = sqlDB.Close()
+		if sqlDB, err := c.DBReadOnly.DB(); err == nil {
+			if sqlDB != masterSQLDB {
+				if err := sqlDB.Close(); err != nil {
+					log.Printf("failed to close readonly db: %v", err)
+				}
+			}
 		}
 	}
+
+	if c.Cache != nil {
+		if err := c.Cache.Close(); err != nil {
+			log.Printf("failed to close redis: %v", err)
+		}
+	}
+
+	// if c.ESClient != nil {
+	// 	if err := c.ESClient.Close(context.Background()); err != nil {
+	// 		log.Printf("failed to close elasticsearch: %v", err)
+	// 	}
+	// }
 }
 
 func NewContainer(cache *redis.Client, gDb *gorm.DB, gDbRo *gorm.DB, es *elasticsearch.TypedClient) *Container {
 	// Repositories
-	// 	attestationRepo := repository.NewAttestationRepository(es)
+	friendRepo := friend.NewRepository(gDb)
+	presenceRepo := presence.NewRepository(cache)
+	purchaseRepo := purchase.NewRepository(gDb)
 
 	// Services
 	// 	attestationSvc := service.NewAttestationService(attestationRepo)
@@ -55,5 +78,9 @@ func NewContainer(cache *redis.Client, gDb *gorm.DB, gDbRo *gorm.DB, es *elastic
 		DBReadOnly: gDbRo,
 		ESClient:   es,
 		// AttestationSvc: attestationSvc,
+
+		FriendRepo:   friendRepo,
+		PresenceRepo: presenceRepo,
+		PurchaseRepo: purchaseRepo,
 	}
 }
