@@ -1,38 +1,49 @@
 package infrastructure
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-type DBConfig struct {
-	Host     string `mapstructure:"DB_HOST"`
-	Port     int    `mapstructure:"DB_PORT"`
-	User     string `mapstructure:"DB_USER"`
-	Password string `mapstructure:"DB_PASSWORD"`
-	DBName   string `mapstructure:"DB_NAME"`
+type BaseDBConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
 }
 
-func NewPostgreSQL(cfg *DBConfig) (*sql.DB, error) {
+type DBConfig struct {
+	MasterDB   BaseDBConfig `mapstructure:"master"`
+	ReadOnlyDB BaseDBConfig `mapstructure:"readonly"`
+}
+
+func NewPostgreSQL(cfg *BaseDBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,
 	)
 
-	db, err := sql.Open("pgx", dsn)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
+	// 取得底層 *sql.DB 設定 Connection Pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sql.DB from gorm: %w", err)
+	}
 	// Connection Pool Settings
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(15 * time.Minute)
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(15 * time.Minute)
 
-	if err := db.Ping(); err != nil {
+	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 

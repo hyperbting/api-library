@@ -1,0 +1,35 @@
+# Application Configuration
+app:
+  env: "development"
+  port: 8080
+  version: "v99"
+
+# Database Configuration
+database:
+  master:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "password"
+    dbname: "db"
+  readonly:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "password"
+    dbname: "db"
+
+# Redis Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+# Elasticsearch Configuration
+elastic:
+  addresses:
+    - "http://localhost:9200"
+    - "http://localhost:9201"
+  username: "user"
+  password: "password"

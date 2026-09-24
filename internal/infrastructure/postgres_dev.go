@@ -1,7 +1,7 @@
 package infrastructure
 
-func NewDevDBConfig() DBConfig {
-	return DBConfig{
+func NewDevDBConfig() *BaseDBConfig {
+	return &BaseDBConfig{
 		Host:     "localhost",
 		Port:     5432,
 		User:     "game_user",

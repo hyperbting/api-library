@@ -2,16 +2,13 @@ package friend
 
 import (
 	"api-library/internal/infrastructure"
-	"database/sql"
 	"log"
 	"os"
 	"testing"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var db *sql.DB
 var gormDB *gorm.DB
 
 func TestMain(m *testing.M) {
@@ -20,14 +17,7 @@ func TestMain(m *testing.M) {
 
 	// 2. Initialize database connection
 	var err error
-	db, err = infrastructure.NewPostgreSQL(&cfg)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-
-	gormDB, err = gorm.Open(postgres.New(postgres.Config{
-		Conn: db,
-	}), &gorm.Config{})
+	gormDB, err = infrastructure.NewPostgreSQL(cfg)
 	if err != nil {
 		log.Fatalf("Failed to wrap *sql.DB with GORM: %v", err)
 	}
@@ -36,8 +26,11 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// 4. Manually close DB connection after tests complete
-	if err := db.Close(); err != nil {
-		log.Printf("Failed to close database clean connection: %v", err)
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		log.Printf("Failed to get sql.DB for closing: %v", err)
+	} else if err := sqlDB.Close(); err != nil {
+		log.Printf("Failed to close database connection: %v", err)
 	}
 
 	// 5. Exit with test runner status code

@@ -2,40 +2,40 @@ package config
 
 import (
 	"api-library/internal/infrastructure"
-	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
+type AppDetail struct {
+	Env     string `mapstructure:"env"`
+	Port    int    `mapstructure:"port"`
+	Version string `mapstructure:"version"`
+}
+
 type AppConfig struct {
-	Env      string `mapstructure:"APP_ENV"`
-	Port     int    `mapstructure:"APP_PORT"`
-	Database *infrastructure.DBConfig
-	Redis    *infrastructure.RedisConfig
-	Elastic  *infrastructure.ESConfig
+	App      AppDetail                   `mapstructure:"app"`
+	Database *infrastructure.DBConfig    `mapstructure:"database"`
+	Redis    *infrastructure.RedisConfig `mapstructure:"redis"`
+	Elastic  *infrastructure.ESConfig    `mapstructure:"elastic"`
 }
 
 func LoadConfig() (*AppConfig, error) {
 	v := viper.New()
+	v.SetConfigType("yaml")
 
-	// 1. 設定讀取 .env 檔
-	v.SetConfigName(".env")
-	v.SetConfigType("env")
-	v.AddConfigPath(".") // 在專案根目錄尋找 .env
+	v.SetConfigFile("config.yaml")
+	_ = v.ReadInConfig()
 
-	// 2. 允許直接讀取系統環境變數 (如 Docker / K8s 環境)
+	v.SetConfigFile("config.local.yaml")
+	_ = v.MergeInConfig()
+
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
-
-	// 3. 嘗試讀取檔案 (若找不到 .env，如在容器內直接傳入 Env，則跳過)
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("failed to read config file: %w", err)
-		}
-	}
 
 	var cfg AppConfig
 	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+		return nil, err
 	}
 
 	return &cfg, nil
