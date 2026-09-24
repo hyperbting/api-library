@@ -2,6 +2,7 @@ package config
 
 import (
 	"api-library/internal/infrastructure"
+	"api-library/pkg/session"
 	"encoding/json"
 	"log"
 	"strings"
@@ -16,10 +17,11 @@ type AppDetail struct {
 }
 
 type AppConfig struct {
-	App      AppDetail                   `mapstructure:"app"`
-	Database *infrastructure.DBConfig    `mapstructure:"database"`
-	Redis    *infrastructure.RedisConfig `mapstructure:"redis"`
-	Elastic  *infrastructure.ESConfig    `mapstructure:"elastic"`
+	App        AppDetail                   `mapstructure:"app"`
+	Database   *infrastructure.DBConfig    `mapstructure:"database"`
+	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`
+	Elastic    *infrastructure.ESConfig    `mapstructure:"elastic"`
+	SessionJWT *session.Config             `mapstructure:"session"`
 }
 
 // DebugPrint 格式化印出 Config

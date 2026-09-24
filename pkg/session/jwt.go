@@ -19,10 +19,10 @@ type TokenManager interface {
 
 // Config holds settings for JWT generation
 type Config struct {
-	SecretKey  string
-	Issuer     string
-	AccessTTL  time.Duration
-	RefreshTTL time.Duration
+	SecretKey  string        `mapstructure:"secret_key"`
+	Issuer     string        `mapstructure:"issuer"`
+	AccessTTL  time.Duration `mapstructure:"access_ttl"`
+	RefreshTTL time.Duration `mapstructure:"refresh_ttl"`
 }
 
 // manager is the unexported implementation of TokenManager[cite: 1]

@@ -2,28 +2,34 @@ package friend
 
 import "context"
 
-type Service struct {
+type Service interface {
+	FollowUser(ctx context.Context, actorID, targetID uint64) error
+	BlockUser(ctx context.Context, actorID, targetID uint64) error
+	GetFriends(ctx context.Context, userID uint64) ([]uint64, error)
+}
+
+func NewService(repo RelationshipRepository) Service {
+	return &friendServiceImpl{repo: repo}
+}
+
+type friendServiceImpl struct {
 	repo RelationshipRepository
 }
 
-func NewService(repo RelationshipRepository) *Service {
-	return &Service{repo: repo}
-}
-
-func (s *Service) FollowUser(ctx context.Context, actorID, targetID uint64) error {
+func (s *friendServiceImpl) FollowUser(ctx context.Context, actorID, targetID uint64) error {
 	if actorID == targetID {
 		return ErrSelfFollow // Domain validation stays in Service
 	}
 	return s.repo.FollowUser(ctx, actorID, targetID)
 }
 
-func (s *Service) BlockUser(ctx context.Context, actorID, targetID uint64) error {
+func (s *friendServiceImpl) BlockUser(ctx context.Context, actorID, targetID uint64) error {
 	if actorID == targetID {
 		return ErrSelfBlock
 	}
 	return s.repo.BlockUser(ctx, actorID, targetID)
 }
 
-func (s *Service) GetFriends(ctx context.Context, userID uint64) ([]uint64, error) {
+func (s *friendServiceImpl) GetFriends(ctx context.Context, userID uint64) ([]uint64, error) {
 	return s.repo.GetFriends(ctx, userID)
 }

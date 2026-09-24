@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"api-library/pkg/platform_helper/meta"
 	"context"
 	"time"
 )
@@ -13,15 +14,15 @@ type MetaAttestationService interface {
 }
 
 type metaAttestationServiceImpl struct {
-	attestClient MetaAttestationClient
-	attestRepo   MetaApiRepository
+	attestClient meta.MetaAttestationClient
+	metaClient   meta.MetaApiClient
 	esRepo       MetaESRepository
 }
 
-func NewMetaAttestationService(attestClient MetaAttestationClient, attestRepo MetaApiRepository, esRepo MetaESRepository) MetaAttestationService {
+func NewMetaAttestationService(attestClient meta.MetaAttestationClient, metaClient meta.MetaApiClient, esRepo MetaESRepository) MetaAttestationService {
 	return &metaAttestationServiceImpl{
 		attestClient: attestClient,
-		attestRepo:   attestRepo,
+		metaClient:   metaClient,
 		esRepo:       esRepo,
 	}
 }

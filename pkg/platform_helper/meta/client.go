@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type MetaApiRepository interface {
+type MetaApiClient interface {
 	GenerateSHA256SignatureWithOculusSecret(devPayload string) string
 	GetOculusOrgScopedID(oculusUsrID string, q GetOculusOrgScopedIDResponseQuery) (respOrgScopedID GetOculusOrgScopedIDResponse, err error)
 	RequestOculusUserNonceValidate(q UserNonceValidateQuery) (OculusResp UserNonceValidateResponse, err error)
@@ -20,17 +20,17 @@ type MetaApiRepository interface {
 	RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error)
 }
 
-func NewMetaApiRepository(cfg *OCULUSPlatformConfig) MetaApiRepository {
-	return &metaApiRepositoryImpl{
+func NewMetaApiClient(cfg *OCULUSPlatformConfig) MetaApiClient {
+	return &metaApiClientImpl{
 		metaCFG: cfg,
 	}
 }
 
-type metaApiRepositoryImpl struct {
+type metaApiClientImpl struct {
 	metaCFG *OCULUSPlatformConfig
 }
 
-func (m *metaApiRepositoryImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwnershipQuery) (OculusResp OCULUSResponseBase, err error) {
+func (m *metaApiClientImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwnershipQuery) (OculusResp OCULUSResponseBase, err error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, VerifyItemOwnershipUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
@@ -53,7 +53,7 @@ func (m *metaApiRepositoryImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwn
 	return
 }
 
-func (m *metaApiRepositoryImpl) RequestOculusRetrieveItemsOwned(q RetrieveItemsOwnedQuery) (oculusResp RetrieveItemsOwnedResponse, err error) {
+func (m *metaApiClientImpl) RequestOculusRetrieveItemsOwned(q RetrieveItemsOwnedQuery) (oculusResp RetrieveItemsOwnedResponse, err error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, RetrieveItemsOwnedUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
@@ -82,7 +82,7 @@ func (m *metaApiRepositoryImpl) RequestOculusRetrieveItemsOwned(q RetrieveItemsO
 	return
 }
 
-func (m *metaApiRepositoryImpl) RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error) {
+func (m *metaApiClientImpl) RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v%v?%v", OculusPlatformServer, m.metaCFG.AppID, ConsumeIAPItemUrl, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return
@@ -105,7 +105,7 @@ func (m *metaApiRepositoryImpl) RequestOculusConsumeIAPItem(q OculusConsumeIAPIt
 	return
 }
 
-func (m *metaApiRepositoryImpl) RequestOculusUserNonceValidate(q UserNonceValidateQuery) (OculusResp UserNonceValidateResponse, err error) {
+func (m *metaApiClientImpl) RequestOculusUserNonceValidate(q UserNonceValidateQuery) (OculusResp UserNonceValidateResponse, err error) {
 	fullURL := fmt.Sprintf("%s%s?%s", OculusPlatformServer, UserNonceValidateUrl, q.BuildParameter())
 
 	req, err := http.NewRequest("POST", fullURL, nil)
@@ -140,7 +140,7 @@ func (m *metaApiRepositoryImpl) RequestOculusUserNonceValidate(q UserNonceValida
 	return
 }
 
-func (m *metaApiRepositoryImpl) GetOculusOrgScopedID(oculusUsrID string, q GetOculusOrgScopedIDResponseQuery) (respOrgScopedID GetOculusOrgScopedIDResponse, err error) {
+func (m *metaApiClientImpl) GetOculusOrgScopedID(oculusUsrID string, q GetOculusOrgScopedIDResponseQuery) (respOrgScopedID GetOculusOrgScopedIDResponse, err error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%v/%v?%v", OculusPlatformServer, oculusUsrID, q.BuildQuery(m.metaCFG).Encode()), nil)
 	if err != nil {
 		return

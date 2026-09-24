@@ -33,3 +33,10 @@ elastic:
     - "http://localhost:9201"
   username: "user"
   password: "password"
+
+# Session Configuration
+session:
+  secret_key: "[ENCRYPTION_KEY]"
+  issuer: "api-library"
+  access_ttl: 15m
+  refresh_ttl: 7d

@@ -5,6 +5,7 @@ import (
 	"api-library/internal/config"
 	"api-library/internal/infrastructure"
 	"api-library/internal/route"
+	"api-library/pkg/session"
 	"fmt"
 	"log"
 
@@ -40,11 +41,14 @@ func main() {
 		log.Fatalf("Cronjob ES init failed: %v", err)
 	}
 
+	tknManager := session.NewTokenManager(*appCfg.SessionJWT)
+
 	container := app.NewContainer(
 		cache,
 		db,
 		dbRo,
 		esClient,
+		tknManager,
 	)
 	defer container.Close()
 	log.Printf("container %+v", container)

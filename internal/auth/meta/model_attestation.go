@@ -2,6 +2,11 @@ package meta
 
 import "time"
 
+type DeviceBan struct {
+	IsBanned         bool `json:"is_banned"`
+	RemainingBanTime int  `json:"remaining_time_in_minute" validate:"gte=0,lte=52560000"`
+}
+
 type AttestationClaims struct {
 	RequestDetails struct {
 		Exp       int64  `json:"exp"`
@@ -21,8 +26,8 @@ type AttestationClaims struct {
 		UniqueId             string `json:"unique_id"`
 	} `json:"device_state"`
 
-	DeviceBan *DeviceBanDTO `json:"device_ban,omitempty"`
-	BanId     string        `json:"ban_id,omitempty"`
+	DeviceBan *DeviceBan `json:"device_ban,omitempty"`
+	BanId     string     `json:"ban_id,omitempty"`
 }
 
 func (c *AttestationClaims) IsDeviceBanned() bool {

@@ -17,6 +17,7 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 
 	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
 	api := app.Group(apiPath)
+	setupWebhookRoutes(api, container)
 
 	setupUserRoutes(api, container)
 	setupFriendRoutes(api, container)

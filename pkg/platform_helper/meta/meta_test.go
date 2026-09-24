@@ -38,7 +38,7 @@ func TestGenerateSHA256SignatureWithOculusSecret(t *testing.T) {
 		AppID:     "123456",
 		AppSecret: "test_secret",
 	}
-	repo := NewMetaApiRepository(cfg)
+	repo := NewMetaApiClient(cfg)
 
 	payload := "test payload"
 	sig := repo.GenerateSHA256SignatureWithOculusSecret(payload)

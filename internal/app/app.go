@@ -5,6 +5,7 @@ import (
 	"api-library/internal/presence"
 	"api-library/internal/purchase"
 	"api-library/internal/user"
+	"api-library/pkg/session"
 	"database/sql"
 	"log"
 
@@ -19,10 +20,13 @@ type Container struct {
 	DB         *gorm.DB
 	DBReadOnly *gorm.DB
 	ESClient   *elasticsearch.TypedClient
+	TokenMgr   session.TokenManager
 
-	UserSrv   user.Service
-	FriendSrv friend.Service
+	SessionSrv session.Service
+	UserSrv    user.Service
+	FriendSrv  friend.Service
 
+	SessionRepo  session.SessionRepository
 	FriendRepo   friend.RelationshipRepository
 	PresenceRepo presence.Repository
 	PurchaseRepo purchase.PurchaseRepository
@@ -63,24 +67,37 @@ func (c *Container) Close() {
 	// }
 }
 
-func NewContainer(cache *redis.Client, gDb *gorm.DB, gDbRo *gorm.DB, es *elasticsearch.TypedClient) *Container {
+func NewContainer(cache *redis.Client, gDb *gorm.DB, gDbRo *gorm.DB, es *elasticsearch.TypedClient, tm session.TokenManager) *Container {
 	// Repositories
+	sessionRepo := session.NewSessionRepository(cache)
 	friendRepo := friend.NewRepository(gDb)
 	presenceRepo := presence.NewRepository(cache)
 	purchaseRepo := purchase.NewRepository(gDb)
+	userRepo := user.NewRepository(gDbRo, gDb)
 
 	// Services
-	// 	attestationSvc := service.NewAttestationService(attestationRepo)
+	sessionSrv := session.NewService(tm, sessionRepo)
+	friendSrv := friend.NewService(friendRepo)
+	// purchaseSrv := purchase.NewService(gDb)
+	// presenceSrv := presence.NewService(presenceRepo)
+	userSrv := user.NewService(userRepo, sessionSrv)
 
 	return &Container{
+		TokenMgr:   tm,
 		Cache:      cache,
 		DB:         gDb,
 		DBReadOnly: gDbRo,
 		ESClient:   es,
-		// AttestationSvc: attestationSvc,
 
+		SessionRepo:  sessionRepo,
 		FriendRepo:   friendRepo,
 		PresenceRepo: presenceRepo,
 		PurchaseRepo: purchaseRepo,
+
+		SessionSrv: sessionSrv,
+		FriendSrv:  friendSrv,
+		// PresenceSrv: presenceSrv,
+		// PurchaseSrv: purchaseSrv,
+		UserSrv: userSrv,
 	}
 }
