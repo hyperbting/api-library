@@ -12,6 +12,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// https://developers.facebook.com/documentation/games_payments/webhooks
+
 const WebhookEventKey = "meta_webhook_event"
 
 type WebhookLogger interface {
@@ -19,27 +21,14 @@ type WebhookLogger interface {
 }
 
 type WebhookConfig struct {
-	VerifyToken string
-	AppSecret   string
-	Logger      WebhookLogger
+	VerifyToken string `mapstructure:"verify_token"`
+	AppSecret   string `mapstructure:"app_secret"`
 }
 
-// NewMetaPaymentWebhookMiddleware handle TWO types of requests: Subscription Verification and Receiving Updates
-// https://developers.facebook.com/documentation/games_payments/webhooks
-func NewMetaPaymentWebhookMiddleware[T any](cfg WebhookConfig) fiber.Handler {
+// NewMetaPaymentWebhookMiddleware handle Receiving Updates
+func NewMetaPaymentWebhookMiddleware[T any](cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		// 優先處理 GET：Meta Webhook 訂閱驗證挑戰 (Subscription Challenge)
-		if c.Method() == fiber.MethodGet {
-			challenge, err := subscriptionVerificationChallenge(c, cfg.VerifyToken)
-			if err != nil {
-				return c.Status(fiber.StatusForbidden).SendString(err.Error())
-			}
-
-			//just return plain text
-			return c.Status(fiber.StatusOK).SendString(challenge)
-		}
-
-		// POST: Receiving Updates, reject if method is PUT/DELETE
+		// POST only: Receiving Updates, reject if not
 		if c.Method() != fiber.MethodPost {
 			return c.Status(fiber.StatusMethodNotAllowed).SendString("Method Not Allowed")
 		}
@@ -55,12 +44,12 @@ func NewMetaPaymentWebhookMiddleware[T any](cfg WebhookConfig) fiber.Handler {
 		}
 
 		// 3. 呼叫 WebhookLogger 介面進行 Audit Log 寫入
-		if cfg.Logger != nil {
+		if logger != nil {
 			bgCtx := context.WithoutCancel(c.Context())
 			payloadCopy := bytes.Clone(body)
 
 			go func(ctx context.Context, data []byte) {
-				_ = cfg.Logger.SaveWebhookLog(ctx, "meta_payment", data)
+				_ = logger.SaveWebhookLog(ctx, "meta_payment", data)
 			}(bgCtx, payloadCopy)
 		}
 
@@ -74,20 +63,6 @@ func NewMetaPaymentWebhookMiddleware[T any](cfg WebhookConfig) fiber.Handler {
 		c.Locals(WebhookEventKey, &event)
 		return c.Next()
 	}
-}
-
-func subscriptionVerificationChallenge(c fiber.Ctx, verifyToken string) (string, error) {
-	mode := c.Query("hub.mode")
-	token := c.Query("hub.verify_token")
-	challenge := c.Query("hub.challenge")
-
-	if mode == "subscribe" && token == verifyToken {
-		// 成功：回傳 200 並直接輸出 challenge 純文字
-		return challenge, nil
-	}
-
-	// 驗證失敗
-	return "", ErrVerifyTokenMismatched
 }
 
 // GetEvent 強型別 Loader 函式，供後續 Handler 安全取出 DTO

@@ -39,3 +39,9 @@ session:
   issuer: "api-library"
   access_ttl: "15m"
   refresh_ttl: "168h"
+
+# Webhook Configuration
+webhook:
+  meta_payment:
+    verify_token: "123456789"
+    app_secret: "app_secret"

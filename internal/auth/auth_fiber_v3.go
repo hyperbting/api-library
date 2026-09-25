@@ -1,4 +1,4 @@
-package middleware
+package auth
 
 import (
 	"api-library/pkg/session"
@@ -41,10 +41,53 @@ func AuthMiddleware(tm session.TokenManager) fiber.Handler {
 		}
 
 		// 4. Attach claims to context for downstream route handlers
-		c.Locals("user_id", claims.UserID)
-		c.Locals("roles", claims.Roles)
+		roleMap := make(map[string]struct{}, len(claims.Roles))
+		for _, r := range claims.Roles {
+			roleMap[r] = struct{}{}
+		}
+		c.Locals(userCtxKey, UserContext{
+			UserID:   claims.UserID,
+			Roles:    claims.Roles,
+			rolesMap: roleMap,
+		})
 
 		// 5. Continue execution flow
 		return c.Next()
 	}
+}
+
+type UserContext struct {
+	UserID   string
+	Roles    []string            // keeps original order / serialization
+	rolesMap map[string]struct{} // internal O(1) set
+}
+
+func (u UserContext) HasRole(role string) bool {
+	if u.rolesMap == nil {
+		for _, r := range u.Roles {
+			if r == role {
+				return true
+			}
+		}
+		return false
+	}
+	_, exists := u.rolesMap[role]
+	return exists
+}
+
+const userCtxKey = "auth:user"
+
+// GetUser extracts the user context from fiber.Ctx
+func GetUser(c fiber.Ctx) (UserContext, bool) {
+	val, ok := c.Locals(userCtxKey).(UserContext)
+	return val, ok
+}
+
+// MustGetUser extracts the user context or panics/fails if not found
+func MustGetUser(c fiber.Ctx) UserContext {
+	user, ok := GetUser(c)
+	if !ok {
+		panic("user context not found in request")
+	}
+	return user
 }

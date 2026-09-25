@@ -2,6 +2,7 @@ package config
 
 import (
 	"api-library/internal/infrastructure"
+	"api-library/pkg/platform_helper/meta"
 	"api-library/pkg/session"
 	"encoding/json"
 	"log"
@@ -22,6 +23,8 @@ type AppConfig struct {
 	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`
 	Elastic    *infrastructure.ESConfig    `mapstructure:"elastic"`
 	SessionJWT *session.Config             `mapstructure:"session"`
+
+	Webhook *WebhookConfig `mapstructure:"webhook"`
 }
 
 // DebugPrint 格式化印出 Config
@@ -29,6 +32,10 @@ func (c *AppConfig) DebugPrint() []byte {
 	jsonBytes, _ := json.MarshalIndent(c, "", "  ")
 	log.Printf("appCfg\n%s\n", jsonBytes)
 	return jsonBytes
+}
+
+type WebhookConfig struct {
+	MetaPayment *meta.WebhookConfig `mapstructure:"meta_payment"`
 }
 
 func LoadConfig() (*AppConfig, error) {
