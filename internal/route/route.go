@@ -21,6 +21,10 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 
 	setupUserRoutes(api, container)
 	setupFriendRoutes(api, container)
+
+	if cfg.Firebase.Enabled {
+		RegisterFirebaseCloudFunctionRoutes(app, cfg, container.FirebasseContainer)
+	}
 }
 
 func setupUserRoutes(router fiber.Router, container *app.Container) {
