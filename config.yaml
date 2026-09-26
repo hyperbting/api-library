@@ -1,8 +1,19 @@
 # Application Configuration
 app:
   env: "development"
+  auth: "firebase" #firebase, custom
   port: 3000
   version: "v99"
+
+# Firebase 
+firebase:
+  enabled: true
+  project_id: "my-game-gcp-project"
+  credentials_file_path: "" # 本地開發可填寫路徑；在 GCP Cloud Run 環境留空即可（自動套用 GCP ADC 認證）
+  use_firestore: true
+  use_storage: false
+  storage_bucket: "my-game-bucket.appspot.com"
+  use_message: false
 
 # Database Configuration
 database:

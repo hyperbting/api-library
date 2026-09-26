@@ -6,15 +6,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
+	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // https://developers.facebook.com/documentation/games_payments/webhooks
-
-const WebhookEventKey = "meta_webhook_event"
 
 type WebhookLogger interface {
 	SaveWebhookLog(ctx context.Context, provider string, payload []byte) error
@@ -26,7 +24,7 @@ type WebhookConfig struct {
 }
 
 // NewMetaPaymentWebhookMiddleware handle Receiving Updates
-func NewMetaPaymentWebhookMiddleware[T any](cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
+func NewMetaPaymentWebhookMiddleware(cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// POST only: Receiving Updates, reject if not
 		if c.Method() != fiber.MethodPost {
@@ -51,33 +49,12 @@ func NewMetaPaymentWebhookMiddleware[T any](cfg *WebhookConfig, logger WebhookLo
 			go func(ctx context.Context, data []byte) {
 				_ = logger.SaveWebhookLog(ctx, "meta_payment", data)
 			}(bgCtx, payloadCopy)
+		} else {
+			log.Printf("skipping webhook log: %s", string(body))
 		}
 
-		// 4. 解析為強型別 DTO T
-		var event T
-		if err := json.Unmarshal(body, &event); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid JSON Payload"})
-		}
-
-		// 5. 儲存解析後的物件至 Context
-		c.Locals(WebhookEventKey, &event)
 		return c.Next()
 	}
-}
-
-// GetEvent 強型別 Loader 函式，供後續 Handler 安全取出 DTO
-func GetEvent[T any](c fiber.Ctx) (*T, error) {
-	val := c.Locals(WebhookEventKey)
-	if val == nil {
-		return nil, ErrEventNotFound
-	}
-
-	event, ok := val.(*T)
-	if !ok {
-		return nil, ErrInvalidEvent
-	}
-
-	return event, nil
 }
 
 func verifyHMAC(payload []byte, signatureHeader string, secret string) bool {

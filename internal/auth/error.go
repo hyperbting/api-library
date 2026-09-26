@@ -3,6 +3,9 @@ package auth
 import "errors"
 
 var (
+	// Firebse Error
+	ErrInvalidFirebaseToken = errors.New("invalid firebase token")
+
 	// HTTP-layer errors for the middleware
 	ErrMissingAuthHeader  = errors.New("missing authorization header")
 	ErrInvalidTokenFormat = errors.New("invalid token format, expected 'Bearer <token>'")

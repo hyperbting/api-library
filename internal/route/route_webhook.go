@@ -12,5 +12,5 @@ func setupWebhookRoutes(router fiber.Router, container *app.Container) {
 
 	metaWH := webhooks.Group("/meta")
 	metaWH.Get("/payments", container.MetaVerifyHdl)
-	//metaWH.Post("/payments", container.MetaPaymentWH)
+	//metaWH.Post("/payments", container.MetaPaymentMW)
 }

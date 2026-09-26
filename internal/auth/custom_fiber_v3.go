@@ -8,9 +8,15 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// AuthMiddleware returns a GoFiber v3 middleware handler
-func AuthMiddleware(tm session.TokenManager) fiber.Handler {
-	// Notice: fiber.Ctx is passed by VALUE in v3
+type CustomSessionProvider struct {
+	tm session.TokenManager
+}
+
+func NewCustomSessionProvider(tm session.TokenManager) *CustomSessionProvider {
+	return &CustomSessionProvider{tm: tm}
+}
+
+func (p *CustomSessionProvider) Middleware() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// 1. Extract Authorization Header
 		authHeader := c.Get("Authorization")
@@ -29,7 +35,7 @@ func AuthMiddleware(tm session.TokenManager) fiber.Handler {
 		}
 
 		// 3. Validate Token via domain service
-		claims, err := tm.ValidateAccessToken(tokenStr)
+		claims, err := p.tm.ValidateAccessToken(tokenStr)
 		if err != nil {
 			msg := "Invalid or expired token"
 			if errors.Is(err, session.ErrTokenRevoked) {
