@@ -20,20 +20,20 @@ var (
 	requestTimeout = 5 * time.Second
 )
 
-type OCULUSPlatformConfig struct {
-	PlatformServer string
-	AppID          string
-	AppSecret      string
+type PlatformConfig struct {
+	PlatformServer     string `mapstructure:"platform_server"`
+	AppID              string `mapstructure:"app_id"`
+	AppSecret          string `mapstructure:"app_secret"`
+	AttestationEnabled bool   `mapstructure:"attestation_enabled"`
 
 	once        sync.Once
 	accessToken string
 }
 
-func (c *OCULUSPlatformConfig) FormAccessToken() string {
+func (c *PlatformConfig) FormAccessToken() string {
 	c.once.Do(func() {
 		c.accessToken = fmt.Sprintf("OC|%v|%v", c.AppID, c.AppSecret)
 		log.Printf("FormAccessToken using %v %v: %v", c.AppID, c.AppSecret, c.accessToken)
 	})
 	return c.accessToken
 }
-

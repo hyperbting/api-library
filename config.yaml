@@ -53,6 +53,14 @@ session:
 
 # Webhook Configuration
 webhook:
-  meta_payment:
-    verify_token: "123456789"
-    app_secret: "app_secret"
+  meta:
+    payment:
+      enabled: true
+      verify_token: "123456789"
+
+meta:
+  platform_server: "https://graph.oculus.com"
+  app_id: "your_app_id"
+  app_secret: "your_app_secret"
+  attestation:
+    enabled: false

@@ -13,7 +13,7 @@ import (
 )
 
 func TestFormAccessToken_Once(t *testing.T) {
-	cfg := &OCULUSPlatformConfig{
+	cfg := &PlatformConfig{
 		PlatformServer: "https://graph.oculus.com",
 		AppID:          "123456",
 		AppSecret:      "secret_abc",
@@ -34,7 +34,7 @@ func TestFormAccessToken_Once(t *testing.T) {
 }
 
 func TestGenerateSHA256SignatureWithOculusSecret(t *testing.T) {
-	cfg := &OCULUSPlatformConfig{
+	cfg := &PlatformConfig{
 		AppID:     "123456",
 		AppSecret: "test_secret",
 	}
@@ -171,7 +171,7 @@ func TestVerifyAttestationToken_IsDeviceBanned(t *testing.T) {
 }
 
 func TestFormUrl_QueryParams(t *testing.T) {
-	cfg := &OCULUSPlatformConfig{
+	cfg := &PlatformConfig{
 		PlatformServer: "https://graph.oculus.com",
 		AppID:          "123",
 		AppSecret:      "abc",
@@ -312,7 +312,7 @@ func TestMetaAttestationClient_MockServer(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	cfg := &OCULUSPlatformConfig{
+	cfg := &PlatformConfig{
 		PlatformServer: ts.URL,
 		AppID:          "mock_app",
 		AppSecret:      "mock_secret",

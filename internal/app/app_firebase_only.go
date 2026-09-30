@@ -11,7 +11,7 @@ import (
 	"firebase.google.com/go/v4/messaging"
 )
 
-type FirebasseContainer struct {
+type FirebaseContainer struct {
 	FbApp           *firebase.App
 	StorageBucket   *storage.BucketHandle
 	Firestore       *firestore.Client
@@ -20,7 +20,7 @@ type FirebasseContainer struct {
 	//StorageClient *storage.Client
 }
 
-func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*FirebasseContainer, error) {
+func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*FirebaseContainer, error) {
 	if appCfg.Firebase == nil || !appCfg.Firebase.Enabled {
 		return nil, nil
 	}
@@ -31,7 +31,9 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		return nil, fmt.Errorf("Firebase init failed: %w", err)
 	}
 
-	container := &FirebasseContainer{}
+	container := &FirebaseContainer{
+		FbApp: fbApp,
+	}
 	// Firestore Database Service
 	if appCfg.Firebase.UseFirestore {
 		container.Firestore, err = fbApp.Firestore(ctx)
@@ -80,6 +82,6 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 	return container, nil
 }
 
-func (c *FirebasseContainer) Close() {
+func (c *FirebaseContainer) Close() {
 	// nothing
 }

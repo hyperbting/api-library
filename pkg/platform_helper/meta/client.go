@@ -20,14 +20,14 @@ type MetaApiClient interface {
 	RequestOculusConsumeIAPItem(q OculusConsumeIAPItemQuery) (OculusResp OCULUSResponseBase, err error)
 }
 
-func NewMetaApiClient(cfg *OCULUSPlatformConfig) MetaApiClient {
+func NewMetaApiClient(cfg *PlatformConfig) MetaApiClient {
 	return &metaApiClientImpl{
 		metaCFG: cfg,
 	}
 }
 
 type metaApiClientImpl struct {
-	metaCFG *OCULUSPlatformConfig
+	metaCFG *PlatformConfig
 }
 
 func (m *metaApiClientImpl) RequestOculusVerifyItemOwnership(q VerifyItemOwnershipQuery) (OculusResp OCULUSResponseBase, err error) {

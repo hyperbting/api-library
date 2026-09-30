@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, container *app.FirebasseContainer) {
+func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, container *app.FirebaseContainer) {
 	// app.Get("/healthz", func(c fiber.Ctx) error {
 	// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 	// 		"status": "ok",

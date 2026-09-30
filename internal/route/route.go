@@ -17,13 +17,13 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 
 	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
 	api := app.Group(apiPath)
-	setupWebhookRoutes(api, container)
+	setupWebhookRoutes(api, container, cfg.Webhook)
 
 	setupUserRoutes(api, container)
 	setupFriendRoutes(api, container)
 
 	if cfg.Firebase.Enabled {
-		RegisterFirebaseCloudFunctionRoutes(app, cfg, container.FirebasseContainer)
+		RegisterFirebaseCloudFunctionRoutes(app, cfg, container.FirebaseContainer)
 	}
 }
 

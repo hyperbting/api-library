@@ -36,7 +36,8 @@ type AppConfig struct {
 	SessionJWT *session.Config             `mapstructure:"session"`
 	Firebase   *FirebaseConfig             `mapstructure:"firebase"`
 
-	Webhook *WebhookConfig `mapstructure:"webhook"`
+	Meta    *meta.PlatformConfig `mapstructure:"meta"`
+	Webhook *WebhookConfig       `mapstructure:"webhook"`
 }
 
 // DebugPrint 格式化印出 Config
@@ -47,7 +48,7 @@ func (c *AppConfig) DebugPrint() []byte {
 }
 
 type WebhookConfig struct {
-	MetaPayment *meta.WebhookConfig `mapstructure:"meta_payment"`
+	Meta *meta.WebhookConfig `mapstructure:"meta"`
 }
 
 func LoadConfig() (*AppConfig, error) {

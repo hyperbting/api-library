@@ -19,3 +19,4 @@ vendor/
 .env
 .*.env
 !.env.example
+additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json

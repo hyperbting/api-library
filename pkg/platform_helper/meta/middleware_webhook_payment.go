@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"log"
 	"strings"
 
@@ -13,18 +14,23 @@ import (
 )
 
 // https://developers.facebook.com/documentation/games_payments/webhooks
+const webhookEventKey = "meta_webhook_event"
 
 type WebhookLogger interface {
 	SaveWebhookLog(ctx context.Context, provider string, payload []byte) error
 }
 
 type WebhookConfig struct {
+	Payment *WebhookPaymentConfig `mapstructure:"payment"`
+}
+
+type WebhookPaymentConfig struct {
+	Enabled     bool   `mapstructure:"enabled"`
 	VerifyToken string `mapstructure:"verify_token"`
-	AppSecret   string `mapstructure:"app_secret"`
 }
 
 // NewMetaPaymentWebhookMiddleware handle Receiving Updates
-func NewMetaPaymentWebhookMiddleware(cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
+func NewMetaPaymentWebhookMiddleware[T any](appSecret string, cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// POST only: Receiving Updates, reject if not
 		if c.Method() != fiber.MethodPost {
@@ -34,7 +40,7 @@ func NewMetaPaymentWebhookMiddleware(cfg *WebhookConfig, logger WebhookLogger) f
 		// 驗證 Meta POST Webhook 簽名 (X-Hub-Signature-256)
 		body := c.Body()
 		signature := c.Get("X-Hub-Signature-256")
-		isValid := verifyHMAC(body, signature, cfg.AppSecret)
+		isValid := verifyHMAC(body, signature, appSecret)
 
 		if !isValid {
 			// TODO: 簽名失敗亦可選擇性紀錄非法攻擊 Log
@@ -53,6 +59,10 @@ func NewMetaPaymentWebhookMiddleware(cfg *WebhookConfig, logger WebhookLogger) f
 			log.Printf("skipping webhook log: %s", string(body))
 		}
 
+		if err := parseThenSaveEvent[T](c); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
 		return c.Next()
 	}
 }
@@ -68,4 +78,26 @@ func verifyHMAC(payload []byte, signatureHeader string, secret string) bool {
 	expectedSig := hex.EncodeToString(mac.Sum(nil))
 
 	return hmac.Equal([]byte(actualSig), []byte(expectedSig))
+}
+
+func parseThenSaveEvent[T any](c fiber.Ctx) error {
+	var pi T
+	if err := json.Unmarshal(c.Body(), &pi); err != nil {
+		return ErrInvalidJSONPayload
+	}
+	c.Locals(webhookEventKey, &pi)
+	return nil
+}
+
+func GetEvent[T any](c fiber.Ctx) (*T, error) {
+	val := c.Locals(webhookEventKey)
+	if val == nil {
+		return nil, fiber.ErrBadRequest
+	}
+
+	if eventPtr, ok := val.(*T); ok {
+		return eventPtr, nil
+	}
+
+	return nil, fiber.ErrInternalServerError
 }

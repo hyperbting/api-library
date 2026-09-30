@@ -49,7 +49,7 @@ type Container struct {
 	PurchaseRepo purchase.PurchaseRepository
 
 	// Firebase OPTIONAL Service (Nil if not Initidalize)
-	*FirebasseContainer
+	*FirebaseContainer
 }
 
 func (c *Container) Close() {
@@ -133,7 +133,7 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 	//metaPaymentMw := meta.NewMetaPaymentWebhookMiddleware(appCfg.Webhook.MetaPayment, purchaseSrv)
 
 	//Handler
-	metaVerifyHdl := meta.NewMetaWebhookVerifyHandler(appCfg.Webhook.MetaPayment.VerifyToken)
+	metaVerifyHdl := meta.NewMetaWebhookVerifyHandler(appCfg.Webhook.Meta.Payment.VerifyToken)
 
 	ac = &Container{
 		TokenMgr:   tknManager,
@@ -163,7 +163,7 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 	if err != nil {
 		return nil, err
 	}
-	ac.FirebasseContainer = fbContainer
+	ac.FirebaseContainer = fbContainer
 
 	var ap auth.AuthProvider
 	switch appCfg.App.AuthMode {

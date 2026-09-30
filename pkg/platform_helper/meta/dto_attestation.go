@@ -19,7 +19,7 @@ type VerifyAttestationTokenQueryDTO struct {
 	AttestationToken string `json:"attestation_token"`
 }
 
-func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *OCULUSPlatformConfig) (string, error) {
+func (tq *VerifyAttestationTokenQueryDTO) formUrl(cfg *PlatformConfig) (string, error) {
 	//https://graph.oculus.com/platform_integrity/verify?token=<attestation_token>&access_token=<access_token>
 
 	// Join the base URL and the path safely using url.JoinPath.
@@ -117,7 +117,7 @@ func (bsr *BanStatusRequestDTO) HasBanId() bool {
 	return bsr.BanId != ""
 }
 
-func (bsr *BanStatusRequestDTO) formUrl(cfg *OCULUSPlatformConfig) (string, error) {
+func (bsr *BanStatusRequestDTO) formUrl(cfg *PlatformConfig) (string, error) {
 	//https://graph.oculus.com/platform_integrity/device_ban_status?
 	//unique_id =<unique_id>&
 	//access_token=<access_token>
@@ -207,7 +207,7 @@ func (dbr *DeviceBanRequestDTO) HasBanId() bool {
 	return dbr.BanId != ""
 }
 
-func (dbr *DeviceBanRequestDTO) formUrl(cfg *OCULUSPlatformConfig) string {
+func (dbr *DeviceBanRequestDTO) formUrl(cfg *PlatformConfig) string {
 	//https://graph.oculus.com/platform_integrity/device_ban?
 	//method=POST&
 	//unique_id=<unique_id>&

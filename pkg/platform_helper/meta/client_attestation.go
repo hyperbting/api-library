@@ -17,11 +17,11 @@ type MetaAttestationClient interface {
 }
 
 type metaAttestationClientImpl struct {
-	cfg        *OCULUSPlatformConfig
+	cfg        *PlatformConfig
 	httpClient *http.Client
 }
 
-func NewMetaAttestationClient(cfg *OCULUSPlatformConfig) MetaAttestationClient {
+func NewMetaAttestationClient(cfg *PlatformConfig) MetaAttestationClient {
 	return &metaAttestationClientImpl{
 		cfg: cfg,
 		httpClient: &http.Client{

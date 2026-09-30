@@ -1,0 +1,14 @@
+# Dependencies & local artifacts
+vendor/
+bin/
+
+# Version control & IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+
+# Documentation & local configs
+*.bat
+*.md
+additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json

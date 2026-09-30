@@ -13,4 +13,5 @@ var (
 	//ErrInvalidEvent = errors.New("invalid event type in context")
 	ErrRawBodyNotFound       = errors.New("raw body not found in fiber context")
 	ErrVerifyTokenMismatched = errors.New("verify token mismatch")
+	ErrInvalidJSONPayload    = errors.New("Invalid JSON Payload")
 )
