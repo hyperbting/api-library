@@ -87,6 +87,18 @@ func (c *Container) Close() {
 	// }
 }
 
+// ValidateSessionByUserAndToken implements pkg/platform_helper/photon.SessionValidator interface
+func (c *Container) ValidateSessionByUserAndToken(ctx context.Context, userID string, token string) error {
+	claims, err := c.SessionSrv.ValidateAccessToken(ctx, token)
+	if err != nil {
+		return err
+	}
+	if claims.UserID != userID {
+		return ErrUserMismatch
+	}
+	return nil
+}
+
 func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 
 	// init infrastructures
