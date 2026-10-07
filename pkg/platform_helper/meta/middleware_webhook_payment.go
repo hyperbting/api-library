@@ -29,6 +29,11 @@ type WebhookPaymentConfig struct {
 	VerifyToken string `mapstructure:"verify_token"`
 }
 
+// PaymentEnabled is nil-safe: a missing payment section means disabled
+func (c *WebhookConfig) PaymentEnabled() bool {
+	return c != nil && c.Payment != nil && c.Payment.Enabled
+}
+
 // NewMetaPaymentWebhookMiddleware handle Receiving Updates
 func NewMetaPaymentWebhookMiddleware[T any](appSecret string, cfg *WebhookConfig, logger WebhookLogger) fiber.Handler {
 	return func(c fiber.Ctx) error {

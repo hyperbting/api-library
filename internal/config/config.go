@@ -47,8 +47,18 @@ func (c *AppConfig) DebugPrint() []byte {
 	return jsonBytes
 }
 
+// FirebaseEnabled is nil-safe: a missing firebase section means disabled
+func (c *AppConfig) FirebaseEnabled() bool {
+	return c != nil && c.Firebase != nil && c.Firebase.Enabled
+}
+
 type WebhookConfig struct {
 	Meta *meta.WebhookConfig `mapstructure:"meta"`
+}
+
+// MetaPaymentEnabled is nil-safe: a missing webhook/meta/payment section means disabled
+func (c *WebhookConfig) MetaPaymentEnabled() bool {
+	return c != nil && c.Meta.PaymentEnabled()
 }
 
 func LoadConfig() (*AppConfig, error) {

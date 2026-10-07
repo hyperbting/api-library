@@ -21,6 +21,11 @@ type MetaApiClient interface {
 }
 
 func NewMetaApiClient(cfg *PlatformConfig) MetaApiClient {
+	if cfg == nil {
+		// avoid nil deref on every request; calls will be rejected by Meta for missing credentials
+		log.Printf("NewMetaApiClient: nil PlatformConfig, using empty config")
+		cfg = &PlatformConfig{PlatformServer: OculusPlatformServer}
+	}
 	return &metaApiClientImpl{
 		metaCFG: cfg,
 	}

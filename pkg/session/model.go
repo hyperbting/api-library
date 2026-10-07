@@ -16,6 +16,9 @@ type Session struct {
 }
 
 func (s *Session) Matches(claims *RefreshClaims, ts time.Time) bool {
+	if s == nil || claims == nil {
+		return false
+	}
 	return s.UserID == claims.UserID &&
 		s.JTI == claims.ID &&
 		ts.Before(s.ExpiresAt)

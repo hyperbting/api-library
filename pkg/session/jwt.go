@@ -35,6 +35,9 @@ type manager struct {
 
 // NewTokenManager creates a new instance of TokenManager[cite: 1]
 func NewTokenManager(cfg *Config) (TokenManager, error) {
+	if cfg == nil {
+		return nil, ErrConfigNil
+	}
 	if cfg.SecretKey == "" {
 		return nil, ErrSecretKeyEmpty
 	}

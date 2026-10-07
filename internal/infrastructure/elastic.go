@@ -14,6 +14,9 @@ type ESConfig struct {
 }
 
 func NewElasticsearch(cfg *ESConfig) (*elasticsearch.TypedClient, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("elasticsearch: %w", ErrNilConfig)
+	}
 
 	client, err := elasticsearch.NewTyped(
 		elasticsearch.WithAddresses(cfg.Addresses...),

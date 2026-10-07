@@ -4,6 +4,7 @@ import (
 	"api-library/internal/config"
 	"context"
 	"fmt"
+	"log"
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/storage"
@@ -20,8 +21,9 @@ type FirebaseContainer struct {
 	//StorageClient *storage.Client
 }
 
+// NewFirebaseContainer returns (nil, nil) when Firebase is disabled; callers must nil-check the result
 func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*FirebaseContainer, error) {
-	if appCfg.Firebase == nil || !appCfg.Firebase.Enabled {
+	if !appCfg.FirebaseEnabled() {
 		return nil, nil
 	}
 
@@ -83,5 +85,13 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 }
 
 func (c *FirebaseContainer) Close() {
-	// nothing
+	if c == nil {
+		return
+	}
+
+	if c.Firestore != nil {
+		if err := c.Firestore.Close(); err != nil {
+			log.Printf("failed to close firestore: %v", err)
+		}
+	}
 }

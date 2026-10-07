@@ -23,6 +23,9 @@ type DBConfig struct {
 }
 
 func NewPostgreSQL(cfg *BaseDBConfig) (*gorm.DB, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("postgres: %w", ErrNilConfig)
+	}
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,

@@ -12,6 +12,9 @@ type FirebaseAuthProvider struct {
 }
 
 func NewFirebaseAuthProvider(client *auth.Client) (*FirebaseAuthProvider, error) {
+	if client == nil {
+		return nil, ErrFirebaseClientNil
+	}
 	return &FirebaseAuthProvider{client: client}, nil
 }
 
@@ -24,12 +27,12 @@ func (p *FirebaseAuthProvider) Middleware() fiber.Handler {
 
 		idToken := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := p.client.VerifyIDToken(c.Context(), idToken)
-		if err != nil {
+		if err != nil || token == nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": ErrInvalidFirebaseToken.Error()})
 		}
 
-		// 將 Firebase UID 放入 Context
-		c.Locals("userID", token.UID)
+		// 將 Firebase UID 放入 Context (same key as CustomSessionProvider so GetUser/MustGetUser work in both modes)
+		c.Locals(userCtxKey, UserContext{UserID: token.UID})
 		return c.Next()
 	}
 }

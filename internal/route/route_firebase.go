@@ -8,6 +8,10 @@ import (
 )
 
 func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, container *app.FirebaseContainer) {
+	// container is nil when Firebase is disabled
+	if cfg == nil || container == nil {
+		return
+	}
 	// app.Get("/healthz", func(c fiber.Ctx) error {
 	// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 	// 		"status": "ok",

@@ -36,7 +36,7 @@ func (p *CustomSessionProvider) Middleware() fiber.Handler {
 
 		// 3. Validate Token via domain service
 		claims, err := p.tm.ValidateAccessToken(tokenStr)
-		if err != nil {
+		if err != nil || claims == nil {
 			msg := "Invalid or expired token"
 			if errors.Is(err, session.ErrTokenRevoked) {
 				msg = "Token has been revoked"

@@ -27,7 +27,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewContainer err: %+v", err)
 	}
-	defer container.Close()
+	if container == nil {
+		log.Printf("[BOOT] Firebase is disabled; Cloud Run service starts without Firebase routes")
+	}
+	defer container.Close() // nil-safe
 	log.Printf("container %+v", container)
 
 	// init fiber app and register routes

@@ -5,6 +5,7 @@ import "errors"
 var (
 	// Firebse Error
 	ErrInvalidFirebaseToken = errors.New("invalid firebase token")
+	ErrFirebaseClientNil    = errors.New("firebase auth client is nil")
 
 	// HTTP-layer errors for the middleware
 	ErrMissingAuthHeader  = errors.New("missing authorization header")

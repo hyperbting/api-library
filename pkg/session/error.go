@@ -3,6 +3,7 @@ package session
 import "errors"
 
 var (
+	ErrConfigNil      = errors.New("JWT config cannot be nil")
 	ErrSecretKeyEmpty = errors.New("JWT secret key cannot be empty")
 	ErrIssuerEmpty    = errors.New("JWT issuer cannot be empty")
 	ErrTTLEmpty       = errors.New("JWT TTL cannot be empty")

@@ -14,6 +14,10 @@ type RedisConfig struct {
 }
 
 func NewRedis(cfg *RedisConfig) (*redis.Client, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("redis: %w", ErrNilConfig)
+	}
+
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	return redis.NewClient(&redis.Options{
 		Addr:     addr,

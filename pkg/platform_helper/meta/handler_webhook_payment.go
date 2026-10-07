@@ -13,7 +13,8 @@ func NewMetaWebhookVerifyHandler(verifyToken string) fiber.Handler {
 		token := c.Query("hub.verify_token")
 		challenge := c.Query("hub.challenge")
 
-		if mode == "subscribe" && token == verifyToken {
+		// empty verifyToken must never match an empty hub.verify_token
+		if mode == "subscribe" && verifyToken != "" && token == verifyToken {
 			// 成功：回傳 200 並直接輸出 challenge 純文字
 			return c.Status(fiber.StatusOK).SendString(challenge)
 		}

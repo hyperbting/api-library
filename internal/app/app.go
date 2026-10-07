@@ -53,6 +53,10 @@ type Container struct {
 }
 
 func (c *Container) Close() {
+	if c == nil {
+		return
+	}
+
 	var masterSQLDB *sql.DB
 
 	if c.DB != nil {
@@ -80,6 +84,9 @@ func (c *Container) Close() {
 		}
 	}
 
+	// nil-safe even when Firebase is disabled
+	c.FirebaseContainer.Close()
+
 	// if c.ESClient != nil {
 	// 	if err := c.ESClient.Close(context.Background()); err != nil {
 	// 		log.Printf("failed to close elasticsearch: %v", err)
@@ -89,17 +96,26 @@ func (c *Container) Close() {
 
 // ValidateSessionByUserAndToken implements pkg/platform_helper/photon.SessionValidator interface
 func (c *Container) ValidateSessionByUserAndToken(ctx context.Context, userID string, token string) error {
+	if c == nil || c.SessionSrv == nil {
+		return ErrSessionSrvNotSet
+	}
 	claims, err := c.SessionSrv.ValidateAccessToken(ctx, token)
 	if err != nil {
 		return err
 	}
-	if claims.UserID != userID {
+	if claims == nil || claims.UserID != userID {
 		return ErrUserMismatch
 	}
 	return nil
 }
 
 func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
+	if appCfg == nil {
+		return nil, ErrConfigNil
+	}
+	if appCfg.Database == nil {
+		return nil, ErrDatabaseConfigNil
+	}
 
 	// init infrastructures
 	cache, err := infrastructure.NewRedis(appCfg.Redis)
@@ -144,8 +160,11 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 	//Middleware
 	//metaPaymentMw := meta.NewMetaPaymentWebhookMiddleware(appCfg.Webhook.MetaPayment, purchaseSrv)
 
-	//Handler
-	metaVerifyHdl := meta.NewMetaWebhookVerifyHandler(appCfg.Webhook.Meta.Payment.VerifyToken)
+	//Handler (nil when the Meta payment webhook is disabled; routes skip it)
+	var metaVerifyHdl fiber.Handler
+	if appCfg.Webhook.MetaPaymentEnabled() {
+		metaVerifyHdl = meta.NewMetaWebhookVerifyHandler(appCfg.Webhook.Meta.Payment.VerifyToken)
+	}
 
 	ac = &Container{
 		TokenMgr:   tknManager,
@@ -180,7 +199,8 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 	var ap auth.AuthProvider
 	switch appCfg.App.AuthMode {
 	case "firebase":
-		if ac.FbApp == nil {
+		// check the embedded pointer first: ac.FbApp panics when FirebaseContainer is nil
+		if ac.FirebaseContainer == nil || ac.FbApp == nil {
 			return nil, errors.New("auth mode is set to 'firebase', but Firebase is not enabled or initialized")
 		}
 		fbAuthClient, err := ac.FbApp.Auth(ctx)

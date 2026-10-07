@@ -13,7 +13,7 @@ func setupWebhookRoutes(router fiber.Router, container *app.Container, cfg *conf
 
 	metaWH := webhooks.Group("/meta")
 
-	if cfg.Meta.Payment.Enabled {
+	if cfg.MetaPaymentEnabled() && container.MetaVerifyHdl != nil {
 		metaWH.Get("/payments", container.MetaVerifyHdl)
 	}
 

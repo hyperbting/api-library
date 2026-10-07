@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -22,6 +23,11 @@ type metaAttestationClientImpl struct {
 }
 
 func NewMetaAttestationClient(cfg *PlatformConfig) MetaAttestationClient {
+	if cfg == nil {
+		// avoid nil deref on every request; calls will be rejected by Meta for missing credentials
+		log.Printf("NewMetaAttestationClient: nil PlatformConfig, using empty config")
+		cfg = &PlatformConfig{PlatformServer: OculusPlatformServer}
+	}
 	return &metaAttestationClientImpl{
 		cfg: cfg,
 		httpClient: &http.Client{
