@@ -3,6 +3,7 @@ package route
 import (
 	"api-library/internal/app"
 	"api-library/internal/config"
+	"fmt"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -12,13 +13,19 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	if cfg == nil || container == nil {
 		return
 	}
-	// app.Get("/healthz", func(c fiber.Ctx) error {
-	// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-	// 		"status": "ok",
-	// 	})
-	// })
 
-	//	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
-	//	api := app.Group(apiPath)
+	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
+	api := app.Group(apiPath)
 
+	setupQuestRoutes(api, container)
+}
+
+func setupQuestRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.QuestHdl == nil {
+		return
+	}
+
+	quests := router.Group("/quests", container.FirebaseAuthMw)
+	quests.Get("/progress", container.QuestHdl.GetProgress)
+	quests.Post("/complete-step", container.QuestHdl.CompleteStep)
 }

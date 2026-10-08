@@ -1,7 +1,9 @@
 package app
 
 import (
+	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/quest"
 	"context"
 	"fmt"
 	"log"
@@ -10,6 +12,7 @@ import (
 	"cloud.google.com/go/storage"
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
+	"github.com/gofiber/fiber/v3"
 )
 
 type FirebaseContainer struct {
@@ -17,6 +20,12 @@ type FirebaseContainer struct {
 	StorageBucket   *storage.BucketHandle
 	Firestore       *firestore.Client
 	MessagingClient *messaging.Client
+
+	// Verifies Firebase ID tokens (the game client always sends one, whatever app.auth is)
+	FirebaseAuthMw fiber.Handler
+
+	// Game services (nil when Firestore is disabled)
+	QuestHdl *quest.Handler
 	//FirebaseAuth    *auth.Client
 	//StorageClient *storage.Client
 }
@@ -36,12 +45,32 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 	container := &FirebaseContainer{
 		FbApp: fbApp,
 	}
+
+	fbAuthClient, err := fbApp.Auth(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init firebase auth: %w", err)
+	}
+	authProvider, err := auth.NewFirebaseAuthProvider(fbAuthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init firebase auth provider: %w", err)
+	}
+	container.FirebaseAuthMw = authProvider.Middleware()
+
 	// Firestore Database Service
 	if appCfg.Firebase.UseFirestore {
 		container.Firestore, err = fbApp.Firestore(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to init firebase firestore: %w", err)
 		}
+
+		// Quest catalog is embedded at build time; an invalid one fails the boot
+		catalog, err := quest.LoadCatalog()
+		if err != nil {
+			return nil, err
+		}
+		questRepo := quest.NewFirestoreRepository(container.Firestore, catalog.Version)
+		container.QuestHdl = quest.NewHandler(quest.NewService(questRepo, catalog))
+		log.Printf("[BOOT] quest catalog version %d, %d quests", catalog.Version, len(catalog.Quests))
 	}
 
 	// Cloud Storage Service

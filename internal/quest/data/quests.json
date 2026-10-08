@@ -1,0 +1,135 @@
+{
+  "version": 3,
+  "exportedAt": "2026-10-08T00:23:06.2071742Z",
+  "quests": [
+    {
+      "id": "tut_prologue",
+      "type": "Tutorial",
+      "initial": true,
+      "followUp": null,
+      "steps": [
+        {
+          "id": "hello",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/Hello",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Unlock",
+              "key": "home.habitat",
+              "amount": 1.0
+            },
+            {
+              "type": "Unlock",
+              "key": "home.trophyshelf",
+              "amount": 1.0
+            },
+            {
+              "type": "Unlock",
+              "key": "home.storyboard",
+              "amount": 1.0
+            },
+            {
+              "type": "Unlock",
+              "key": "home.incomejar",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "habitat_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.habitat.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "habitat_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/Habitat",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "shelf_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.trophyshelf.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "shelf_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/TrophyShelf",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "board_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.storyboard.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "board_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/StoryBoard",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "jar_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.incomejar.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "jar_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/IncomeJar",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "go_to_work",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "place.Place_CornerConvenience",
+            "target": 1.0
+          },
+          "rewards": []
+        }
+      ]
+    }
+  ]
+}
