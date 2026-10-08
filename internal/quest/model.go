@@ -47,10 +47,11 @@ type Progress struct {
 	Completed       bool   `firestore:"completed" json:"completed"`
 
 	// Step IDs already completed (and rewarded); makes complete-step idempotent.
-	CompletedSteps []string   `firestore:"completedSteps" json:"-"`
-	StartedAt      time.Time  `firestore:"startedAt" json:"-"`
-	UpdatedAt      time.Time  `firestore:"updatedAt" json:"-"`
-	CompletedAt    *time.Time `firestore:"completedAt,omitempty" json:"-"`
+	CompletedSteps []string  `firestore:"completedSteps" json:"-"`
+	StartedAt      time.Time `firestore:"startedAt" json:"-"`
+	// Last change; sent so the client can show "last played" (e.g. on an account conflict).
+	UpdatedAt   time.Time  `firestore:"updatedAt" json:"updatedAt"`
+	CompletedAt *time.Time `firestore:"completedAt,omitempty" json:"-"`
 }
 
 func (p *Progress) HasCompletedStep(stepID string) bool {
