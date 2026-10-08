@@ -1,12 +1,13 @@
 @echo off
-set PROJECT_ID=YOUR_GCP_PROJECT_ID
-set REGION=asia-east1
-set REPO=my-game-repo
-set SERVICE_NAME=my-go-backend
+set PROJECT_ID=additive-idle-simulation
+set REGION=us-central1
+set REPO=api
+set SERVICE_NAME=api-library
+set RUNTIME_SA=api-runtime@%PROJECT_ID%.iam.gserviceaccount.com
 set IMAGE_TAG=%REGION%-docker.pkg.dev/%PROJECT_ID%/%REPO%/%SERVICE_NAME%:latest
 
 echo === 1. 開始使用 Cloud Build 打包 Docker Image (%IMAGE_TAG%) ===
-call gcloud builds submit --tag %IMAGE_TAG% --dockerfile=Dockerfile.GCPCloudRun .
+call gcloud builds submit --project=%PROJECT_ID% --region=%REGION% --config=cloudbuild.yaml --substitutions=_IMAGE=%IMAGE_TAG% .
 if %ERRORLEVEL% NEQ 0 (
     echo Cloud Build 失敗！
     exit /b %ERRORLEVEL%
@@ -14,9 +15,12 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo === 2. 部署至 Cloud Run ===
 call gcloud run deploy %SERVICE_NAME% ^
+    --project=%PROJECT_ID% ^
     --image=%IMAGE_TAG% ^
     --platform=managed ^
     --region=%REGION% ^
+    --service-account=%RUNTIME_SA% ^
+    --port=3000 ^
     --allow-unauthenticated ^
     --min-instances=0 ^
     --max-instances=10 ^

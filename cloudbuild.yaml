@@ -1,0 +1,7 @@
+# Builds the Cloud Run image from Dockerfile.GCPCloudRun (gcloud builds submit --tag cannot pick a Dockerfile).
+# Used by deploy.bat: gcloud builds submit --config cloudbuild.yaml --substitutions _IMAGE=<image>
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "Dockerfile.GCPCloudRun", "-t", "${_IMAGE}", "."]
+images:
+  - "${_IMAGE}"

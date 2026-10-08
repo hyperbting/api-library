@@ -8,7 +8,7 @@ app:
 # Firebase 
 firebase:
   enabled: true
-  project_id: "my-game-gcp-project"
+  project_id: "additive-idle-simulation"
   credentials_file_path: "" # 本地開發可填寫路徑；在 GCP Cloud Run 環境留空即可（自動套用 GCP ADC 認證）
   use_firestore: true
   use_storage: false
