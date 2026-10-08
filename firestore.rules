@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Clients sign in with Firebase Auth. Cloud Run (api-library) uses the Admin SDK,
+// which bypasses these rules, and owns every write.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // A player may read their own profile document; writes go through Cloud Run.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Server-owned state (quest progress, later the wallet): no client access at all.
+    match /users/{uid}/private/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Everything else is closed unless a rule above opens it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
