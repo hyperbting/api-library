@@ -10,23 +10,40 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// AdminsCollection holds one empty-ish document per admin, keyed by Firebase UID. Add or delete a document
-// in the Firebase console (Firestore > admins) to grant or revoke admin; no deploy and no token refresh needed.
-// Firestore rules deny every client access to it; only this server reads it.
-const AdminsCollection = "admins"
+// Admin lives on the player's profile document users/{uid}, field UserRoles (an array that includes "admin").
+// Grant or revoke it by hand in the Firebase console (Firestore > users > <uid>); no deploy and no token refresh.
+// Firestore rules make users/{uid} read-only for clients, so a player cannot give themselves the role.
+const (
+	usersCollection = "users"
+	userRolesField  = "UserRoles"
+	adminRole       = "admin"
+)
 
 // AdminChecker reports whether a user is an admin.
 type AdminChecker func(ctx context.Context, uid string) (bool, error)
 
-// FirestoreAdminChecker treats the existence of admins/{uid} as admin.
+// FirestoreAdminChecker reads users/{uid}.UserRoles and looks for "admin".
 func FirestoreAdminChecker(client *firestore.Client) AdminChecker {
 	return func(ctx context.Context, uid string) (bool, error) {
-		_, err := client.Collection(AdminsCollection).Doc(uid).Get(ctx)
+		snap, err := client.Collection(usersCollection).Doc(uid).Get(ctx)
 		if status.Code(err) == codes.NotFound {
 			return false, nil
 		}
-		return err == nil, err
+		if err != nil {
+			return false, err
+		}
+		return hasAdminRole(snap.Data()), nil
 	}
+}
+
+func hasAdminRole(data map[string]any) bool {
+	roles, _ := data[userRolesField].([]any)
+	for _, r := range roles {
+		if name, ok := r.(string); ok && name == adminRole {
+			return true
+		}
+	}
+	return false
 }
 
 // RequireAdmin rejects (403) users who are not admins. Mount it after the auth middleware.

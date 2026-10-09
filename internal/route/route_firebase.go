@@ -29,6 +29,6 @@ func setupQuestRoutes(router fiber.Router, container *app.FirebaseContainer) {
 	quests := router.Group("/quests", container.FirebaseAuthMw)
 	quests.Get("/progress", container.QuestHdl.GetProgress)
 	quests.Post("/complete-step", container.QuestHdl.CompleteStep)
-	// Admin only (a document admins/{uid} in Firestore): wipes the caller's own quest progress. Used by the client dev menu.
+	// Admin only (Firestore users/{uid}.UserRoles includes "admin"): wipes the caller's own quest progress. Used by the client dev menu.
 	quests.Post("/admin/reset", auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), container.QuestHdl.Reset)
 }

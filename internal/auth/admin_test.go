@@ -43,3 +43,21 @@ func TestRequireAdmin(t *testing.T) {
 		}
 	}
 }
+
+func TestHasAdminRole(t *testing.T) {
+	cases := map[string]struct {
+		data map[string]any
+		want bool
+	}{
+		"admin":     {map[string]any{"UserRoles": []any{"player", "admin"}}, true},
+		"player":    {map[string]any{"UserRoles": []any{"player"}}, false},
+		"no field":  {map[string]any{}, false},
+		"nil doc":   {nil, false},
+		"wrongtype": {map[string]any{"UserRoles": "admin"}, false},
+	}
+	for name, c := range cases {
+		if got := hasAdminRole(c.data); got != c.want {
+			t.Fatalf("%s: got %v want %v", name, got, c.want)
+		}
+	}
+}
