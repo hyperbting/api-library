@@ -32,10 +32,17 @@ type Container struct {
 
 	//Handlers
 	MetaVerifyHdl fiber.Handler
+	UserHdl       *user.Handler
 
 	// Middlewares
 	AuthMw        fiber.Handler
 	MetaPaymentMw fiber.Handler
+	// SessionAuthMw is the stateless JWT middleware (no Redis) used to verify
+	// access tokens issued by email/password login, regardless of AuthMode.
+	SessionAuthMw fiber.Handler
+	// SessionAdminAuthMw requires the "admin" role (from the token claims).
+	// Mount it after SessionAuthMw.
+	SessionAdminAuthMw fiber.Handler
 
 	// Services
 	SessionSrv session.Service
@@ -92,6 +99,20 @@ func (c *Container) Close() {
 	// 		log.Printf("failed to close elasticsearch: %v", err)
 	// 	}
 	// }
+}
+
+// SessionRoleMw returns a middleware that requires the caller to hold at least
+// one of the given roles, read from the access token claims (no DB access).
+// Mount it after SessionAuthMw. Any role can be required without adding a
+// dedicated middleware:
+//
+//	container.SessionRoleMw(user.UserRoleModerator)
+func (c *Container) SessionRoleMw(roles ...user.UserRoleType) fiber.Handler {
+	allowed := make([]string, len(roles))
+	for i, r := range roles {
+		allowed[i] = string(r)
+	}
+	return auth.RequireRole(allowed...)
 }
 
 // ValidateSessionByUserAndToken implements pkg/platform_helper/photon.SessionValidator interface
@@ -187,6 +208,7 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 		//MetaPaymentMw: metaPaymentMw,
 
 		MetaVerifyHdl: metaVerifyHdl,
+		UserHdl:       user.NewHandler(userSrv),
 	}
 
 	ctx := context.Background()
@@ -217,6 +239,8 @@ func NewContainer(appCfg *config.AppConfig) (ac *Container, err error) {
 		ap = auth.NewCustomSessionProvider(tknManager)
 	}
 	ac.AuthMw = ap.Middleware()
+	ac.SessionAuthMw = auth.NewCustomSessionProvider(tknManager).Middleware()
+	ac.SessionAdminAuthMw = ac.SessionRoleMw(user.UserRoleAdmin)
 
 	return ac, nil
 }

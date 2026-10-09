@@ -11,6 +11,9 @@ import (
 // TokenManager defines the contract for creating and validating tokens[cite: 1]
 type TokenManager interface {
 	GenerateTokenPair(userID string, roles []string) (tp *TokenPair, err error)
+	// GenerateAccessToken issues a standalone access token with no refresh token
+	// and no persisted session (used by stateless email/password logins).
+	GenerateAccessToken(userID string, roles []string) (at *AccessToken, err error)
 	ValidateAccessToken(tokenStr string) (*AccessClaims, error)
 	ValidateRefreshToken(tokenStr string) (*RefreshClaims, error)
 	// RefreshTTL() time.Duration
@@ -78,11 +81,8 @@ type TokenPair struct {
 	RefreshExpiresAt time.Time
 }
 
-// GenerateTokenPair creates both short-lived AT and long-lived RT
-func (m *manager) GenerateTokenPair(userID string, roles []string) (tp *TokenPair, err error) {
-	now := time.Now()
-
-	// 1. Generate Access Token Claims
+// buildAccessToken signs a short-lived access token for the given user/roles at time now.
+func (m *manager) buildAccessToken(userID string, roles []string, now time.Time) (string, time.Time, error) {
 	accessClaims := AccessClaims{
 		UserID: userID,
 		Roles:  roles,
@@ -94,10 +94,30 @@ func (m *manager) GenerateTokenPair(userID string, roles []string) (tp *TokenPai
 		},
 	}
 
-	var accessTokenJWT string
-	if accessTokenJWT, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(m.secretKey); err != nil {
-		err = fmt.Errorf("failed to sign access token: %w", err)
-		return
+	tokenStr, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(m.secretKey)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to sign access token: %w", err)
+	}
+	return tokenStr, accessClaims.ExpiresAt.Time, nil
+}
+
+// GenerateAccessToken issues a standalone access token, no refresh token and no session store.
+func (m *manager) GenerateAccessToken(userID string, roles []string) (*AccessToken, error) {
+	tokenStr, expiresAt, err := m.buildAccessToken(userID, roles, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	return &AccessToken{Token: tokenStr, ExpiresAt: expiresAt}, nil
+}
+
+// GenerateTokenPair creates both short-lived AT and long-lived RT
+func (m *manager) GenerateTokenPair(userID string, roles []string) (tp *TokenPair, err error) {
+	now := time.Now()
+
+	// 1. Generate the access token
+	accessTokenJWT, accessExpiresAt, err := m.buildAccessToken(userID, roles, now)
+	if err != nil {
+		return nil, err
 	}
 
 	// 2. Generate Refresh Token Claims (with unique JTI)
@@ -123,7 +143,7 @@ func (m *manager) GenerateTokenPair(userID string, roles []string) (tp *TokenPai
 		AccessToken:      accessTokenJWT,
 		RefreshToken:     refreshTokenJWT,
 		JTI:              jti,
-		AccessExpiresAt:  accessClaims.ExpiresAt.Time,
+		AccessExpiresAt:  accessExpiresAt,
 		RefreshExpiresAt: refreshClaims.ExpiresAt.Time,
 	}
 

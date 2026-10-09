@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -39,7 +40,7 @@ type User struct {
 	// optional account/password auth info
 	Email           *string    `gorm:"type:varchar(255);uniqueIndex:idx_users_email"`
 	EmailVerifiedAt *time.Time `gorm:"type:timestamp"` // NULL means unverified
-	PasswordHash    *string    `gorm:"type:varchar(512)"`
+	PasswordHash    *string    `gorm:"type:varchar(512)" json:"-"`
 }
 
 func (u *User) HasPassword() bool {
@@ -66,6 +67,9 @@ func (u *User) VerifyPassword(plainPassword string) (bool, error) {
 	// and the error is nil. The error is non-nil if the hash is invalid or the
 	// plain text password does not match the hash.
 	err := bcrypt.CompareHashAndPassword([]byte(*u.PasswordHash), []byte(plainPassword))
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}

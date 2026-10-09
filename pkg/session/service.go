@@ -12,6 +12,10 @@ type Service interface {
 	// CreateSession generates a token pair and persists the session for a user.
 	CreateSession(ctx context.Context, userID string, roles []string) (*TokenPair, error)
 
+	// IssueAccessToken issues a standalone access token without persisting a
+	// session and without a refresh token (stateless logins).
+	IssueAccessToken(ctx context.Context, userID string, roles []string) (*AccessToken, error)
+
 	// ValidateAccessToken validates an access token and returns its claims.
 	ValidateAccessToken(ctx context.Context, accessTokenStr string) (*AccessClaims, error)
 
@@ -53,6 +57,11 @@ func (s *authServiceImpl) CreateSession(ctx context.Context, userID string, role
 	}
 
 	return tp, nil
+}
+
+// IssueAccessToken issues a stateless access token (no session store, no refresh token).
+func (s *authServiceImpl) IssueAccessToken(ctx context.Context, userID string, roles []string) (*AccessToken, error) {
+	return s.tokenMgr.GenerateAccessToken(userID, roles)
 }
 
 // ValidateAccessToken validates an access token and returns its claims.

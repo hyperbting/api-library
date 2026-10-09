@@ -16,6 +16,8 @@ type AppDetail struct {
 	AuthMode string `mapstructure:"auth"`
 	Port     int    `mapstructure:"port"`
 	Version  string `mapstructure:"version"`
+	// RegisterEnabled toggles the email/password registration route. Absent means off.
+	RegisterEnabled bool `mapstructure:"register_enabled"`
 }
 
 type FirebaseConfig struct {

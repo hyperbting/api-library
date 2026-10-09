@@ -4,6 +4,7 @@ app:
   auth: "firebase" #firebase, custom
   port: 3000
   version: "v99"
+  register_enabled: true # enable the email/password registration route
 
 # Firebase 
 firebase:

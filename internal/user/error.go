@@ -13,6 +13,7 @@ var (
 	ErrPlatformMustBeString   = errors.New("Platform must be a string")
 	ErrPasswordEmpty          = errors.New("password cannot be empty")
 
+	ErrInvalidRequest     = errors.New("invalid request body")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrEmailAlreadyExists = errors.New("email is already registered")
 	ErrEmailNotFound      = errors.New("email not found")

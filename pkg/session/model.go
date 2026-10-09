@@ -38,6 +38,13 @@ func (s *Session) Rotate(newJTI string, expiresAt time.Time) *Session {
 	return &cloned
 }
 
+// AccessToken is a stateless, short-lived token issued without a persisted
+// session. It carries no refresh token and never touches the session store.
+type AccessToken struct {
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
 // AccessClaims defines the payload inside the short-lived Access Token
 type AccessClaims struct {
 	UserID string   `json:"user_id"`
