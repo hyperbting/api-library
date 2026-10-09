@@ -16,3 +16,6 @@ check: check-build vet
 # 完整測試 (包含單元測試)
 test: check
 	go test -v ./...
+
+deploy:
+	deploy.bat
