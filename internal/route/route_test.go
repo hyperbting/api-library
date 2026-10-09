@@ -73,3 +73,20 @@ func TestSetupUserRoutes_AuthRateLimited(t *testing.T) {
 		t.Fatalf("6th register got %d want %d", last, fiber.StatusTooManyRequests)
 	}
 }
+
+func TestFirebaseRoutesServeUserAuth(t *testing.T) {
+	cfg := &config.AppConfig{App: config.AppDetail{Version: "v99", RegisterEnabled: true}}
+	fc := &app.FirebaseContainer{UserHdl: user.NewHandler(&fakeUserSvc{})}
+	fiberApp := fiber.New()
+	RegisterFirebaseCloudFunctionRoutes(fiberApp, cfg, fc)
+
+	req := httptest.NewRequest("POST", "/api/v99/auth/register", strings.NewReader(`{"email":"player@example.com","password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	res, err := fiberApp.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if res.StatusCode != fiber.StatusCreated {
+		t.Fatalf("got %d want %d", res.StatusCode, fiber.StatusCreated)
+	}
+}

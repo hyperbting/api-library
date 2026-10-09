@@ -18,6 +18,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
 	api := app.Group(apiPath)
 
+	mountUserRoutes(api, container.UserHdl, cfg)
 	setupQuestRoutes(api, container)
 }
 

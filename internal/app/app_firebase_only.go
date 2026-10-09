@@ -4,6 +4,8 @@ import (
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/quest"
+	"api-library/internal/user"
+	"api-library/pkg/session"
 	"context"
 	"fmt"
 	"log"
@@ -26,6 +28,9 @@ type FirebaseContainer struct {
 
 	// Game services (nil when Firestore is disabled)
 	QuestHdl *quest.Handler
+
+	// Email/password login and register, stored in Firestore (nil when Firestore or the session config is missing)
+	UserHdl *user.Handler
 	//FirebaseAuth    *auth.Client
 	//StorageClient *storage.Client
 }
@@ -70,6 +75,16 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 		questRepo := quest.NewFirestoreRepository(container.Firestore, catalog.Version)
 		container.QuestHdl = quest.NewHandler(quest.NewService(questRepo, catalog))
+		// Email players: stateless access tokens only (no Redis), users in Firestore
+		if appCfg.SessionJWT != nil {
+			tokenMgr, err := session.NewTokenManager(appCfg.SessionJWT)
+			if err != nil {
+				return nil, fmt.Errorf("session token manager init failed: %w", err)
+			}
+			userSrv := user.NewService(user.NewFirestoreRepository(container.Firestore), session.NewService(tokenMgr, nil))
+			container.UserHdl = user.NewHandler(userSrv)
+		}
+
 		log.Printf("[BOOT] quest catalog version %d, %d quests", catalog.Version, len(catalog.Quests))
 	}
 

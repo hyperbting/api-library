@@ -3,6 +3,7 @@ package route
 import (
 	"api-library/internal/app"
 	"api-library/internal/config"
+	"api-library/internal/user"
 	"fmt"
 	"time"
 
@@ -30,17 +31,22 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 }
 
 func setupUserRoutes(router fiber.Router, container *app.Container, cfg *config.AppConfig) {
-	if container.UserHdl == nil {
+	mountUserRoutes(router, container.UserHdl, cfg)
+}
+
+// mountUserRoutes serves email/password login and register; shared by the full server and the Firebase-only one.
+func mountUserRoutes(router fiber.Router, userHdl *user.Handler, cfg *config.AppConfig) {
+	if userHdl == nil {
 		return
 	}
 
 	// Per-IP limits slow down password guessing and mass sign-ups.
 	auth := router.Group("/auth")
-	auth.Post("/login", authLimiter(10), container.UserHdl.LoginEmailPassword)
+	auth.Post("/login", authLimiter(10), userHdl.LoginEmailPassword)
 
 	// Registration is opt-in via app.register_enabled in the config.
 	if cfg != nil && cfg.App.RegisterEnabled {
-		auth.Post("/register", authLimiter(5), container.UserHdl.RegisterEmailPassword)
+		auth.Post("/register", authLimiter(5), userHdl.RegisterEmailPassword)
 	}
 }
 
