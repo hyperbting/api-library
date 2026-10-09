@@ -17,6 +17,8 @@ const (
 type Service interface {
 	GetProgress(ctx context.Context, uid string) (*GetProgressResponse, error)
 	CompleteStep(ctx context.Context, uid string, req CompleteStepRequest) (*CompleteStepResponse, error)
+	// Reset drops all of the user's quest progress (admin only; the route requires the admin role).
+	Reset(ctx context.Context, uid string) error
 }
 
 type service struct {
@@ -48,6 +50,10 @@ func (s *service) GetProgress(ctx context.Context, uid string) (*GetProgressResp
 	}
 	sort.Slice(res.Quests, func(i, j int) bool { return res.Quests[i].QuestID < res.Quests[j].QuestID })
 	return res, nil
+}
+
+func (s *service) Reset(ctx context.Context, uid string) error {
+	return s.repo.Delete(ctx, uid)
 }
 
 // CompleteStep accepts only the quest's current step. A step that was already completed

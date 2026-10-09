@@ -14,6 +14,8 @@ type Repository interface {
 	// Update runs fn in a transaction on the user's document (a new one when missing).
 	// fn may run more than once on contention; it is written only when fn returns true.
 	Update(ctx context.Context, uid string, fn func(doc *QuestsDoc) (bool, error)) error
+	// Delete removes the user's quest document (no error when it does not exist).
+	Delete(ctx context.Context, uid string) error
 }
 
 type firestoreRepo struct {
@@ -61,6 +63,11 @@ func (r *firestoreRepo) Update(ctx context.Context, uid string, fn func(doc *Que
 		}
 		return tx.Set(ref, doc)
 	})
+}
+
+func (r *firestoreRepo) Delete(ctx context.Context, uid string) error {
+	_, err := r.ref(uid).Delete(ctx)
+	return err
 }
 
 func decode(snap *firestore.DocumentSnapshot) (*QuestsDoc, error) {

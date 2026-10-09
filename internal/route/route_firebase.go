@@ -2,6 +2,7 @@ package route
 
 import (
 	"api-library/internal/app"
+	"api-library/internal/auth"
 	"api-library/internal/config"
 	"fmt"
 
@@ -21,11 +22,13 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 }
 
 func setupQuestRoutes(router fiber.Router, container *app.FirebaseContainer) {
-	if container.QuestHdl == nil {
+	if container.QuestHdl == nil || container.Firestore == nil {
 		return
 	}
 
 	quests := router.Group("/quests", container.FirebaseAuthMw)
 	quests.Get("/progress", container.QuestHdl.GetProgress)
 	quests.Post("/complete-step", container.QuestHdl.CompleteStep)
+	// Admin only (a document admins/{uid} in Firestore): wipes the caller's own quest progress. Used by the client dev menu.
+	quests.Post("/admin/reset", auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), container.QuestHdl.Reset)
 }

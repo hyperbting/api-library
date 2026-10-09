@@ -31,6 +31,11 @@ func (r *memRepo) Update(_ context.Context, uid string, fn func(doc *QuestsDoc) 
 	return nil
 }
 
+func (r *memRepo) Delete(_ context.Context, uid string) error {
+	delete(r.docs, uid)
+	return nil
+}
+
 func clone(d *QuestsDoc) *QuestsDoc {
 	if d == nil {
 		return nil
@@ -89,6 +94,25 @@ func TestFreshAccountHasNoProgress(t *testing.T) {
 	}
 	if res.Quests == nil || len(res.Quests) != 0 {
 		t.Fatalf("want empty non-nil list, got %#v", res.Quests)
+	}
+}
+
+func TestResetDropsProgressAndRegrants(t *testing.T) {
+	s, _ := newTestService(t)
+	complete(t, s, "tut_prologue", "intro", 0)
+	complete(t, s, "tut_prologue", "jar", 1)
+
+	if err := s.Reset(context.Background(), "uid"); err != nil {
+		t.Fatal(err)
+	}
+	if res, _ := s.GetProgress(context.Background(), "uid"); len(res.Quests) != 0 {
+		t.Fatalf("progress after reset: %+v", res.Quests)
+	}
+
+	// A fresh run starts at step 0 and grants again.
+	complete(t, s, "tut_prologue", "intro", 0)
+	if r := complete(t, s, "tut_prologue", "jar", 1); !r.Accepted || len(r.Granted) != 1 {
+		t.Fatalf("jar after reset: %+v", r)
 	}
 }
 

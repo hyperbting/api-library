@@ -53,3 +53,15 @@ func (h *Handler) CompleteStep(c fiber.Ctx) error {
 	}
 	return c.JSON(res)
 }
+
+// POST /quests/admin/reset (admin role required, enforced by the route)
+func (h *Handler) Reset(c fiber.Ctx) error {
+	user := auth.MustGetUser(c)
+
+	if err := h.srv.Reset(c.Context(), user.UserID); err != nil {
+		log.Printf("[quest] reset uid=%s: %v", user.UserID, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to reset quest progress"})
+	}
+	log.Printf("[quest] reset uid=%s", user.UserID)
+	return c.JSON(&GetProgressResponse{Quests: []Progress{}})
+}
