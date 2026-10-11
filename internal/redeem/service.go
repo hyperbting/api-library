@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"api-library/internal/grant"
+	"api-library/internal/item"
 )
 
 type Service interface {
@@ -19,12 +20,13 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
-	now  func() time.Time
+	repo    Repository
+	catalog *item.Catalog
+	now     func() time.Time
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo, now: time.Now}
+func NewService(repo Repository, catalog *item.Catalog) Service {
+	return &service{repo: repo, catalog: catalog, now: time.Now}
 }
 
 // Use refuses in this order: rate limited, unknown, already redeemed by this user, disabled, expired, used up.
@@ -72,11 +74,17 @@ func (s *service) Use(ctx context.Context, uid, rawCode string) (*UseResponse, e
 			return fail(CodeFinished)
 		}
 
+		// A code whose items no longer resolve (an item was removed from the catalog) is a server-side
+		// mistake, not the player's: an error (HTTP 500, logged), not a refusal that counts as a guess.
+		rewards, err := s.catalog.Resolve(c.Items)
+		if err != nil {
+			return false, false, fmt.Errorf("code %s: %w", c.Code, err)
+		}
 		g := grant.Grant{
 			ID:        id,
 			Source:    grant.SourceRedeem,
 			SourceRef: c.Code,
-			Rewards:   c.Rewards,
+			Rewards:   rewards,
 			CreatedAt: now,
 		}
 		if _, err := grants.Add(g); err != nil {
@@ -103,7 +111,8 @@ func (s *service) CreateCode(ctx context.Context, adminUID string, req CreateCod
 		return fmt.Errorf("%w: %s", ErrInvalidRequest, fmt.Sprintf(format, args...))
 	}
 
-	if err := grant.ValidateRewards(req.Rewards); err != nil {
+	// Every item must exist and the resolved rewards must be valid (e.g. a time warp within its cap)
+	if _, err := s.catalog.Resolve(req.Items); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidRequest, err)
 	}
 	if req.MaxRedemptions < 0 || req.MaxRedemptions > MaxRedemptionsLimit {
@@ -136,7 +145,7 @@ func (s *service) CreateCode(ctx context.Context, adminUID string, req CreateCod
 		}
 		stored := &Code{
 			Code:           c,
-			Rewards:        append([]grant.Reward(nil), req.Rewards...),
+			Items:          append([]item.Ref(nil), req.Items...),
 			MaxRedemptions: req.MaxRedemptions,
 			ExpiresAt:      req.ExpiresAt,
 			Note:           req.Note,

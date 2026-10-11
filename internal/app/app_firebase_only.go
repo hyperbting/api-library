@@ -3,6 +3,7 @@ package app
 import (
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/item"
 	"api-library/internal/quest"
 	"api-library/internal/redeem"
 	"api-library/internal/save"
@@ -80,7 +81,12 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		questRepo := quest.NewFirestoreRepository(container.Firestore, catalog.Version)
 		container.QuestHdl = quest.NewHandler(quest.NewService(questRepo, catalog))
 		container.SaveHdl = save.NewHandler(save.NewService(save.NewFirestoreRepository(container.Firestore)))
-		container.RedeemHdl = redeem.NewHandler(redeem.NewService(redeem.NewFirestoreRepository(container.Firestore)))
+		// Item catalog (embedded, validated at boot like the quest table)
+		items, err := item.LoadCatalog()
+		if err != nil {
+			return nil, err
+		}
+		container.RedeemHdl = redeem.NewHandler(redeem.NewService(redeem.NewFirestoreRepository(container.Firestore), items))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
 		if appCfg.SessionJWT != nil {
 			tokenMgr, err := session.NewTokenManager(appCfg.SessionJWT)
@@ -92,6 +98,7 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 
 		log.Printf("[BOOT] quest catalog version %d, %d quests", catalog.Version, len(catalog.Quests))
+		log.Printf("[BOOT] item catalog version %d, %d items", items.Version, len(items.Items))
 	}
 
 	// Cloud Storage Service

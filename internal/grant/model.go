@@ -58,11 +58,15 @@ var (
 	ErrTooManyGrants = errors.New("too many grants")
 )
 
-// Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount}).
+// Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).
+// Amount is the total: the item's unit amount times Count. ItemID and Count are for display only (the
+// client applies Type, Key and Amount), and are empty for rewards that did not come from an item.
 type Reward struct {
 	Type   RewardType `firestore:"type" json:"type"`
 	Key    string     `firestore:"key" json:"key"`
 	Amount float64    `firestore:"amount" json:"amount"`
+	ItemID string     `firestore:"itemId,omitempty" json:"itemId,omitempty"`
+	Count  int        `firestore:"count,omitempty" json:"count,omitempty"`
 }
 
 func (r Reward) Validate() error {

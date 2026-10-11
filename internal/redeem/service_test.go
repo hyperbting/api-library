@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-library/internal/grant"
+	"api-library/internal/item"
 )
 
 // memRepo mimics the Firestore repository: Redeem works on copies and keeps them only when fn asks.
@@ -82,17 +83,28 @@ type fixture struct {
 	ctx  context.Context
 }
 
+const testItems = `{"version": 1, "items": [
+  {"id": "pull_ticket", "type": "Pull", "amount": 1},
+  {"id": "timewarp_1h", "type": "TimeWarp", "amount": 1},
+  {"id": "cash_500", "type": "Cash", "amount": 500},
+  {"id": "unlock_habitat", "type": "Unlock", "key": "home.habitat", "amount": 0}
+]}`
+
 func newFixture() *fixture {
 	repo := newMemRepo()
-	s := NewService(repo).(*service)
+	catalog, err := item.ParseCatalog([]byte(testItems))
+	if err != nil {
+		panic(err)
+	}
+	s := NewService(repo, catalog).(*service)
 	s.now = func() time.Time { return clock }
 	return &fixture{srv: s, repo: repo, ctx: context.Background()}
 }
 
 func (f *fixture) code(t *testing.T, req CreateCodeRequest) string {
 	t.Helper()
-	if len(req.Rewards) == 0 {
-		req.Rewards = []grant.Reward{{Type: grant.RewardPull, Amount: 2}}
+	if len(req.Items) == 0 {
+		req.Items = []item.Ref{{ItemID: "pull_ticket", Count: 2}}
 	}
 	c, err := f.srv.CreateCode(f.ctx, "admin", req)
 	if err != nil {
@@ -150,11 +162,15 @@ func TestFormatAndGenerate(t *testing.T) {
 
 func TestRedeemGivesGrantOnce(t *testing.T) {
 	f := newFixture()
-	code := f.code(t, CreateCodeRequest{Rewards: []grant.Reward{{Type: grant.RewardCash, Amount: 500}, {Type: grant.RewardPull, Amount: 1}}})
+	code := f.code(t, CreateCodeRequest{Items: []item.Ref{{ItemID: "cash_500", Count: 3}, {ItemID: "pull_ticket", Count: 1}}})
 
 	res := f.use(t, "u1", Format(code)) // typed with dashes and in lower case would also work
 	if !res.OK || res.Grant == nil || res.Grant.ID != "redeem:"+code || len(res.Grant.Rewards) != 2 {
 		t.Fatalf("redeem = %+v", res)
+	}
+	// Item unit amount times count, with the item kept for display
+	if got := res.Grant.Rewards[0]; got.Type != grant.RewardCash || got.Amount != 1500 || got.ItemID != "cash_500" || got.Count != 3 {
+		t.Errorf("first reward = %+v", got)
 	}
 	if f.repo.codes[code].Redeemed != 1 {
 		t.Error("redeemed counter not incremented")
@@ -278,17 +294,19 @@ func TestMalformedInputCountsAsFailure(t *testing.T) {
 
 func TestCreateCodeValidation(t *testing.T) {
 	f := newFixture()
-	ok := []grant.Reward{{Type: grant.RewardPull, Amount: 1}}
+	ok := []item.Ref{{ItemID: "pull_ticket", Count: 1}}
 	past := clock.Add(-time.Minute)
 
 	bad := map[string]CreateCodeRequest{
-		"no rewards":     {},
-		"bad reward":     {Rewards: []grant.Reward{{Type: grant.RewardCash}}},
-		"negative max":   {Rewards: ok, MaxRedemptions: -1},
-		"huge max":       {Rewards: ok, MaxRedemptions: MaxRedemptionsLimit + 1},
-		"past expiry":    {Rewards: ok, ExpiresAt: &past},
-		"bad custom":     {Rewards: ok, Code: "no!"},
-		"note too large": {Rewards: ok, Note: string(make([]byte, 300))},
+		"no items":       {},
+		"unknown item":   {Items: []item.Ref{{ItemID: "gems", Count: 1}}},
+		"zero count":     {Items: []item.Ref{{ItemID: "pull_ticket", Count: 0}}},
+		"time warp cap":  {Items: []item.Ref{{ItemID: "timewarp_1h", Count: 200}}},
+		"negative max":   {Items: ok, MaxRedemptions: -1},
+		"huge max":       {Items: ok, MaxRedemptions: MaxRedemptionsLimit + 1},
+		"past expiry":    {Items: ok, ExpiresAt: &past},
+		"bad custom":     {Items: ok, Code: "no!"},
+		"note too large": {Items: ok, Note: string(make([]byte, 300))},
 	}
 	for name, req := range bad {
 		if _, err := f.srv.CreateCode(f.ctx, "admin", req); !errors.Is(err, ErrInvalidRequest) {
@@ -299,7 +317,7 @@ func TestCreateCodeValidation(t *testing.T) {
 
 func TestCreateCustomCodeAndDuplicate(t *testing.T) {
 	f := newFixture()
-	req := CreateCodeRequest{Code: "welcome-2026", Rewards: []grant.Reward{{Type: grant.RewardUnlock, Key: "home.habitat"}}}
+	req := CreateCodeRequest{Code: "welcome-2026", Items: []item.Ref{{ItemID: "unlock_habitat", Count: 1}}}
 
 	c, err := f.srv.CreateCode(f.ctx, "admin", req)
 	if err != nil || c.Code != "WELCOME2026" || c.CreatedBy != "admin" {
@@ -324,5 +342,33 @@ func TestDisableAndReenable(t *testing.T) {
 	}
 	if err := f.srv.SetDisabled(f.ctx, "NOSUCHCODE12", true); !errors.Is(err, ErrCodeNotFound) {
 		t.Errorf("unknown code: %v", err)
+	}
+}
+
+func TestGrantKeepsItsSnapshotWhenTheCatalogChanges(t *testing.T) {
+	f := newFixture()
+	code := f.code(t, CreateCodeRequest{Items: []item.Ref{{ItemID: "pull_ticket", Count: 2}}})
+	res := f.use(t, "u", code)
+	if !res.OK {
+		t.Fatalf("redeem = %+v", res)
+	}
+
+	// The delivered grant is stored with its amounts, whatever the catalog says afterwards.
+	stored := f.repo.grants["u"].Grants["redeem:"+code]
+	if len(stored.Rewards) != 1 || stored.Rewards[0].Amount != 2 || stored.Rewards[0].ItemID != "pull_ticket" {
+		t.Errorf("stored rewards = %+v", stored.Rewards)
+	}
+}
+
+func TestUnresolvableCodeIsAServerErrorNotAGuess(t *testing.T) {
+	f := newFixture()
+	code := f.code(t, CreateCodeRequest{})
+	f.repo.codes[code].Items = []item.Ref{{ItemID: "removed_item", Count: 1}} // an item left the catalog
+
+	if _, err := f.srv.Use(f.ctx, "u", code); err == nil {
+		t.Fatal("expected an error")
+	}
+	if g := f.repo.grants["u"]; g != nil && g.RedeemFailures != 0 {
+		t.Error("a server-side mistake counted against the player")
 	}
 }

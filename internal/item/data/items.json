@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "items": [
+    { "id": "pull_ticket", "type": "Pull", "amount": 1, "note": "One gacha pull. Nothing spends it yet (GDD 2.0)." },
+    { "id": "timewarp_1h", "type": "TimeWarp", "amount": 1, "note": "Instant payout of 1 h of current income (IAP_1hr_CPY)." },
+    { "id": "timewarp_2h", "type": "TimeWarp", "amount": 2, "note": "IAP_2hr_CPY." },
+    { "id": "timewarp_8h", "type": "TimeWarp", "amount": 8, "note": "IAP_8hr_CPY." },
+    { "id": "timewarp_24h", "type": "TimeWarp", "amount": 24, "note": "IAP_24hr_CPY." },
+    { "id": "cash_10k", "type": "Cash", "amount": 10000, "note": "About the first upgrade. A fixed amount stops meaning anything once income grows, so prefer time warps." }
+  ]
+}

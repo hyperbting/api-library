@@ -1,6 +1,7 @@
 // Package redeem turns a code the player types into a grant (see package grant). Codes are free promos
 // (events, support, creators), not a way to sell content: they live in Firestore, are created by an admin
-// through the API, and each player can redeem a given code once.
+// through the API, and each player can redeem a given code once. A code lists items ({itemId, count}) from
+// the item catalog (package item); the grant stores the resolved rewards.
 package redeem
 
 import (
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"api-library/internal/grant"
+	"api-library/internal/item"
 )
 
 // Firestore layout (server-only; the catch-all security rule denies clients):
@@ -50,8 +52,10 @@ var (
 
 // Code is stored at redeemCodes/{CODE}.
 type Code struct {
-	Code    string         `firestore:"code" json:"code"`
-	Rewards []grant.Reward `firestore:"rewards" json:"rewards"`
+	Code string `firestore:"code" json:"code"`
+	// What the code gives, by catalog item. Resolved to rewards when it is redeemed, so a change to an
+	// item's unit amount applies to codes nobody redeemed yet (grants already delivered keep their snapshot).
+	Items []item.Ref `firestore:"items" json:"items"`
 	// 0 = unlimited.
 	MaxRedemptions int        `firestore:"maxRedemptions" json:"maxRedemptions"`
 	Redeemed       int        `firestore:"redeemed" json:"redeemed"`
@@ -78,11 +82,11 @@ type UseResponse struct {
 // POST /api/{version}/redeem/admin/codes
 type CreateCodeRequest struct {
 	// Empty: the server generates one.
-	Code           string         `json:"code" validate:"max=64"`
-	Rewards        []grant.Reward `json:"rewards"`
-	MaxRedemptions int            `json:"maxRedemptions" validate:"min=0"`
-	ExpiresAt      *time.Time     `json:"expiresAt"`
-	Note           string         `json:"note" validate:"max=200"`
+	Code           string     `json:"code" validate:"max=64"`
+	Items          []item.Ref `json:"items"`
+	MaxRedemptions int        `json:"maxRedemptions" validate:"min=0"`
+	ExpiresAt      *time.Time `json:"expiresAt"`
+	Note           string     `json:"note" validate:"max=200"`
 }
 
 // POST /api/{version}/redeem/admin/codes/disable
