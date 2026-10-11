@@ -4,6 +4,8 @@ import (
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/quest"
+	"api-library/internal/redeem"
+	"api-library/internal/save"
 	"api-library/internal/user"
 	"api-library/pkg/session"
 	"context"
@@ -27,7 +29,9 @@ type FirebaseContainer struct {
 	FirebaseAuthMw fiber.Handler
 
 	// Game services (nil when Firestore is disabled)
-	QuestHdl *quest.Handler
+	QuestHdl  *quest.Handler
+	SaveHdl   *save.Handler
+	RedeemHdl *redeem.Handler
 
 	// Email/password login and register, stored in Firestore (nil when Firestore or the session config is missing)
 	UserHdl *user.Handler
@@ -75,6 +79,8 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 		questRepo := quest.NewFirestoreRepository(container.Firestore, catalog.Version)
 		container.QuestHdl = quest.NewHandler(quest.NewService(questRepo, catalog))
+		container.SaveHdl = save.NewHandler(save.NewService(save.NewFirestoreRepository(container.Firestore)))
+		container.RedeemHdl = redeem.NewHandler(redeem.NewService(redeem.NewFirestoreRepository(container.Firestore)))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
 		if appCfg.SessionJWT != nil {
 			tokenMgr, err := session.NewTokenManager(appCfg.SessionJWT)
