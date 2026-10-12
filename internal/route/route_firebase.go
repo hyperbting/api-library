@@ -24,10 +24,13 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	setupSaveRoutes(api, container)
 	setupRedeemRoutes(api, container)
 
-	// Admin panel and admin API: only when ADMIN_ENABLED, so the public service can run the same image without them
+	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
+	// public service, which runs the same image.
 	if cfg.Admin.Enabled {
-		adminui.Register(app, cfg)
 		setupAdminRoutes(api, cfg, container)
+		if cfg.Admin.PanelEnabled {
+			adminui.Register(app, cfg)
+		}
 	}
 }
 

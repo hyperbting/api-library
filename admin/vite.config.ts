@@ -11,7 +11,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // `npm run dev` talks to the Go service on :3000 (run it with ADMIN_ENABLED=true)
+    // `npm run dev` talks to the Go service on :3000 (run it with ADMIN_ENABLED=true ADMIN_PANEL_ENABLED=true)
     proxy: {
       '/admin/config.json': 'http://localhost:3000',
       '/api': 'http://localhost:3000',

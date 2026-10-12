@@ -90,3 +90,48 @@ func TestFirebaseRoutesServeUserAuth(t *testing.T) {
 		t.Fatalf("got %d want %d", res.StatusCode, fiber.StatusCreated)
 	}
 }
+
+// The panel (/admin) follows ADMIN_PANEL_ENABLED and only exists on top of the admin API (ADMIN_ENABLED):
+// neither = game API only, admin = + /api/<v>/admin routes, admin + panel = + the embedded panel.
+func TestAdminPanelFollowsItsOwnSwitch(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		enabled      bool
+		panelEnabled bool
+		wantPanel    int
+	}{
+		{"neither", false, false, fiber.StatusNotFound},
+		{"admin api only", true, false, fiber.StatusNotFound},
+		{"panel without the admin api", false, true, fiber.StatusNotFound},
+		{"admin api and panel", true, true, fiber.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &config.AppConfig{
+				App:   config.AppDetail{Version: "v99", RegisterEnabled: true},
+				Admin: config.AdminConfig{Enabled: tc.enabled, PanelEnabled: tc.panelEnabled},
+			}
+			fc := &app.FirebaseContainer{UserHdl: user.NewHandler(&fakeUserSvc{})}
+			fiberApp := fiber.New()
+			RegisterFirebaseCloudFunctionRoutes(fiberApp, cfg, fc)
+
+			res, err := fiberApp.Test(httptest.NewRequest("GET", "/admin/config.json", nil))
+			if err != nil {
+				t.Fatalf("app.Test: %v", err)
+			}
+			if res.StatusCode != tc.wantPanel {
+				t.Fatalf("/admin/config.json got %d want %d", res.StatusCode, tc.wantPanel)
+			}
+
+			// The game API is there in every combination.
+			req := httptest.NewRequest("POST", "/api/v99/auth/register", strings.NewReader(`{"email":"player@example.com","password":"password123"}`))
+			req.Header.Set("Content-Type", "application/json")
+			res, err = fiberApp.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test: %v", err)
+			}
+			if res.StatusCode != fiber.StatusCreated {
+				t.Fatalf("register got %d want %d", res.StatusCode, fiber.StatusCreated)
+			}
+		})
+	}
+}

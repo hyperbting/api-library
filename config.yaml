@@ -6,10 +6,14 @@ app:
   version: "v99"
   register_enabled: true # enable the email/password registration route
 
-# Admin panel (embedded Vue app + admin API). Same image, switched per service by env:
-# ADMIN_ENABLED, ADMIN_LOGIN_GOOGLE, ADMIN_LOGIN_EMAIL, ADMIN_WEB_API_KEY, ADMIN_WEB_AUTH_DOMAIN, ADMIN_WEB_APP_ID
+# Admin API and panel. Same image, switched per service by env (all off by default):
+#   neither flag                      game API only                         (deploy.bat)
+#   ADMIN_ENABLED=true                game API + /api/<v>/admin routes      (deploy-admin.bat)
+#   + ADMIN_PANEL_ENABLED=true        ... + the embedded panel under /admin (deploy-admin.bat with the flag set)
+# Other env overrides: ADMIN_LOGIN_GOOGLE, ADMIN_LOGIN_EMAIL, ADMIN_WEB_API_KEY, ADMIN_WEB_AUTH_DOMAIN, ADMIN_WEB_APP_ID
 admin:
-  enabled: false
+  enabled: false       # the /api/<v>/admin routes
+  panel_enabled: false # the embedded panel (needs enabled)
   login_google: false # Firebase Google sign-in on the panel (off by default)
   login_email: true   # Firebase email/password sign-in on the panel
   web_api_key: ""     # Firebase Web app config (public values)

@@ -30,10 +30,16 @@ type FirebaseConfig struct {
 	UseMessage          bool   `mapstructure:"use_message"`           // 是否初始化 Message Client
 }
 
-// AdminConfig controls the embedded admin panel. Everything is off unless Enabled is set (env ADMIN_ENABLED),
-// so the public service can run the same image with the panel and its routes switched off.
+// AdminConfig controls the admin API and the embedded admin panel. Everything is off by default, so the public
+// service can run the same image with both switched off. Two independent switches, three deployments:
+//   - neither:               the game API only (the public service)
+//   - Enabled:               the game API plus the /api/<v>/admin routes, no panel
+//   - Enabled + PanelEnabled: the above plus the embedded panel under /admin
 type AdminConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool `mapstructure:"enabled"` // env ADMIN_ENABLED: the /api/<v>/admin routes
+	// env ADMIN_PANEL_ENABLED: serve the embedded panel under /admin. Only takes effect with Enabled, the panel
+	// has nothing to talk to without the admin routes.
+	PanelEnabled bool `mapstructure:"panel_enabled"`
 	// Sign-in methods the panel offers and the admin routes accept. Google is off by default.
 	LoginGoogle bool `mapstructure:"login_google"`
 	LoginEmail  bool `mapstructure:"login_email"`
