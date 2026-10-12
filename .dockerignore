@@ -12,3 +12,6 @@ bin/
 *.bat
 *.md
 additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json
+admin/node_modules/
+internal/adminui/dist/*
+!internal/adminui/dist/.gitkeep

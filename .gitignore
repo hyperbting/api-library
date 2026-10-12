@@ -20,3 +20,8 @@ vendor/
 .*.env
 !.env.example
 additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json
+
+# Admin panel build output (filled by the Docker build, only .gitkeep is tracked) and local node deps
+internal/adminui/dist/*
+!internal/adminui/dist/.gitkeep
+admin/node_modules/

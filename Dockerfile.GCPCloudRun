@@ -1,3 +1,11 @@
+# Admin panel (Vue + Vite + PrimeVue): builds into /src/internal/adminui/dist, which the Go binary embeds
+FROM node:22-alpine AS admin
+WORKDIR /src/admin
+COPY admin/package*.json ./
+RUN npm install --no-audit --no-fund
+COPY admin/ ./
+RUN mkdir -p /src/internal/adminui/dist && npm run build
+
 FROM golang:1.26-alpine AS builder
 #RUN apk update && apk add --no-cache ca-certificates tzdata
 
@@ -6,6 +14,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+COPY --from=admin /src/internal/adminui/dist ./internal/adminui/dist
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/cloud-run ./internal/cmd/gcp_cloud_run
 
