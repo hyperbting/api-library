@@ -19,6 +19,12 @@ type Service interface {
 	CompleteStep(ctx context.Context, uid string, req CompleteStepRequest) (*CompleteStepResponse, error)
 	// Reset drops all of the user's quest progress (admin only; the route requires the admin role).
 	Reset(ctx context.Context, uid string) error
+
+	// Admin panel (see admin.go): any user's progress, by uid.
+	AdminCatalog() *Catalog
+	AdminGet(ctx context.Context, uid string) (*AdminUserQuests, error)
+	AdminSetProgress(ctx context.Context, uid string, req SetProgressRequest) (*AdminProgress, error)
+	AdminResetQuest(ctx context.Context, uid, questID string) (bool, error)
 }
 
 type service struct {

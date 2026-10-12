@@ -5,6 +5,7 @@ import (
 	"api-library/internal/app"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/quest"
 	"fmt"
 
 	"github.com/gofiber/fiber/v3"
@@ -70,6 +71,22 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 		u := auth.MustGetUser(c)
 		return c.JSON(fiber.Map{"uid": u.UserID, "provider": u.SignInProvider})
 	})
+
+	mountAdminQuestRoutes(admin, container.QuestHdl)
+}
+
+// mountAdminQuestRoutes: view, edit and reset any user's quest progress by uid (panel page "Quests").
+// The router must already demand the admin role.
+func mountAdminQuestRoutes(admin fiber.Router, h *quest.Handler) {
+	if h == nil {
+		return
+	}
+	q := admin.Group("/quests")
+	q.Get("/catalog", h.AdminCatalog)
+	q.Get("/progress", h.AdminGet)
+	q.Put("/progress", h.AdminSet)
+	q.Post("/progress/reset", h.AdminResetQuest)
+	q.Post("/reset", h.AdminResetUser)
 }
 
 func setupQuestRoutes(router fiber.Router, container *app.FirebaseContainer) {

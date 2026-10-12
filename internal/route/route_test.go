@@ -9,6 +9,7 @@ import (
 	"api-library/internal/app"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/quest"
 	"api-library/internal/user"
 	"api-library/pkg/session"
 
@@ -181,5 +182,30 @@ func TestAdminRegisterFollowsItsSwitch(t *testing.T) {
 				t.Fatalf("/admin/me got %d want %d (the gate must still apply)", me.StatusCode, fiber.StatusUnauthorized)
 			}
 		})
+	}
+}
+
+// The quest admin routes sit under the /admin group's gate, so without a token they answer 401, and a missing
+// handler (quests off) mounts nothing.
+func TestAdminQuestRoutesStayBehindTheGate(t *testing.T) {
+	fiberApp := fiber.New()
+	gate := fiberApp.Group("/api/v99/admin", func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusUnauthorized) })
+	mountAdminQuestRoutes(gate, quest.NewHandler(nil))
+	mountAdminQuestRoutes(gate, nil) // no quest handler: must not panic
+
+	for _, tc := range []struct{ method, path string }{
+		{"GET", "/api/v99/admin/quests/catalog"},
+		{"GET", "/api/v99/admin/quests/progress?uid=u"},
+		{"PUT", "/api/v99/admin/quests/progress"},
+		{"POST", "/api/v99/admin/quests/progress/reset"},
+		{"POST", "/api/v99/admin/quests/reset"},
+	} {
+		res, err := fiberApp.Test(httptest.NewRequest(tc.method, tc.path, nil))
+		if err != nil {
+			t.Fatalf("app.Test: %v", err)
+		}
+		if res.StatusCode != fiber.StatusUnauthorized {
+			t.Fatalf("%s %s got %d want 401", tc.method, tc.path, res.StatusCode)
+		}
 	}
 }
