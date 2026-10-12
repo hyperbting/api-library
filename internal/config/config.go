@@ -30,7 +30,21 @@ type FirebaseConfig struct {
 	UseMessage          bool   `mapstructure:"use_message"`           // 是否初始化 Message Client
 }
 
+// AdminConfig controls the embedded admin panel. Everything is off unless Enabled is set (env ADMIN_ENABLED),
+// so the public service can run the same image with the panel and its routes switched off.
+type AdminConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	// Sign-in methods the panel offers and the admin routes accept. Google is off by default.
+	LoginGoogle bool `mapstructure:"login_google"`
+	LoginEmail  bool `mapstructure:"login_email"`
+	// Firebase web app config the panel loads at runtime (public values, not secrets).
+	WebAPIKey     string `mapstructure:"web_api_key"`
+	WebAuthDomain string `mapstructure:"web_auth_domain"`
+	WebAppID      string `mapstructure:"web_app_id"`
+}
+
 type AppConfig struct {
+	Admin      AdminConfig                 `mapstructure:"admin"`
 	App        AppDetail                   `mapstructure:"app"`
 	Database   *infrastructure.DBConfig    `mapstructure:"database"`
 	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`

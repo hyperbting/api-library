@@ -6,7 +6,17 @@ app:
   version: "v99"
   register_enabled: true # enable the email/password registration route
 
-# Firebase 
+# Admin panel (embedded Vue app + admin API). Same image, switched per service by env:
+# ADMIN_ENABLED, ADMIN_LOGIN_GOOGLE, ADMIN_LOGIN_EMAIL, ADMIN_WEB_API_KEY, ADMIN_WEB_AUTH_DOMAIN, ADMIN_WEB_APP_ID
+admin:
+  enabled: false
+  login_google: false # Firebase Google sign-in on the panel (off by default)
+  login_email: true   # Firebase email/password sign-in on the panel
+  web_api_key: ""     # Firebase Web app config (public values)
+  web_auth_domain: ""
+  web_app_id: ""
+
+# Firebase
 firebase:
   enabled: true
   project_id: "additive-idle-simulation"

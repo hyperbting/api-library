@@ -154,3 +154,33 @@ app:
 		t.Errorf("Expected nil config on error, got %+v", cfg)
 	}
 }
+
+func TestLoadConfig_AdminEnvOverrides(t *testing.T) {
+	dir := t.TempDir()
+	createTempConfigFile(t, dir, "config.yaml", "admin:\n  enabled: false\n  login_google: false\n  login_email: true\n  web_api_key: \"\"\n")
+	origWd, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(origWd)
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Admin.Enabled || cfg.Admin.LoginGoogle || !cfg.Admin.LoginEmail {
+		t.Fatalf("defaults: %+v", cfg.Admin)
+	}
+
+	t.Setenv("ADMIN_ENABLED", "true")
+	t.Setenv("ADMIN_LOGIN_GOOGLE", "true")
+	t.Setenv("ADMIN_LOGIN_EMAIL", "false")
+	t.Setenv("ADMIN_WEB_API_KEY", "key")
+	cfg, err = config.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Admin.Enabled || !cfg.Admin.LoginGoogle || cfg.Admin.LoginEmail || cfg.Admin.WebAPIKey != "key" {
+		t.Fatalf("env overrides: %+v", cfg.Admin)
+	}
+}
