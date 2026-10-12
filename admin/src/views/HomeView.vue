@@ -19,10 +19,11 @@ async function logout() {
       <template #title>Admin</template>
       <template #subtitle>{{ session.user?.email }}</template>
       <template #content>
-        <p>Signed in as an admin. Admin tools go here.</p>
+        <p>Signed in as an admin.</p>
       </template>
       <template #footer>
         <div class="actions">
+          <Button label="Quests" icon="pi pi-list-check" @click="router.push({ name: 'quests' })" />
           <Button v-if="session.hasPassword" label="Change password" severity="secondary" @click="router.push({ name: 'password' })" />
           <Button label="Sign out" severity="secondary" @click="logout" />
         </div>
