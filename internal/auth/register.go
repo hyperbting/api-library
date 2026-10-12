@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"api-library/pkg/validator"
@@ -35,6 +36,10 @@ func NewFirebaseEmailUserCreator(client *fbauth.Client) EmailUserCreator {
 			return "", ErrRegistrationEmailTaken
 		case fbauth.IsInvalidEmail(err):
 			return "", ErrRegistrationInvalid
+		case fbauth.IsInsufficientPermission(err):
+			// Not the caller's fault: the Cloud Run runtime service account lacks firebaseauth.users.create.
+			return "", fmt.Errorf("the runtime service account cannot create Firebase Auth users "+
+				"(grant it roles/firebaseauth.admin): %w", err)
 		default:
 			return "", err
 		}
