@@ -25,6 +25,7 @@ call gcloud run deploy %SERVICE_NAME% ^
     --min-instances=0 ^
     --max-instances=10 ^
     --cpu=1 ^
-    --memory=256Mi
+    --memory=256Mi ^
+    --update-env-vars=ADMIN_ENABLED=false,ADMIN_PANEL_ENABLED=false
 
 echo === Deploy Completed！ ===

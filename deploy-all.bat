@@ -1,6 +1,7 @@
 @echo off
-rem One command: build the image once, deploy api-library (public, admin panel off), then deploy
-rem api-library-admin (same image, ADMIN_ENABLED=true). Set the ADMIN_WEB_* values first, see deploy-admin.bat.
+rem One command: build the image once, deploy api-library (public: game API only, no /admin routes, no panel),
+rem then api-library-admin (same image: game API + /admin routes; panel only with ADMIN_PANEL_ENABLED=true).
+rem See deploy-admin.bat for the ADMIN_* values.
 
 echo === 1/2 Build + deploy api-library ===
 call deploy.bat
@@ -9,8 +10,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
-rem Make sure the public service keeps the panel off, whatever it had before.
-call gcloud run services update api-library --project=additive-idle-simulation --region=us-central1 --update-env-vars=ADMIN_ENABLED=false
+rem deploy.bat already sets ADMIN_ENABLED=false and ADMIN_PANEL_ENABLED=false on the public service.
 
 echo === 2/2 Deploy api-library-admin (ADMIN_ENABLED=true) ===
 call deploy-admin.bat

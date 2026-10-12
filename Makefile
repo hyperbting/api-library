@@ -17,5 +17,14 @@ check: check-build vet
 test: check
 	go test -v ./...
 
+# Public API only: no /admin routes, no panel.
 deploy:
 	deploy.bat
+
+# Same image as a second service: game API + /admin routes. ADMIN_PANEL_ENABLED=true also serves the panel.
+# Run `make deploy` first (it pushes the image), or use deploy-all.
+deploy-admin:
+	deploy-admin.bat
+
+deploy-all:
+	deploy-all.bat
