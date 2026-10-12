@@ -22,7 +22,10 @@ async function logout() {
         <p>Signed in as an admin. Admin tools go here.</p>
       </template>
       <template #footer>
-        <Button label="Sign out" severity="secondary" @click="logout" />
+        <div class="actions">
+          <Button v-if="session.hasPassword" label="Change password" severity="secondary" @click="router.push({ name: 'password' })" />
+          <Button label="Sign out" severity="secondary" @click="logout" />
+        </div>
       </template>
     </Card>
   </main>
@@ -30,4 +33,5 @@ async function logout() {
 
 <style scoped>
 .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 </style>

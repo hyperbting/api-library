@@ -40,6 +40,10 @@ async function run(fn: () => Promise<boolean>) {
           <Button type="submit" label="Sign in" :loading="busy" fluid />
         </form>
 
+        <p v-if="session.config?.register.email && session.config?.login.email" class="register">
+          No account yet? <router-link :to="{ name: 'register' }">Create an account</router-link>
+        </p>
+
         <Button
           v-if="session.config?.login.google"
           class="google"
@@ -60,4 +64,5 @@ async function run(fn: () => Promise<boolean>) {
 .card { width: 100%; max-width: 380px; }
 .form { display: grid; gap: 12px; margin-top: 12px; }
 .google { margin-top: 12px; }
+.register { margin: 12px 0 0; font-size: 0.9rem; }
 </style>
