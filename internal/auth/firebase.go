@@ -32,7 +32,7 @@ func (p *FirebaseAuthProvider) Middleware() fiber.Handler {
 		}
 
 		// 將 Firebase UID 放入 Context (same key as CustomSessionProvider so GetUser/MustGetUser work in both modes)
-		c.Locals(userCtxKey, UserContext{UserID: token.UID})
+		c.Locals(userCtxKey, UserContext{UserID: token.UID, SignInProvider: token.Firebase.SignInProvider})
 		return c.Next()
 	}
 }

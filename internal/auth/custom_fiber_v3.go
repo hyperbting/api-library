@@ -63,7 +63,9 @@ func (p *CustomSessionProvider) Middleware() fiber.Handler {
 }
 
 type UserContext struct {
-	UserID   string
+	UserID string
+	// SignInProvider is the Firebase sign-in method of the ID token ("password", "google.com", "anonymous", ...). Empty for custom session tokens.
+	SignInProvider string
 	Roles    []string            // keeps original order / serialization
 	rolesMap map[string]struct{} // internal O(1) set
 }
