@@ -40,6 +40,9 @@ type AdminConfig struct {
 	// env ADMIN_PANEL_ENABLED: serve the embedded panel under /admin. Only takes effect with Enabled, the panel
 	// has nothing to talk to without the admin routes.
 	PanelEnabled bool `mapstructure:"panel_enabled"`
+	// env ADMIN_REGISTER_EMAIL: POST /api/<v>/admin/register (creates a Firebase Auth email/password account,
+	// no role) and a "create an account" link on the panel. Needs Enabled and LoginEmail. Off by default.
+	RegisterEmail bool `mapstructure:"register_email"`
 	// Sign-in methods the panel offers and the admin routes accept. Google is off by default.
 	LoginGoogle bool `mapstructure:"login_google"`
 	LoginEmail  bool `mapstructure:"login_email"`

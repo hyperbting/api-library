@@ -33,6 +33,10 @@ type PublicConfig struct {
 		ProjectID  string `json:"projectId"`
 		AppID      string `json:"appId"`
 	} `json:"firebase"`
+	// Register tells the panel to show its "create an account" link (the endpoint is mounted by the same flag).
+	Register struct {
+		Email bool `json:"email"`
+	} `json:"register"`
 	APIBase string `json:"apiBase"`
 }
 
@@ -41,6 +45,7 @@ func NewPublicConfig(cfg *config.AppConfig) PublicConfig {
 	var pc PublicConfig
 	pc.Login.Google = cfg.Admin.LoginGoogle
 	pc.Login.Email = cfg.Admin.LoginEmail
+	pc.Register.Email = cfg.Admin.RegisterEmail && cfg.Admin.LoginEmail
 	pc.Firebase.APIKey = cfg.Admin.WebAPIKey
 	pc.Firebase.AuthDomain = cfg.Admin.WebAuthDomain
 	pc.Firebase.AppID = cfg.Admin.WebAppID

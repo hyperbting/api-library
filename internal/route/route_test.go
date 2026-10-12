@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"api-library/internal/app"
+	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/user"
 	"api-library/pkg/session"
@@ -131,6 +132,53 @@ func TestAdminPanelFollowsItsOwnSwitch(t *testing.T) {
 			}
 			if res.StatusCode != fiber.StatusCreated {
 				t.Fatalf("register got %d want %d", res.StatusCode, fiber.StatusCreated)
+			}
+		})
+	}
+}
+
+// POST /admin/register exists only with ADMIN_REGISTER_EMAIL (and email sign-in), and is reachable without a
+// token even though the /admin group registered after it demands one. When it is not mounted the request falls
+// through to that group's token gate (401), so it is not reachable anonymously either way.
+func TestAdminRegisterFollowsItsSwitch(t *testing.T) {
+	create := func(context.Context, string, string) (string, error) { return "uid-1", nil }
+
+	for _, tc := range []struct {
+		name     string
+		admin    config.AdminConfig
+		creator  auth.EmailUserCreator
+		wantCode int
+	}{
+		{"off by default", config.AdminConfig{Enabled: true, LoginEmail: true}, create, fiber.StatusUnauthorized},
+		{"on", config.AdminConfig{Enabled: true, LoginEmail: true, RegisterEmail: true}, create, fiber.StatusCreated},
+		{"email sign-in is off", config.AdminConfig{Enabled: true, RegisterEmail: true}, create, fiber.StatusUnauthorized},
+		{"no creator", config.AdminConfig{Enabled: true, LoginEmail: true, RegisterEmail: true}, nil, fiber.StatusUnauthorized},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &config.AppConfig{App: config.AppDetail{Version: "v99"}, Admin: tc.admin}
+			fiberApp := fiber.New()
+			api := fiberApp.Group("/api/v99")
+			mountAdminRegister(api, cfg, tc.creator)
+			// What setupAdminRoutes does next: a token gate on everything else under /admin.
+			gate := api.Group("/admin", func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusUnauthorized) })
+			gate.Get("/me", func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
+
+			req := httptest.NewRequest("POST", "/api/v99/admin/register", strings.NewReader(`{"email":"ops@example.com","password":"password123"}`))
+			req.Header.Set("Content-Type", "application/json")
+			res, err := fiberApp.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test: %v", err)
+			}
+			if res.StatusCode != tc.wantCode {
+				t.Fatalf("register got %d want %d", res.StatusCode, tc.wantCode)
+			}
+
+			me, err := fiberApp.Test(httptest.NewRequest("GET", "/api/v99/admin/me", nil))
+			if err != nil {
+				t.Fatalf("app.Test: %v", err)
+			}
+			if me.StatusCode != fiber.StatusUnauthorized {
+				t.Fatalf("/admin/me got %d want %d (the gate must still apply)", me.StatusCode, fiber.StatusUnauthorized)
 			}
 		})
 	}

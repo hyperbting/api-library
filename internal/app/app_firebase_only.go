@@ -34,6 +34,9 @@ type FirebaseContainer struct {
 	SaveHdl   *save.Handler
 	RedeemHdl *redeem.Handler
 
+	// Creates Firebase Auth email/password users (the admin panel's sign-in accounts)
+	EmailUserCreator auth.EmailUserCreator
+
 	// Email/password login and register, stored in Firestore (nil when Firestore or the session config is missing)
 	UserHdl *user.Handler
 	//FirebaseAuth    *auth.Client
@@ -65,6 +68,7 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		return nil, fmt.Errorf("failed to init firebase auth provider: %w", err)
 	}
 	container.FirebaseAuthMw = authProvider.Middleware()
+	container.EmailUserCreator = auth.NewFirebaseEmailUserCreator(fbAuthClient)
 
 	// Firestore Database Service
 	if appCfg.Firebase.UseFirestore {

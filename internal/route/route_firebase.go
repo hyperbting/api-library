@@ -27,11 +27,23 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
 	// public service, which runs the same image.
 	if cfg.Admin.Enabled {
+		// Registered before the /admin group below: it is public (no token yet), the group's middleware is not.
+		mountAdminRegister(api, cfg, container.EmailUserCreator)
 		setupAdminRoutes(api, cfg, container)
 		if cfg.Admin.PanelEnabled {
 			adminui.Register(app, cfg)
 		}
 	}
+}
+
+// mountAdminRegister serves POST /admin/register when ADMIN_REGISTER_EMAIL is on (and email sign-in is, since the
+// account it creates can only sign in with email/password). It creates the sign-in account and nothing else:
+// the admin role is still set by hand on users/{uid}. Per-IP rate limited like the player register route.
+func mountAdminRegister(router fiber.Router, cfg *config.AppConfig, create auth.EmailUserCreator) {
+	if cfg == nil || create == nil || !cfg.Admin.RegisterEmail || !cfg.Admin.LoginEmail {
+		return
+	}
+	router.Post("/admin/register", authLimiter(5, false), auth.RegisterEmailHandler(create))
 }
 
 // setupAdminRoutes mounts the admin API. A request needs a Firebase ID token from an enabled sign-in method

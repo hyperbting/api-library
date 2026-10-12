@@ -77,6 +77,34 @@ func TestConfigJSON(t *testing.T) {
 	if pc.Firebase.ProjectID != "proj" || pc.Firebase.APIKey != "k" || pc.APIBase != "/api/v99" {
 		t.Fatalf("config: %+v", pc)
 	}
+	if pc.Register.Email {
+		t.Fatalf("register link must be off by default: %+v", pc.Register)
+	}
+}
+
+// The link shows only with ADMIN_REGISTER_EMAIL and email sign-in: the account can only sign in with email.
+func TestConfigJSONRegisterFlag(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		admin config.AdminConfig
+		want  bool
+	}{
+		{"flag and email sign-in", config.AdminConfig{LoginEmail: true, RegisterEmail: true}, true},
+		{"flag without email sign-in", config.AdminConfig{RegisterEmail: true}, false},
+		{"no flag", config.AdminConfig{LoginEmail: true}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			app := testApp(t, &config.AppConfig{Admin: tc.admin})
+			_, body, _ := get(t, app, "/admin/config.json")
+			var pc PublicConfig
+			if err := json.Unmarshal([]byte(body), &pc); err != nil {
+				t.Fatal(err)
+			}
+			if pc.Register.Email != tc.want {
+				t.Fatalf("register.email = %v want %v", pc.Register.Email, tc.want)
+			}
+		})
+	}
 }
 
 func TestDistEmbedCompiles(t *testing.T) {
