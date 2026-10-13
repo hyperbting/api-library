@@ -8,6 +8,15 @@ export default defineConfig({
   build: {
     outDir: '../internal/adminui/dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Keep the big libraries in their own files so they cache apart from the app code.
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/auth'],
+          primevue: ['primevue/config', '@primeuix/themes/aura'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

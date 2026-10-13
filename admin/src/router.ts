@@ -1,21 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from './views/LoginView.vue'
-import RegisterView from './views/RegisterView.vue'
-import PasswordView from './views/PasswordView.vue'
-import HomeView from './views/HomeView.vue'
-import QuestsView from './views/QuestsView.vue'
-import NewsView from './views/NewsView.vue'
 import { useSession } from './session'
 
 export const router = createRouter({
   history: createWebHistory('/admin/'),
   routes: [
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/login', name: 'login', component: LoginView },
-    { path: '/register', name: 'register', component: RegisterView },
-    { path: '/password', name: 'password', component: PasswordView },
-    { path: '/quests', name: 'quests', component: QuestsView },
-    { path: '/news', name: 'news', component: NewsView },
+    { path: '/', name: 'home', component: () => import('./views/HomeView.vue') },
+    { path: '/login', name: 'login', component: () => import('./views/LoginView.vue') },
+    { path: '/register', name: 'register', component: () => import('./views/RegisterView.vue') },
+    { path: '/password', name: 'password', component: () => import('./views/PasswordView.vue') },
+    { path: '/quests', name: 'quests', component: () => import('./views/QuestsView.vue') },
+    { path: '/news', name: 'news', component: () => import('./views/NewsView.vue') },
   ],
 })
 
