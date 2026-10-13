@@ -4,6 +4,7 @@ import RegisterView from './views/RegisterView.vue'
 import PasswordView from './views/PasswordView.vue'
 import HomeView from './views/HomeView.vue'
 import QuestsView from './views/QuestsView.vue'
+import NewsView from './views/NewsView.vue'
 import { useSession } from './session'
 
 export const router = createRouter({
@@ -14,6 +15,7 @@ export const router = createRouter({
     { path: '/register', name: 'register', component: RegisterView },
     { path: '/password', name: 'password', component: PasswordView },
     { path: '/quests', name: 'quests', component: QuestsView },
+    { path: '/news', name: 'news', component: NewsView },
   ],
 })
 

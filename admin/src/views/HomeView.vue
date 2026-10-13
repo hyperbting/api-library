@@ -24,6 +24,7 @@ async function logout() {
       <template #footer>
         <div class="actions">
           <Button label="Quests" icon="pi pi-list-check" @click="router.push({ name: 'quests' })" />
+          <Button label="News" icon="pi pi-megaphone" @click="router.push({ name: 'news' })" />
           <Button v-if="session.hasPassword" label="Change password" severity="secondary" @click="router.push({ name: 'password' })" />
           <Button label="Sign out" severity="secondary" @click="logout" />
         </div>
