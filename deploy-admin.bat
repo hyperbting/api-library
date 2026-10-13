@@ -1,6 +1,8 @@
 @echo off
 rem Deploys the same image as api-library as a second Cloud Run service: the game API plus the /admin routes
 rem (ADMIN_ENABLED=true). Run deploy.bat first (it builds and pushes the image), or use deploy-all.bat.
+rem This script never builds: it looks up the digest the ":latest" tag points at NOW and deploys that digest.
+rem (Deploying the bare tag can make Cloud Run re-serve the digest it resolved earlier, i.e. the old image.)
 rem
 rem Environment variables are MERGED into the service (--update-env-vars): only the ones you set in this shell are
 rem written, everything already on the service stays, so a new image keeps its settings. Unset = unchanged (and
@@ -21,6 +23,15 @@ set SERVICE_NAME=api-library-admin
 set RUNTIME_SA=api-runtime@%PROJECT_ID%.iam.gserviceaccount.com
 set IMAGE_TAG=%REGION%-docker.pkg.dev/%PROJECT_ID%/%REPO%/%IMAGE_NAME%:latest
 
+rem The image deploy.bat built last, as an immutable reference (never the moving :latest tag).
+set IMAGE_REF=
+for /f "delims=" %%D in ('gcloud artifacts docker images describe %IMAGE_TAG% --project=%PROJECT_ID% --format="value(image_summary.fully_qualified_digest)" 2^>nul') do set IMAGE_REF=%%D
+if "%IMAGE_REF%"=="" (
+    echo ERROR: no image found for %IMAGE_TAG%. Run deploy.bat first, so there is a build to deploy.
+    exit /b 1
+)
+echo Image to deploy: %IMAGE_REF%
+
 set ENV_VARS=ADMIN_ENABLED=true
 if not "%ADMIN_PANEL_ENABLED%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_PANEL_ENABLED=%ADMIN_PANEL_ENABLED%
 if not "%ADMIN_REGISTER_EMAIL%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_REGISTER_EMAIL=%ADMIN_REGISTER_EMAIL%
@@ -39,7 +50,7 @@ echo === Deploying %SERVICE_NAME% (game API + /admin routes) ===
 echo Env vars written (the rest stay as they are on the service): %ENV_VARS%
 call gcloud run deploy %SERVICE_NAME% ^
     --project=%PROJECT_ID% ^
-    --image=%IMAGE_TAG% ^
+    --image=%IMAGE_REF% ^
     --platform=managed ^
     --region=%REGION% ^
     --service-account=%RUNTIME_SA% ^
