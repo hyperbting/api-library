@@ -9,6 +9,7 @@ import (
 	"api-library/internal/app"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/news"
 	"api-library/internal/quest"
 	"api-library/internal/user"
 	"api-library/pkg/session"
@@ -199,6 +200,28 @@ func TestAdminQuestRoutesStayBehindTheGate(t *testing.T) {
 		{"PUT", "/api/v99/admin/quests/progress"},
 		{"POST", "/api/v99/admin/quests/progress/reset"},
 		{"POST", "/api/v99/admin/quests/reset"},
+	} {
+		res, err := fiberApp.Test(httptest.NewRequest(tc.method, tc.path, nil))
+		if err != nil {
+			t.Fatalf("app.Test: %v", err)
+		}
+		if res.StatusCode != fiber.StatusUnauthorized {
+			t.Fatalf("%s %s got %d want 401", tc.method, tc.path, res.StatusCode)
+		}
+	}
+}
+
+// The news admin routes sit under the /admin gate (401 without a token) and GET /news is mounted only with a handler.
+func TestAdminNewsRoutesStayBehindTheGate(t *testing.T) {
+	fiberApp := fiber.New()
+	gate := fiberApp.Group("/api/v99/admin", func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusUnauthorized) })
+	mountAdminNewsRoutes(gate, news.NewHandler(nil, nil))
+	mountAdminNewsRoutes(gate, nil) // no handler: must not panic
+
+	for _, tc := range []struct{ method, path string }{
+		{"GET", "/api/v99/admin/news"},
+		{"POST", "/api/v99/admin/news"},
+		{"POST", "/api/v99/admin/news/delete"},
 	} {
 		res, err := fiberApp.Test(httptest.NewRequest(tc.method, tc.path, nil))
 		if err != nil {

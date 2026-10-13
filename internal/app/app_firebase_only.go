@@ -4,6 +4,7 @@ import (
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/item"
+	"api-library/internal/news"
 	"api-library/internal/quest"
 	"api-library/internal/redeem"
 	"api-library/internal/save"
@@ -31,6 +32,7 @@ type FirebaseContainer struct {
 
 	// Game services (nil when Firestore is disabled)
 	QuestHdl  *quest.Handler
+	NewsHdl   *news.Handler
 	SaveHdl   *save.Handler
 	RedeemHdl *redeem.Handler
 
@@ -85,6 +87,8 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		questRepo := quest.NewFirestoreRepository(container.Firestore, catalog.Version)
 		container.QuestHdl = quest.NewHandler(quest.NewService(questRepo, catalog))
 		container.SaveHdl = save.NewHandler(save.NewService(save.NewFirestoreRepository(container.Firestore)))
+		// News: public items for everyone, dev items only for admin accounts (checked per request)
+		container.NewsHdl = news.NewHandler(news.NewService(news.NewFirestoreRepository(container.Firestore)), auth.FirestoreAdminChecker(container.Firestore))
 		// Item catalog (embedded, validated at boot like the quest table)
 		items, err := item.LoadCatalog()
 		if err != nil {

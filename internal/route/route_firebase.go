@@ -5,6 +5,7 @@ import (
 	"api-library/internal/app"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/news"
 	"api-library/internal/quest"
 	"fmt"
 
@@ -22,6 +23,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 
 	mountUserRoutes(api, container.UserHdl, cfg)
 	setupQuestRoutes(api, container)
+	setupNewsRoutes(api, container)
 	setupSaveRoutes(api, container)
 	setupRedeemRoutes(api, container)
 
@@ -73,6 +75,25 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 	})
 
 	mountAdminQuestRoutes(admin, container.QuestHdl)
+	mountAdminNewsRoutes(admin, container.NewsHdl)
+}
+
+// setupNewsRoutes: GET /news for any signed-in player (public items; the dev items too for an admin account).
+func setupNewsRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.NewsHdl == nil || container.Firestore == nil {
+		return
+	}
+	router.Get("/news", container.FirebaseAuthMw, container.NewsHdl.List)
+}
+
+// mountAdminNewsRoutes: the panel's News page. The router must already demand the admin role.
+func mountAdminNewsRoutes(admin fiber.Router, h *news.Handler) {
+	if h == nil {
+		return
+	}
+	admin.Get("/news", h.AdminList)
+	admin.Post("/news", h.AdminSave)
+	admin.Post("/news/delete", h.AdminDelete)
 }
 
 // mountAdminQuestRoutes: view, edit and reset any user's quest progress by uid (panel page "Quests").
