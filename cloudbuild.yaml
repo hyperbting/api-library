@@ -1,7 +1,23 @@
 # Builds the Cloud Run image from Dockerfile.GCPCloudRun (gcloud builds submit --tag cannot pick a Dockerfile).
-# Used by deploy.bat: gcloud builds submit --config cloudbuild.yaml --substitutions _IMAGE=<image>
+# Used by deploy.bat:
+#   gcloud builds submit --config cloudbuild.yaml --substitutions _IMAGE=<image>:latest,_COMMIT_IMAGE=<image>:<hash>,_COMMIT=<hash>
+# The image gets two tags (latest and the git hash) and the hash is stamped into the binary and the image label.
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "Dockerfile.GCPCloudRun", "-t", "${_IMAGE}", "."]
+    args:
+      - build
+      - -f
+      - Dockerfile.GCPCloudRun
+      - --build-arg
+      - COMMIT=${_COMMIT}
+      - -t
+      - ${_IMAGE}
+      - -t
+      - ${_COMMIT_IMAGE}
+      - .
+substitutions:
+  _COMMIT: dev
+  _COMMIT_IMAGE: us-central1-docker.pkg.dev/additive-idle-simulation/api/api-library:dev
 images:
   - "${_IMAGE}"
+  - "${_COMMIT_IMAGE}"

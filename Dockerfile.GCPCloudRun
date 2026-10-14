@@ -16,9 +16,13 @@ RUN go mod download
 COPY . .
 COPY --from=admin /src/internal/adminui/dist ./internal/adminui/dist
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/cloud-run ./internal/cmd/gcp_cloud_run
+# The short git hash of the build (cloudbuild.yaml passes it); "dev" when built by hand.
+ARG COMMIT=dev
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X api-library/internal/buildinfo.Commit=${COMMIT}" -o /app/cloud-run ./internal/cmd/gcp_cloud_run
 
 FROM alpine:latest
+ARG COMMIT=dev
+LABEL org.opencontainers.image.revision=${COMMIT}
 RUN apk update && apk add --no-cache ca-certificates tzdata
 #RUN rm -rf /var/cache/apk/*
 

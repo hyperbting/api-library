@@ -2,12 +2,14 @@ package route
 
 import (
 	"context"
+	"encoding/json"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"api-library/internal/app"
 	"api-library/internal/auth"
+	"api-library/internal/buildinfo"
 	"api-library/internal/config"
 	"api-library/internal/news"
 	"api-library/internal/quest"
@@ -257,5 +259,27 @@ func TestAdminSignInProvidersFollowTheSwitches(t *testing.T) {
 				t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
 			}
 		}
+	}
+}
+
+// /healthz says which commit the image was built from (stamped with -ldflags by the Cloud Run build).
+func TestHealthzReportsTheBuildCommit(t *testing.T) {
+	old := buildinfo.Commit
+	buildinfo.Commit = "ab12cd3-dirty"
+	defer func() { buildinfo.Commit = old }()
+
+	app := fiber.New()
+	app.Get("/healthz", healthz)
+	res, err := app.Test(httptest.NewRequest("GET", "/healthz", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var body struct{ Status, Commit string }
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != fiber.StatusOK || body.Status != "ok" || body.Commit != "ab12cd3-dirty" {
+		t.Fatalf("healthz: %d %+v", res.StatusCode, body)
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"api-library/internal/app"
+	"api-library/internal/buildinfo"
 	"api-library/internal/config"
 	"api-library/internal/route"
 	"context"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	log.Printf("[BOOT] build %s", buildinfo.Commit)
 
 	// load env from config.yaml then config.local.yaml
 	appCfgP, err := config.LoadConfig()

@@ -2,6 +2,7 @@ package route
 
 import (
 	"api-library/internal/app"
+	"api-library/internal/buildinfo"
 	"api-library/internal/config"
 	"api-library/internal/user"
 	"fmt"
@@ -13,11 +14,7 @@ import (
 )
 
 func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Container) {
-	app.Get("/healthz", func(c fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"status": "ok",
-		})
-	})
+	app.Get("/healthz", healthz)
 
 	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
 	api := app.Group(apiPath)
@@ -29,6 +26,14 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 	if cfg.FirebaseEnabled() && container.FirebaseContainer != nil {
 		RegisterFirebaseCloudFunctionRoutes(app, cfg, container.FirebaseContainer)
 	}
+}
+
+// healthz answers the liveness probe and says which commit the running image was built from.
+func healthz(c fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "ok",
+		"commit": buildinfo.Commit,
+	})
 }
 
 func setupUserRoutes(router fiber.Router, container *app.Container, cfg *config.AppConfig) {
