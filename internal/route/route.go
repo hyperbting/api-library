@@ -28,7 +28,8 @@ func RegisterRoutes(app *fiber.App, cfg *config.AppConfig, container *app.Contai
 	}
 }
 
-// healthz answers the liveness probe and says which commit the running image was built from.
+// healthz answers the liveness probe and says which commit the running image was built from. Served as /healthz
+// by the full server and as /version by RegisterFirebaseCloudFunctionRoutes (the Cloud Run entrypoint).
 func healthz(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "ok",

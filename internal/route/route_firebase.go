@@ -13,6 +13,9 @@ import (
 )
 
 func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, container *app.FirebaseContainer) {
+	// Which commit is running, readable over HTTP. Not /healthz: the Cloud Run service only mounts these routes.
+	app.Get("/version", healthz)
+
 	// container is nil when Firebase is disabled
 	if cfg == nil || container == nil {
 		return

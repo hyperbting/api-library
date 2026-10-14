@@ -283,3 +283,25 @@ func TestHealthzReportsTheBuildCommit(t *testing.T) {
 		t.Fatalf("healthz: %d %+v", res.StatusCode, body)
 	}
 }
+
+// The Cloud Run entrypoint mounts only the Firebase routes, so /version has to exist there, even with Firebase off.
+func TestVersionRouteOnTheCloudRunEntrypoint(t *testing.T) {
+	old := buildinfo.Commit
+	buildinfo.Commit = "ef56ab7"
+	defer func() { buildinfo.Commit = old }()
+
+	app := fiber.New()
+	RegisterFirebaseCloudFunctionRoutes(app, &config.AppConfig{App: config.AppDetail{Version: "v99"}}, nil)
+	res, err := app.Test(httptest.NewRequest("GET", "/version", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var body struct{ Status, Commit string }
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != fiber.StatusOK || body.Commit != "ef56ab7" {
+		t.Fatalf("version: %d %+v", res.StatusCode, body)
+	}
+}

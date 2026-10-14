@@ -8,7 +8,7 @@ set IMAGE_BASE=%REGION%-docker.pkg.dev/%PROJECT_ID%/%REPO%/%SERVICE_NAME%
 set IMAGE_TAG=%IMAGE_BASE%:latest
 
 rem The short git hash of what is built (+ "-dirty" when the tree has uncommitted changes), stamped into the binary
-rem (GET /healthz, the [BOOT] log line), the image label and a second image tag.
+rem (GET /version, the [BOOT] log line), the image label and a second image tag.
 set COMMIT=dev
 for /f %%H in ('git rev-parse --short HEAD 2^>nul') do set COMMIT=%%H
 for /f %%S in ('git status --porcelain 2^>nul') do set COMMIT=%COMMIT%-dirty
