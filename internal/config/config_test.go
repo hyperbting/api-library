@@ -2,8 +2,10 @@ package config_test
 
 import (
 	"api-library/internal/config"
+	"api-library/pkg/session"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -46,6 +48,66 @@ func TestLoadConfig_FromProjectRoot(t *testing.T) {
 	}
 
 	_ = cfg.DebugPrint()
+
+	// The committed config.yaml carries the public dev signing key: it is flagged until overridden.
+	if !cfg.SessionKeyUnsafe() {
+		t.Errorf("config.yaml's session key must be reported as unsafe")
+	}
+	t.Setenv("SESSION_SECRET_KEY", "an-operator-secret")
+	cfg, err = config.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.SessionJWT.SecretKey != "an-operator-secret" {
+		t.Errorf("SESSION_SECRET_KEY did not reach session.secret_key: %q", cfg.SessionJWT.SecretKey)
+	}
+	if cfg.SessionKeyUnsafe() {
+		t.Errorf("an overridden session key must not be reported as unsafe")
+	}
+}
+
+func TestSessionKeyUnsafe(t *testing.T) {
+	dev := &config.AppConfig{SessionJWT: &session.Config{SecretKey: config.DevSessionSecretKey}}
+	cases := map[string]struct {
+		cfg  *config.AppConfig
+		want bool
+	}{
+		"nil config":     {nil, false},
+		"no session":     {&config.AppConfig{}, false},
+		"dev key":        {dev, true},
+		"other key":      {&config.AppConfig{SessionJWT: &session.Config{SecretKey: "something-else"}}, false},
+		"dev key opt-in": {&config.AppConfig{App: config.AppDetail{AllowDevSessionKey: true}, SessionJWT: dev.SessionJWT}, false},
+	}
+	for name, tc := range cases {
+		if got := tc.cfg.SessionKeyUnsafe(); got != tc.want {
+			t.Errorf("%s: SessionKeyUnsafe = %v, want %v", name, got, tc.want)
+		}
+	}
+}
+
+func TestDebugPrint_MasksSecrets(t *testing.T) {
+	cfg := &config.AppConfig{
+		App:        config.AppDetail{Env: "production", Version: "v99"},
+		SessionJWT: &session.Config{SecretKey: "very-secret-signing-key", Issuer: "api-library"},
+		Admin:      config.AdminConfig{WebAPIKey: "web-api-key-value", WebAppID: "app-id-1"},
+		Firebase:   &config.FirebaseConfig{ProjectID: "my-project", CredentialsFilePath: "/etc/sa.json"},
+		Webhook:    &config.WebhookConfig{},
+	}
+	out := string(cfg.DebugPrint())
+	for _, leaked := range []string{"very-secret-signing-key", "web-api-key-value", "/etc/sa.json"} {
+		if strings.Contains(out, leaked) {
+			t.Errorf("DebugPrint leaked %q:\n%s", leaked, out)
+		}
+	}
+	for _, shown := range []string{"api-library", "my-project", "production", "app-id-1", "***"} {
+		if !strings.Contains(out, shown) {
+			t.Errorf("DebugPrint should still show %q:\n%s", shown, out)
+		}
+	}
+	// the config itself is untouched
+	if cfg.SessionJWT.SecretKey != "very-secret-signing-key" {
+		t.Errorf("DebugPrint modified the config")
+	}
 }
 
 // 建立暫存檔輔助函式

@@ -18,7 +18,14 @@ type AppDetail struct {
 	Version  string `mapstructure:"version"`
 	// RegisterEnabled toggles the email/password registration route. Absent means off.
 	RegisterEnabled bool `mapstructure:"register_enabled"`
+	// AllowDevSessionKey (env APP_ALLOW_DEV_SESSION_KEY) lets the email login run with the public development
+	// session key from config.yaml. For local runs only (config.local.yaml); never set it on a deployed service.
+	AllowDevSessionKey bool `mapstructure:"allow_dev_session_key"`
 }
+
+// DevSessionSecretKey is the signing key committed in config.yaml. It is public, so tokens signed with it are
+// forgeable; a deployed service must override it with SESSION_SECRET_KEY.
+const DevSessionSecretKey = "c2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtMzA4OQ"
 
 type FirebaseConfig struct {
 	Enabled             bool   `mapstructure:"enabled"`               // 是否啟用 Firebase 服務
@@ -70,11 +77,57 @@ type AppConfig struct {
 	Webhook *WebhookConfig       `mapstructure:"webhook"`
 }
 
-// DebugPrint 格式化印出 Config
+// secretKeyParts: a config key containing one of these (case-insensitive) has its value masked in DebugPrint.
+var secretKeyParts = []string{"secret", "pass", "token", "credential", "key"}
+
+func isSecretKey(k string) bool {
+	k = strings.ToLower(k)
+	for _, p := range secretKeyParts {
+		if strings.Contains(k, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// redact masks, in place, every non-empty string whose key looks like a secret. Empty values stay visible so a
+// missing secret can still be told apart from a set one.
+func redact(v any) any {
+	switch t := v.(type) {
+	case map[string]any:
+		for k, val := range t {
+			if s, ok := val.(string); ok && s != "" && isSecretKey(k) {
+				t[k] = "***"
+				continue
+			}
+			t[k] = redact(val)
+		}
+	case []any:
+		for i := range t {
+			t[i] = redact(t[i])
+		}
+	}
+	return v
+}
+
+// DebugPrint logs the Config as indented JSON with secrets masked (the log ends up in Cloud Logging) and
+// returns the same masked bytes.
 func (c *AppConfig) DebugPrint() []byte {
-	jsonBytes, _ := json.MarshalIndent(c, "", "  ")
+	raw, _ := json.Marshal(c)
+	var generic any
+	if err := json.Unmarshal(raw, &generic); err != nil {
+		log.Printf("appCfg: not printable: %v", err)
+		return nil
+	}
+	jsonBytes, _ := json.MarshalIndent(redact(generic), "", "  ")
 	log.Printf("appCfg\n%s\n", jsonBytes)
 	return jsonBytes
+}
+
+// SessionKeyUnsafe reports that the session section still holds the public development key and nothing opted in
+// to it (app.allow_dev_session_key). Services that sign email-player tokens must not start that path then.
+func (c *AppConfig) SessionKeyUnsafe() bool {
+	return c != nil && c.SessionJWT != nil && c.SessionJWT.SecretKey == DevSessionSecretKey && !c.App.AllowDevSessionKey
 }
 
 // FirebaseEnabled is nil-safe: a missing firebase section means disabled

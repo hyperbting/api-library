@@ -96,7 +96,10 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 		container.RedeemHdl = redeem.NewHandler(redeem.NewService(redeem.NewFirestoreRepository(container.Firestore), items))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
-		if appCfg.SessionJWT != nil {
+		if appCfg.SessionKeyUnsafe() {
+			// config.yaml's key is public: tokens signed with it are forgeable, so there is no email login.
+			log.Printf("[BOOT] email login is OFF: session.secret_key is the public development key; set SESSION_SECRET_KEY (local runs: app.allow_dev_session_key)")
+		} else if appCfg.SessionJWT != nil {
 			tokenMgr, err := session.NewTokenManager(appCfg.SessionJWT)
 			if err != nil {
 				return nil, fmt.Errorf("session token manager init failed: %w", err)
