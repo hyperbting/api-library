@@ -19,12 +19,12 @@ test: check
 
 # Public API only: no /admin routes, no panel.
 deploy:
-	deploy.bat
+	"$(CURDIR)/deploy.bat"
 
 # Same image as a second service: game API + /admin routes. ADMIN_PANEL_ENABLED=true also serves the panel.
 # Run `make deploy` first (it pushes the image), or use deploy-all.
 deploy-admin:
-	deploy-admin.bat
+	"$(CURDIR)/deploy-admin.bat"
 
 deploy-all:
-	deploy-all.bat
+	"$(CURDIR)/deploy-all.bat"
