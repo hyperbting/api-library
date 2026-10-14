@@ -1,12 +1,80 @@
 {
-  "version": 3,
-  "exportedAt": "2026-10-08T00:23:06.2071742Z",
+  "version": 5,
+  "exportedAt": "2026-10-14T06:14:28.2564327Z",
   "quests": [
+    {
+      "id": "tut_ch1_store",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "steps": [
+        {
+          "id": "earn_level",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.upgrade.ready",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "level_first",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.level",
+            "target": 2.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "earn_decor",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.ready",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "buy_decor",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "store.upgrade",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "level_to_5",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.level",
+            "target": 5.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "all_decor",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.retail.tier",
+            "target": 1.0
+          },
+          "rewards": []
+        }
+      ]
+    },
     {
       "id": "tut_prologue",
       "type": "Tutorial",
       "initial": true,
-      "followUp": null,
+      "followUp": "tut_ch1_store",
       "steps": [
         {
           "id": "hello",
