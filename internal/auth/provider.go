@@ -6,6 +6,9 @@ import "github.com/gofiber/fiber/v3"
 const (
 	ProviderPassword = "password"
 	ProviderGoogle   = "google.com"
+	// ProviderCustom is an ID token exchanged from a custom token minted with the Firebase Admin service account
+	// (signJwt). Tools/publish_build.py uses it to post news; there is no panel login for it.
+	ProviderCustom = "custom"
 )
 
 // RequireSignInProvider rejects (403) Firebase ID tokens that were not issued by one of the allowed

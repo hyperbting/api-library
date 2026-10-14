@@ -232,3 +232,30 @@ func TestAdminNewsRoutesStayBehindTheGate(t *testing.T) {
 		}
 	}
 }
+
+// The admin routes accept only the sign-in methods the switches name; a signed custom token needs its own switch.
+func TestAdminSignInProvidersFollowTheSwitches(t *testing.T) {
+	cases := []struct {
+		name string
+		cfg  config.AdminConfig
+		want []string
+	}{
+		{"nothing on", config.AdminConfig{}, nil},
+		{"email only", config.AdminConfig{LoginEmail: true}, []string{auth.ProviderPassword}},
+		{"email and google", config.AdminConfig{LoginEmail: true, LoginGoogle: true}, []string{auth.ProviderPassword, auth.ProviderGoogle}},
+		{"custom off by default", config.AdminConfig{LoginEmail: true}, []string{auth.ProviderPassword}},
+		{"custom on", config.AdminConfig{LoginEmail: true, AcceptCustomToken: true}, []string{auth.ProviderPassword, auth.ProviderCustom}},
+		{"custom alone", config.AdminConfig{AcceptCustomToken: true}, []string{auth.ProviderCustom}},
+	}
+	for _, c := range cases {
+		got := adminSignInProviders(c.cfg)
+		if len(got) != len(c.want) {
+			t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
+		}
+		for i := range got {
+			if got[i] != c.want[i] {
+				t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
+			}
+		}
+	}
+}

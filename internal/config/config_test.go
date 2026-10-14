@@ -157,7 +157,7 @@ app:
 
 func TestLoadConfig_AdminEnvOverrides(t *testing.T) {
 	dir := t.TempDir()
-	createTempConfigFile(t, dir, "config.yaml", "admin:\n  enabled: false\n  panel_enabled: false\n  register_email: false\n  login_google: false\n  login_email: true\n  web_api_key: \"\"\n")
+	createTempConfigFile(t, dir, "config.yaml", "admin:\n  enabled: false\n  panel_enabled: false\n  register_email: false\n  login_google: false\n  login_email: true\n  accept_custom_token: false\n  web_api_key: \"\"\n")
 	origWd, _ := os.Getwd()
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
@@ -168,7 +168,7 @@ func TestLoadConfig_AdminEnvOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Admin.Enabled || cfg.Admin.PanelEnabled || cfg.Admin.RegisterEmail || cfg.Admin.LoginGoogle || !cfg.Admin.LoginEmail {
+	if cfg.Admin.Enabled || cfg.Admin.PanelEnabled || cfg.Admin.RegisterEmail || cfg.Admin.LoginGoogle || cfg.Admin.AcceptCustomToken || !cfg.Admin.LoginEmail {
 		t.Fatalf("defaults: %+v", cfg.Admin)
 	}
 
@@ -177,12 +177,13 @@ func TestLoadConfig_AdminEnvOverrides(t *testing.T) {
 	t.Setenv("ADMIN_REGISTER_EMAIL", "true")
 	t.Setenv("ADMIN_LOGIN_GOOGLE", "true")
 	t.Setenv("ADMIN_LOGIN_EMAIL", "false")
+	t.Setenv("ADMIN_ACCEPT_CUSTOM_TOKEN", "true")
 	t.Setenv("ADMIN_WEB_API_KEY", "key")
 	cfg, err = config.LoadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.Admin.Enabled || !cfg.Admin.PanelEnabled || !cfg.Admin.RegisterEmail || !cfg.Admin.LoginGoogle || cfg.Admin.LoginEmail || cfg.Admin.WebAPIKey != "key" {
+	if !cfg.Admin.Enabled || !cfg.Admin.PanelEnabled || !cfg.Admin.RegisterEmail || !cfg.Admin.LoginGoogle || cfg.Admin.LoginEmail || !cfg.Admin.AcceptCustomToken || cfg.Admin.WebAPIKey != "key" {
 		t.Fatalf("env overrides: %+v", cfg.Admin)
 	}
 }

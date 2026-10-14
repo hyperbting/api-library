@@ -46,6 +46,11 @@ type AdminConfig struct {
 	// Sign-in methods the panel offers and the admin routes accept. Google is off by default.
 	LoginGoogle bool `mapstructure:"login_google"`
 	LoginEmail  bool `mapstructure:"login_email"`
+	// env ADMIN_ACCEPT_CUSTOM_TOKEN: the admin routes also accept an ID token that came from a Firebase custom
+	// token (sign_in_provider "custom"), for tools that sign one with the Firebase Admin service account (needs
+	// IAM roles/iam.serviceAccountTokenCreator on it). The uid still needs the admin role. Not a panel login
+	// method. Off by default.
+	AcceptCustomToken bool `mapstructure:"accept_custom_token"`
 	// Firebase web app config the panel loads at runtime (public values, not secrets).
 	WebAPIKey     string `mapstructure:"web_api_key"`
 	WebAuthDomain string `mapstructure:"web_auth_domain"`

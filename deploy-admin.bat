@@ -15,6 +15,8 @@ rem       or different shell cannot overwrite a good value. To replace one: set 
 rem   ADMIN_REGISTER_EMAIL=true    POST /api/<v>/admin/register (creates a sign-in account, no role) + panel link
 rem   ADMIN_LOGIN_GOOGLE=true      Google sign-in (off by default; applies to the /admin routes too)
 rem   ADMIN_LOGIN_EMAIL=false      email/password sign-in (on by default)
+rem   ADMIN_ACCEPT_CUSTOM_TOKEN=true  the /admin routes also accept an ID token from a custom token signed with the
+rem                                Firebase Admin service account (Tools/publish_build.py in the Unity repo). Off by default.
 set PROJECT_ID=additive-idle-simulation
 set REGION=us-central1
 set REPO=api
@@ -37,6 +39,7 @@ if not "%ADMIN_PANEL_ENABLED%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_PANEL_ENABLED=%
 if not "%ADMIN_REGISTER_EMAIL%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_REGISTER_EMAIL=%ADMIN_REGISTER_EMAIL%
 if not "%ADMIN_LOGIN_GOOGLE%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_LOGIN_GOOGLE=%ADMIN_LOGIN_GOOGLE%
 if not "%ADMIN_LOGIN_EMAIL%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_LOGIN_EMAIL=%ADMIN_LOGIN_EMAIL%
+if not "%ADMIN_ACCEPT_CUSTOM_TOKEN%"=="" set ENV_VARS=%ENV_VARS%,ADMIN_ACCEPT_CUSTOM_TOKEN=%ADMIN_ACCEPT_CUSTOM_TOKEN%
 
 rem What the service has now (empty on the first deploy, when the service does not exist yet).
 set CURRENT_ENV=%TEMP%\%SERVICE_NAME%-env.txt

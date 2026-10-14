@@ -49,23 +49,32 @@ func mountAdminRegister(router fiber.Router, cfg *config.AppConfig, create auth.
 	router.Post("/admin/register", authLimiter(5, false), auth.RegisterEmailHandler(create))
 }
 
+// adminSignInProviders is the list of Firebase sign-in methods the admin routes accept: email/password and Google
+// follow the panel's switches, and a custom-token session is accepted only with ADMIN_ACCEPT_CUSTOM_TOKEN.
+func adminSignInProviders(cfg config.AdminConfig) []string {
+	var providers []string
+	if cfg.LoginEmail {
+		providers = append(providers, auth.ProviderPassword)
+	}
+	if cfg.LoginGoogle {
+		providers = append(providers, auth.ProviderGoogle)
+	}
+	if cfg.AcceptCustomToken {
+		providers = append(providers, auth.ProviderCustom)
+	}
+	return providers
+}
+
 // setupAdminRoutes mounts the admin API. A request needs a Firebase ID token from an enabled sign-in method
-// (Google only when ADMIN_LOGIN_GOOGLE, email/password only when ADMIN_LOGIN_EMAIL) and the admin role.
+// (Google only when ADMIN_LOGIN_GOOGLE, email/password only when ADMIN_LOGIN_EMAIL, a signed custom token only when
+// ADMIN_ACCEPT_CUSTOM_TOKEN) and the admin role.
 func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app.FirebaseContainer) {
 	if container.Firestore == nil {
 		return
 	}
-	var providers []string
-	if cfg.Admin.LoginEmail {
-		providers = append(providers, auth.ProviderPassword)
-	}
-	if cfg.Admin.LoginGoogle {
-		providers = append(providers, auth.ProviderGoogle)
-	}
-
 	admin := router.Group("/admin",
 		container.FirebaseAuthMw,
-		auth.RequireSignInProvider(providers...),
+		auth.RequireSignInProvider(adminSignInProviders(cfg.Admin)...),
 		auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)),
 	)
 	// The panel calls this after sign-in to confirm the account is an admin.
