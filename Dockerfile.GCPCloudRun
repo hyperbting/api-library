@@ -6,7 +6,7 @@ RUN npm install --no-audit --no-fund
 COPY admin/ ./
 RUN mkdir -p /src/internal/adminui/dist && npm run build
 
-FROM golang:1.26-alpine AS builder
+FROM golang:1.26.9-alpine AS builder
 #RUN apk update && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app

@@ -14,7 +14,7 @@ services:
   # API Service
   # ---------------------------------------------------------------------------
   api:
-    image: golang:1.26-alpine
+    image: golang:1.26.9-alpine
     container_name: game_api
     restart: unless-stopped
     working_dir: /app
