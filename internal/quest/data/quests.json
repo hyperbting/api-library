@@ -1,7 +1,31 @@
 {
-  "version": 5,
-  "exportedAt": "2026-10-14T06:14:28.2564327Z",
+  "version": 6,
+  "exportedAt": "2026-10-15T03:34:59.8583016Z",
   "quests": [
+    {
+      "id": "tut_ch1_golden",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": "tut_ch1_store",
+      "steps": [
+        {
+          "id": "play_qte",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "qte.finished",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 15.0
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "tut_ch1_store",
       "type": "Tutorial",
@@ -66,7 +90,13 @@
             "key": "store.retail.tier",
             "target": 1.0
           },
-          "rewards": []
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 20.0
+            }
+          ]
         }
       ]
     },
@@ -74,7 +104,7 @@
       "id": "tut_prologue",
       "type": "Tutorial",
       "initial": true,
-      "followUp": "tut_ch1_store",
+      "followUp": "tut_ch1_golden",
       "steps": [
         {
           "id": "hello",
@@ -195,7 +225,13 @@
             "key": "place.Place_CornerConvenience",
             "target": 1.0
           },
-          "rewards": []
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 10.0
+            }
+          ]
         }
       ]
     }

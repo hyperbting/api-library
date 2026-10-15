@@ -65,3 +65,39 @@ func TestParseCatalogRejects(t *testing.T) {
 		})
 	}
 }
+
+// The shipped tutorial chain (decided 2026-10-15): prologue -> golden bubble -> store, and the free gems on the last
+// step of each: 10, 15, 20.
+func TestShippedTutorialChainAndGems(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	chain := []struct {
+		id       string
+		followUp string
+		gems     float64
+	}{
+		{"tut_prologue", "tut_ch1_golden", 10},
+		{"tut_ch1_golden", "tut_ch1_store", 15},
+		{"tut_ch1_store", "", 20},
+	}
+	for _, want := range chain {
+		d, ok := c.Get(want.id)
+		if !ok {
+			t.Fatalf("quest %s missing", want.id)
+		}
+		if d.FollowUp != want.followUp {
+			t.Errorf("%s followUp = %q, want %q", want.id, d.FollowUp, want.followUp)
+		}
+		last := d.Steps[len(d.Steps)-1]
+		if got := last.GemReward(); got != want.gems {
+			t.Errorf("%s last step %s pays %v gems, want %v", want.id, last.ID, got, want.gems)
+		}
+		for _, s := range d.Steps[:len(d.Steps)-1] {
+			if s.GemReward() != 0 {
+				t.Errorf("%s step %s pays gems before the last step", want.id, s.ID)
+			}
+		}
+	}
+}
