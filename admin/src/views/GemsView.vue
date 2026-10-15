@@ -44,8 +44,8 @@ const ITEMS = [
 ]
 
 const ERRORS: Record<string, string> = {
-  empty_gift: 'Nothing to gift: enter gems or pick an item.',
-  invalid_gift: 'The server refused the gift (too many gems or an unknown item).',
+  empty_gift: 'Nothing to gift: enter gold bars or pick an item.',
+  invalid_gift: 'The server refused the gift (too many gold bars or an unknown item).',
 }
 
 const session = useSession()
@@ -107,7 +107,7 @@ onMounted(loadOrders)
 async function sendGift() {
   if (!overview.value) return
   const items = gift.itemId ? [{ itemId: gift.itemId, count: Math.max(1, gift.itemCount) }] : []
-  const what = [gift.gems > 0 ? `${gift.gems} gems` : '', ...items.map((i) => `${i.count} x ${i.itemId}`)].filter(Boolean).join(' + ')
+  const what = [gift.gems > 0 ? `${gift.gems} gold bars` : '', ...items.map((i) => `${i.count} x ${i.itemId}`)].filter(Boolean).join(' + ')
   if (!what) {
     error.value = ERRORS.empty_gift
     return
@@ -150,7 +150,7 @@ function when(iso?: string): string {
 }
 
 function rewardText(g: GrantRow): string {
-  return g.rewards.map((r) => (r.type === 'Unlock' ? `Unlock ${r.key}` : `${r.amount} ${r.type}`)).join(', ')
+  return g.rewards.map((r) => (r.type === 'Unlock' ? `Unlock ${r.key}` : `${r.amount} ${r.type === 'Gem' ? 'gold bars' : r.type}`)).join(', ')
 }
 
 function minutes(s: number): string {
@@ -162,15 +162,17 @@ const sourceSeverity: Record<string, 'info' | 'success' | 'warn' | 'secondary'> 
   redeem: 'info',
   admin: 'warn',
   gems: 'secondary',
+  ads: 'success',
+  quest: 'info',
 }
 </script>
 
 <template>
   <main class="wrap">
     <Card>
-      <template #title>Gems</template>
+      <template #title>Gold bars</template>
       <template #subtitle>
-        A player's gem balance, spends and grants by uid, a gift, and the newest store orders. A gift is a grant like
+        A player's gold bar balance, spends and grants by uid, a gift, and the newest store orders. A gift is a grant like
         any other: it shows in the player's history and is credited on their next read.
       </template>
       <template #content>
@@ -184,11 +186,11 @@ const sourceSeverity: Record<string, 'info' | 'success' | 'warn' | 'secondary'> 
 
         <template v-if="overview">
           <Message v-if="!overview.hasRecords" severity="warn" :closable="false">
-            This uid has no gem or grant records. Check that it is spelled right before gifting.
+            This uid has no gold bar or grant records. Check that it is spelled right before gifting.
           </Message>
 
           <div class="stats">
-            <div><span class="k">Balance</span><span class="v">{{ overview.state.balance }} gems</span></div>
+            <div><span class="k">Balance</span><span class="v">{{ overview.state.balance }} gold bars</span></div>
             <div><span class="k">Warp hours today</span><span class="v">{{ overview.state.warpHoursUsed }} used, {{ overview.state.warpHoursLeft }} left</span></div>
             <div><span class="k">x2 boost left</span><span class="v">{{ minutes(overview.state.boostSeconds) }}</span></div>
             <div><span class="k">Allowance resets</span><span class="v">{{ when(overview.state.warpResetsAt) }}</span></div>
@@ -196,7 +198,7 @@ const sourceSeverity: Record<string, 'info' | 'success' | 'warn' | 'secondary'> 
 
           <h3>Gift</h3>
           <div class="form">
-            <label>Gems <InputNumber v-model="gift.gems" :min="0" :max="100000" show-buttons fluid /></label>
+            <label>Gold bars <InputNumber v-model="gift.gems" :min="0" :max="100000" show-buttons fluid /></label>
             <label>Item <Select v-model="gift.itemId" :options="ITEMS" option-label="label" option-value="value" fluid /></label>
             <label v-if="gift.itemId">Count <InputNumber v-model="gift.itemCount" :min="1" :max="100" show-buttons fluid /></label>
             <label class="wide">Note (shown in the grant history) <InputText v-model="gift.note" maxlength="120" placeholder="why" fluid /></label>
@@ -224,7 +226,7 @@ const sourceSeverity: Record<string, 'info' | 'success' | 'warn' | 'secondary'> 
           <p v-if="!overview.grants.length" class="empty">No grants.</p>
           <div v-else class="scroll">
             <table class="rows">
-              <thead><tr><th>When</th><th>Source</th><th>Rewards</th><th>Gems</th><th>Reference</th></tr></thead>
+              <thead><tr><th>When</th><th>Source</th><th>Rewards</th><th>Gold bars</th><th>Reference</th></tr></thead>
               <tbody>
                 <tr v-for="g in overview.grants" :key="g.id">
                   <td class="sub">{{ when(g.createdAt) }}</td>
