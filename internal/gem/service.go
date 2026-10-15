@@ -41,13 +41,15 @@ func (s *service) state(d *Doc, now time.Time) State {
 	if left < 0 {
 		left = 0
 	}
+	resetAt := NextReset(now)
 	return State{
-		Balance:       d.Balance,
-		WarpHoursUsed: used,
-		WarpHoursLeft: left,
-		WarpResetsAt:  NextReset(now),
-		BoostSeconds:  d.BoostSeconds,
-		ServerNowMs:   now.UnixMilli(),
+		Balance:             d.Balance,
+		WarpHoursUsed:       used,
+		WarpHoursLeft:       left,
+		WarpResetsAt:        resetAt,
+		WarpResetsInSeconds: int64(math.Ceil(resetAt.Sub(now).Seconds())),
+		BoostSeconds:        d.BoostSeconds,
+		ServerNowMs:         now.UnixMilli(),
 	}
 }
 

@@ -26,7 +26,8 @@ const (
 	// MaxWarpHoursPerDay is the payout hours a player may buy per day (GDD 5.2.1). With the x2 boost running a
 	// warp counts double against it.
 	MaxWarpHoursPerDay = 8.0
-	// ResetHourUTC is when the daily allowance starts again (assumed midnight UTC, GDD 5.2.1 TBD).
+	// ResetHourUTC is when the daily allowance starts again: midnight UTC (decided 2026-10-15). The clients show
+	// the countdown from State.WarpResetsInSeconds.
 	ResetHourUTC = 0
 
 	// MaxBoostSeconds bounds the stored boost, so a stack of purchases cannot grow without limit.
@@ -183,8 +184,11 @@ type State struct {
 	WarpHoursUsed float64   `json:"warpHoursUsed"`
 	WarpHoursLeft float64   `json:"warpHoursLeft"`
 	WarpResetsAt  time.Time `json:"warpResetsAt"`
-	BoostSeconds  int64     `json:"boostSeconds"`
-	ServerNowMs   int64     `json:"serverNowMs"`
+	// Seconds until the allowance resets, on the server clock: the client counts this down from the moment it
+	// received it and does not trust its own clock.
+	WarpResetsInSeconds int64 `json:"warpResetsInSeconds"`
+	BoostSeconds        int64 `json:"boostSeconds"`
+	ServerNowMs         int64 `json:"serverNowMs"`
 }
 
 // POST /api/{version}/gems/spend

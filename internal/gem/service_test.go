@@ -322,3 +322,20 @@ func TestDayKeyAndNextReset(t *testing.T) {
 		t.Errorf("NextReset = %v", got)
 	}
 }
+
+func TestStateGivesTheResetCountdown(t *testing.T) {
+	f := newFixture()
+	// 12:00 UTC: twelve hours to the next midnight.
+	if got := f.state(t, "u1").WarpResetsInSeconds; got != 12*3600 {
+		t.Errorf("countdown at noon = %d, want %d", got, 12*3600)
+	}
+	f.now = time.Date(2026, 10, 15, 23, 59, 30, 0, time.UTC)
+	if got := f.state(t, "u1").WarpResetsInSeconds; got != 30 {
+		t.Errorf("countdown at 23:59:30 = %d, want 30", got)
+	}
+	// Exactly at midnight a new day has started: a full day to go, never zero.
+	f.now = time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC)
+	if got := f.state(t, "u1").WarpResetsInSeconds; got != 24*3600 {
+		t.Errorf("countdown at midnight = %d, want %d", got, 24*3600)
+	}
+}
