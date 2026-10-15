@@ -3,15 +3,54 @@ package quest
 import (
 	"context"
 	"testing"
+
+	"api-library/internal/grant"
 )
 
 // memRepo mimics the Firestore repository: Update works on a copy and keeps it only when fn returns true.
 type memRepo struct {
 	docs   map[string]*QuestsDoc
+	grants map[string]*grant.Doc
 	writes int
+	// failGrantWrite makes UpdateWithGrants fail after fn ran, as a transaction that does not commit.
+	failGrantWrite bool
 }
 
-func newMemRepo() *memRepo { return &memRepo{docs: map[string]*QuestsDoc{}} }
+func newMemRepo() *memRepo {
+	return &memRepo{docs: map[string]*QuestsDoc{}, grants: map[string]*grant.Doc{}}
+}
+
+func (r *memRepo) UpdateWithGrants(_ context.Context, uid string, fn func(*QuestsDoc, *grant.Doc) (bool, bool, error)) error {
+	doc := clone(r.docs[uid])
+	if doc == nil {
+		doc = NewQuestsDoc(0)
+	}
+	grants := grant.NewDoc()
+	if g := r.grants[uid]; g != nil {
+		c := *g
+		c.Grants = map[string]*grant.Grant{}
+		for k, v := range g.Grants {
+			gv := *v
+			c.Grants[k] = &gv
+		}
+		grants = &c
+	}
+	writeQuests, writeGrants, err := fn(doc, grants)
+	if err != nil {
+		return err
+	}
+	if r.failGrantWrite {
+		return context.DeadlineExceeded
+	}
+	if writeQuests {
+		r.docs[uid] = doc
+		r.writes++
+	}
+	if writeGrants {
+		r.grants[uid] = grants
+	}
+	return nil
+}
 
 func (r *memRepo) Get(_ context.Context, uid string) (*QuestsDoc, error) {
 	return clone(r.docs[uid]), nil

@@ -36,6 +36,9 @@ const (
 	RewardCash   RewardType = "Cash"
 	RewardPull   RewardType = "Pull"
 	RewardUnlock RewardType = "Unlock"
+	// RewardGem is paid by the server only: the step writes a grant (ID "quest:<questId>:<stepId>") that the
+	// gem service credits to the balance. It is also listed in the response's Granted so the client can show it.
+	RewardGem RewardType = "Gem"
 )
 
 // Progress is one quest's server-owned state. The JSON form is the API shape

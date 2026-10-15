@@ -2,8 +2,11 @@ package quest
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"time"
+
+	"api-library/internal/grant"
 )
 
 // Error codes returned in CompleteStepResponse.ErrorCode (HTTP 200, accepted=false).
@@ -74,24 +77,46 @@ func (s *service) CompleteStep(ctx context.Context, uid string, req CompleteStep
 	}
 
 	var res *CompleteStepResponse
-	err := s.repo.Update(ctx, uid, func(doc *QuestsDoc) (bool, error) {
-		// fn may be retried by the transaction, so build the response from scratch each time.
-		var write bool
-		var err error
-		res, write, err = s.apply(doc, def, req)
-		if write {
-			doc.CatalogVersion = s.catalog.Version
-			doc.UpdatedAt = s.now()
-		}
-		return write, err
-	})
+	var err error
+	// A step that pays gems also writes a grant, in the same transaction; any other step touches the quest
+	// document only (no extra read).
+	if req.StepIndex >= 0 && req.StepIndex < len(def.Steps) && def.Steps[req.StepIndex].GemReward() > 0 {
+		err = s.repo.UpdateWithGrants(ctx, uid, func(doc *QuestsDoc, grants *grant.Doc) (bool, bool, error) {
+			var write, wroteGrant bool
+			var err error
+			res, write, wroteGrant, err = s.apply(doc, grants, def, req)
+			if write {
+				doc.CatalogVersion = s.catalog.Version
+				doc.UpdatedAt = s.now()
+			}
+			return write, wroteGrant, err
+		})
+	} else {
+		err = s.repo.Update(ctx, uid, func(doc *QuestsDoc) (bool, error) {
+			// fn may be retried by the transaction, so build the response from scratch each time.
+			var write bool
+			var err error
+			res, write, _, err = s.apply(doc, nil, def, req)
+			if write {
+				doc.CatalogVersion = s.catalog.Version
+				doc.UpdatedAt = s.now()
+			}
+			return write, err
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (s *service) apply(doc *QuestsDoc, def *Definition, req CompleteStepRequest) (*CompleteStepResponse, bool, error) {
+// GemGrantID is the grant a step's Gem reward is stored as. It does not depend on the quest's progress, so a
+// quest that an admin reset or that is replayed never pays its gems a second time.
+func GemGrantID(questID, stepID string) string { return "quest:" + questID + ":" + stepID }
+
+// apply runs one step against the stored state. grants is only given for a step that pays gems; wroteGrant
+// reports that the grants document changed.
+func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req CompleteStepRequest) (res *CompleteStepResponse, write, wroteGrant bool, err error) {
 	now := s.now()
 
 	// Rejections never write; a quest created here is only stored if the step is accepted.
@@ -99,31 +124,62 @@ func (s *service) apply(doc *QuestsDoc, def *Definition, req CompleteStepRequest
 	if p == nil {
 		completed := func(id string) bool { q := doc.Quests[id]; return q != nil && q.Completed }
 		if !s.catalog.IsUnlockedBy(def.ID, completed) {
-			return reject(CodeQuestLocked, nil), false, nil
+			return reject(CodeQuestLocked, nil), false, false, nil
 		}
 		p = &Progress{QuestID: def.ID, StartedAt: now, UpdatedAt: now}
 		doc.Quests[def.ID] = p
 	}
 
 	if req.StepIndex < 0 || req.StepIndex >= len(def.Steps) || def.Steps[req.StepIndex].ID != req.StepID {
-		return reject(CodeStepMismatch, p), false, nil
+		return reject(CodeStepMismatch, p), false, false, nil
 	}
 
 	if p.HasCompletedStep(req.StepID) {
-		return accept(p, nil, nil), false, nil
+		return accept(p, nil, nil), false, false, nil
 	}
 
 	if p.Completed || req.StepIndex != p.StepIndex {
-		return reject(CodeStepMismatch, p), false, nil
+		return reject(CodeStepMismatch, p), false, false, nil
 	}
 
 	step := def.Steps[req.StepIndex]
 	p.CompletedSteps = append(p.CompletedSteps, step.ID)
 	p.UpdatedAt = now
 	granted := make([]GrantedReward, 0, len(step.Rewards))
+	var gemRewards []grant.Reward
 	for _, r := range step.Rewards {
-		// TODO: credit the wallet (users/{uid}/private/wallet) once the server-side economy exists.
+		// Cash, Pull and Unlock are applied by the client from this list. Gems are the server's: they are
+		// stored as a grant below, and listed here only when this call paid them.
+		if r.Type == RewardGem {
+			gemRewards = append(gemRewards, grant.Reward{Type: grant.RewardGem, Key: r.Key, Amount: r.Amount})
+			continue
+		}
 		granted = append(granted, GrantedReward(r))
+	}
+	if len(gemRewards) > 0 {
+		if grants == nil {
+			return nil, false, false, errors.New("quest: a step with gems was applied without the grants document")
+		}
+		// Already paid (the quest was reset and replayed): the grant is kept, nothing is added again.
+		added, err := grants.Add(grant.Grant{
+			ID:        GemGrantID(def.ID, step.ID),
+			Source:    grant.SourceQuest,
+			SourceRef: def.ID + "/" + step.ID,
+			Rewards:   gemRewards,
+			CreatedAt: now,
+			// Gems are credited by the gem service whatever the claim state, and the client has nothing to apply.
+			ClaimedAt: &now,
+		})
+		if err != nil {
+			return nil, false, false, err
+		}
+		if added {
+			grants.UpdatedAt = now
+			wroteGrant = true
+			for _, r := range gemRewards {
+				granted = append(granted, GrantedReward{Type: RewardGem, Key: r.Key, Amount: r.Amount})
+			}
+		}
 	}
 
 	var started []Progress
@@ -142,7 +198,7 @@ func (s *service) apply(doc *QuestsDoc, def *Definition, req CompleteStepRequest
 		}
 	}
 
-	return accept(p, granted, started), true, nil
+	return accept(p, granted, started), true, wroteGrant, nil
 }
 
 func accept(p *Progress, granted []GrantedReward, started []Progress) *CompleteStepResponse {

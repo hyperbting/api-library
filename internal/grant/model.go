@@ -60,6 +60,8 @@ const (
 	SourceAdmin  Source = "admin"
 	// SourceGems: bought with gems (a time warp), see package gem. ID "gem:<requestId>".
 	SourceGems Source = "gems"
+	// SourceQuest: the Gem reward of a quest step (package quest). ID "quest:<questId>:<stepId>".
+	SourceQuest Source = "quest"
 )
 
 var (
