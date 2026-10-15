@@ -3,11 +3,14 @@ package adminui
 
 import (
 	"api-library/internal/config"
+	"bytes"
+	"compress/gzip"
 	"embed"
 	"io/fs"
 	"mime"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -19,6 +22,38 @@ import (
 var distFS embed.FS
 
 const basePath = "/admin"
+
+// gzipTypes are the file types that shrink well. Fonts such as .woff and .woff2 are already compressed.
+var gzipTypes = map[string]bool{
+	".js": true, ".css": true, ".html": true, ".svg": true, ".json": true, ".ttf": true, ".eot": true,
+}
+
+// minGzipSize: below this the header overhead is not worth it.
+const minGzipSize = 512
+
+// gzipCache holds each asset compressed once. The files are embedded and never change while the process runs, so
+// the key is the file name and a request only pays for the first compression.
+type gzipCache struct{ files sync.Map }
+
+// get returns the gzip bytes of data, or nil when compressing does not make it smaller.
+func (g *gzipCache) get(name string, data []byte) []byte {
+	if v, ok := g.files.Load(name); ok {
+		out, _ := v.([]byte)
+		return out
+	}
+	var out []byte
+	if len(data) >= minGzipSize {
+		var buf bytes.Buffer
+		w, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+		_, werr := w.Write(data)
+		cerr := w.Close()
+		if werr == nil && cerr == nil && buf.Len() < len(data) {
+			out = buf.Bytes()
+		}
+	}
+	g.files.Store(name, out)
+	return out
+}
 
 // PublicConfig is what the panel loads before sign-in. All values are public (the Firebase web config is
 // shipped to browsers anyway); never put secrets here.
@@ -67,17 +102,18 @@ func register(app *fiber.App, cfg *config.AppConfig, files fs.FS) {
 		sub = files
 	}
 	pc := NewPublicConfig(cfg)
+	zipped := &gzipCache{}
 
 	app.Get(basePath+"/config.json", func(c fiber.Ctx) error {
 		c.Set("Cache-Control", "no-store")
 		return c.JSON(pc)
 	})
-	app.Get(basePath, func(c fiber.Ctx) error { return serve(c, sub) })
-	app.Get(basePath+"/*", func(c fiber.Ctx) error { return serve(c, sub) })
+	app.Get(basePath, func(c fiber.Ctx) error { return serve(c, sub, zipped) })
+	app.Get(basePath+"/*", func(c fiber.Ctx) error { return serve(c, sub, zipped) })
 }
 
 // serve returns the requested asset, or index.html for any path without a file (client-side routes).
-func serve(c fiber.Ctx, sub fs.FS) error {
+func serve(c fiber.Ctx, sub fs.FS, zipped *gzipCache) error {
 	name := strings.TrimPrefix(path.Clean("/"+strings.TrimPrefix(c.Path(), basePath)), "/")
 	if name == "" {
 		name = "index.html"
@@ -101,6 +137,16 @@ func serve(c fiber.Ctx, sub fs.FS) error {
 		c.Set("Cache-Control", "no-store")
 	} else if strings.HasPrefix(name, "assets/") {
 		c.Set("Cache-Control", "public, max-age=31536000, immutable") // Vite hashes these file names
+	}
+	if gzipTypes[path.Ext(name)] {
+		c.Set("Vary", "Accept-Encoding")
+		// No header at all means "no preference": send plain bytes (some tools and health checks do not decode).
+		if c.Get("Accept-Encoding") != "" && c.AcceptsEncodings("gzip") == "gzip" {
+			if packed := zipped.get(name, data); packed != nil {
+				c.Set("Content-Encoding", "gzip")
+				return c.Send(packed)
+			}
+		}
 	}
 	return c.Send(data)
 }

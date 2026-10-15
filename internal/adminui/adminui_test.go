@@ -2,9 +2,13 @@ package adminui
 
 import (
 	"api-library/internal/config"
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"io"
+	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -16,6 +20,8 @@ func testApp(t *testing.T, cfg *config.AppConfig) *fiber.App {
 	files := fstest.MapFS{
 		"dist/index.html":        {Data: []byte("<html>panel</html>")},
 		"dist/assets/app-abc.js": {Data: []byte("console.log(1)")},
+		"dist/assets/big-abc.js": {Data: []byte(strings.Repeat("function f(){return 1}\n", 200))},
+		"dist/assets/font.woff2": {Data: []byte(strings.Repeat("w", 2000))},
 	}
 	app := fiber.New()
 	register(app, cfg, files)
@@ -111,5 +117,70 @@ func TestDistEmbedCompiles(t *testing.T) {
 	// The embedded dist must exist (only .gitkeep outside the Docker build) so `go build` never fails.
 	if _, err := distFS.ReadDir("dist"); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func getEncoded(t *testing.T, app *fiber.App, path, accept string) (*http.Response, []byte) {
+	t.Helper()
+	req := httptest.NewRequest("GET", path, nil)
+	if accept != "" {
+		req.Header.Set("Accept-Encoding", accept)
+	}
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(res.Body)
+	return res, body
+}
+
+func TestGzipAssets(t *testing.T) {
+	app := testApp(t, &config.AppConfig{})
+	plain := strings.Repeat("function f(){return 1}\n", 200)
+
+	// A client that accepts gzip gets a smaller, correct body.
+	res, body := getEncoded(t, app, "/admin/assets/big-abc.js", "gzip, br")
+	if res.Header.Get("Content-Encoding") != "gzip" || res.Header.Get("Vary") != "Accept-Encoding" {
+		t.Fatalf("headers: %v", res.Header)
+	}
+	if len(body) >= len(plain) {
+		t.Fatalf("gzip body %d bytes, plain %d", len(body), len(plain))
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := io.ReadAll(zr)
+	if string(got) != plain {
+		t.Fatal("decompressed body differs")
+	}
+	if ct := res.Header.Get("Content-Type"); !strings.Contains(ct, "javascript") {
+		t.Fatalf("content type %q", ct)
+	}
+
+	// The second request is served from the cache with the same bytes.
+	_, again := getEncoded(t, app, "/admin/assets/big-abc.js", "gzip")
+	if !bytes.Equal(again, body) {
+		t.Fatal("cached gzip differs")
+	}
+
+	// No Accept-Encoding: plain bytes, still marked Vary.
+	res, body = getEncoded(t, app, "/admin/assets/big-abc.js", "")
+	if res.Header.Get("Content-Encoding") != "" || string(body) != plain || res.Header.Get("Vary") != "Accept-Encoding" {
+		t.Fatalf("plain: %v len %d", res.Header, len(body))
+	}
+
+	// Tiny files and already-compressed fonts are left alone.
+	for _, p := range []string{"/admin/assets/app-abc.js", "/admin/assets/font.woff2"} {
+		res, _ = getEncoded(t, app, p, "gzip")
+		if res.Header.Get("Content-Encoding") != "" {
+			t.Fatalf("%s was compressed", p)
+		}
+	}
+
+	// The index is compressible too, and keeps no-store.
+	res, _ = getEncoded(t, app, "/admin/", "gzip")
+	if res.Header.Get("Cache-Control") != "no-store" {
+		t.Fatalf("index cache header %q", res.Header.Get("Cache-Control"))
 	}
 }
