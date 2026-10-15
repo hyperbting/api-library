@@ -66,38 +66,66 @@ func TestParseCatalogRejects(t *testing.T) {
 	}
 }
 
-// The shipped tutorial chain (decided 2026-10-15): prologue -> golden bubble -> store, and the free gems on the last
-// step of each: 10, 15, 20.
+// The shipped tutorial chain (decided 2026-10-15): prologue -> store, with the golden bubble as a step of the store
+// tutorial (after the third decoration). Free gems: 10 on the prologue's last step, 15 on the store's golden step and
+// 20 on its last step.
 func TestShippedTutorialChainAndGems(t *testing.T) {
 	c, err := LoadCatalog()
 	if err != nil {
 		t.Fatal(err)
 	}
-	chain := []struct {
-		id       string
-		followUp string
-		gems     float64
-	}{
-		{"tut_prologue", "tut_ch1_golden", 10},
-		{"tut_ch1_golden", "tut_ch1_store", 15},
-		{"tut_ch1_store", "", 20},
+	if _, ok := c.Get("tut_ch1_golden"); ok {
+		t.Error("tut_ch1_golden is a step of tut_ch1_store now")
 	}
-	for _, want := range chain {
-		d, ok := c.Get(want.id)
-		if !ok {
-			t.Fatalf("quest %s missing", want.id)
+
+	prologue, ok := c.Get("tut_prologue")
+	if !ok || prologue.FollowUp != "tut_ch1_store" {
+		t.Fatalf("tut_prologue = %+v", prologue)
+	}
+	if got := prologue.Steps[len(prologue.Steps)-1].GemReward(); got != 10 {
+		t.Errorf("prologue last step pays %v gems, want 10", got)
+	}
+
+	store, ok := c.Get("tut_ch1_store")
+	if !ok {
+		t.Fatal("tut_ch1_store missing")
+	}
+	var ids []string
+	gems := map[string]float64{}
+	for _, s := range store.Steps {
+		ids = append(ids, s.ID)
+		if g := s.GemReward(); g > 0 {
+			gems[s.ID] = g
 		}
-		if d.FollowUp != want.followUp {
-			t.Errorf("%s followUp = %q, want %q", want.id, d.FollowUp, want.followUp)
-		}
-		last := d.Steps[len(d.Steps)-1]
-		if got := last.GemReward(); got != want.gems {
-			t.Errorf("%s last step %s pays %v gems, want %v", want.id, last.ID, got, want.gems)
-		}
-		for _, s := range d.Steps[:len(d.Steps)-1] {
-			if s.GemReward() != 0 {
-				t.Errorf("%s step %s pays gems before the last step", want.id, s.ID)
+	}
+	idx := func(id string) int {
+		for i, v := range ids {
+			if v == id {
+				return i
 			}
 		}
+		return -1
+	}
+	if !(idx("buy_decor") >= 0 && idx("buy_decor") < idx("third_deco") && idx("third_deco") < idx("first_warp") &&
+		idx("first_warp") < idx("golden") && idx("golden") < idx("golden_fever")) {
+		t.Errorf("store steps out of order: %v", ids)
+	}
+	// The first warp is a free hour of income (a TimeWarp reward).
+	var warpHours float64
+	for _, s := range store.Steps {
+		if s.ID != "first_warp" {
+			continue
+		}
+		for _, r := range s.Rewards {
+			if r.Type == RewardTimeWarp {
+				warpHours += r.Amount
+			}
+		}
+	}
+	if warpHours != 1 {
+		t.Errorf("first_warp pays %v hours of warp, want 1", warpHours)
+	}
+	if gems["golden"] != 15 || gems["golden_fever"] != 5 || gems[ids[len(ids)-1]] != 20 || len(gems) != 3 {
+		t.Errorf("store gems = %v, want golden 15, golden_fever 5 and %s 20", gems, ids[len(ids)-1])
 	}
 }

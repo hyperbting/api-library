@@ -158,3 +158,49 @@ func TestCatalogRejectsABadGemReward(t *testing.T) {
 		}
 	}
 }
+
+// A time warp on a step is an unclaimed grant (the client applies it), paid once, and not in `granted`.
+const warpCatalog = `{
+  "version": 9,
+  "quests": [
+    {"id": "tut_w", "type": "Tutorial", "initial": true, "steps": [
+      {"id": "gift", "condition": {"eventType": "ActionDone", "key": "w", "target": 1},
+       "rewards": [{"type": "TimeWarp", "key": "", "amount": 1}, {"type": "Gem", "key": "", "amount": 5}]}
+    ]}
+  ]
+}`
+
+func TestTimeWarpStepWritesAnUnclaimedGrant(t *testing.T) {
+	c, err := ParseCatalog([]byte(warpCatalog))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := newMemRepo()
+	s := NewService(repo, c)
+	res := complete(t, s, "tut_w", "gift", 0)
+	if !res.Accepted {
+		t.Fatalf("not accepted: %+v", res)
+	}
+	for _, r := range res.Granted {
+		if r.Type == RewardTimeWarp {
+			t.Errorf("the time warp must not be on the granted list: %+v", res.Granted)
+		}
+	}
+	if gemsOf(res) != 5 {
+		t.Errorf("gems listed = %v, want 5", gemsOf(res))
+	}
+
+	g := repo.grants["uid"].Grants[GemGrantID("tut_w", "gift")+":warp"]
+	if g == nil {
+		t.Fatalf("no warp grant: %+v", repo.grants["uid"].Grants)
+	}
+	if g.ClaimedAt != nil {
+		t.Error("the warp grant must wait for the client to apply it")
+	}
+	if len(g.Rewards) != 1 || g.Rewards[0].Type != grant.RewardTimeWarp || g.Rewards[0].Amount != 1 {
+		t.Errorf("warp rewards = %+v", g.Rewards)
+	}
+	if gg := repo.grants["uid"].Grants[GemGrantID("tut_w", "gift")]; gg == nil || gg.ClaimedAt == nil {
+		t.Errorf("the gem grant should be there and claimed: %+v", gg)
+	}
+}

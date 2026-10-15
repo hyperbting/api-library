@@ -39,6 +39,9 @@ const (
 	// RewardGem is paid by the server only: the step writes a grant (ID "quest:<questId>:<stepId>") that the
 	// gem service credits to the balance. It is also listed in the response's Granted so the client can show it.
 	RewardGem RewardType = "Gem"
+	// RewardTimeWarp: Amount is hours of the player's current income. Stored as an unclaimed grant
+	// ("quest:<questId>:<stepId>:warp") that the client applies, as for a redeem code; not listed in `granted`.
+	RewardTimeWarp RewardType = "TimeWarp"
 )
 
 // Progress is one quest's server-owned state. The JSON form is the API shape

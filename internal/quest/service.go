@@ -80,7 +80,7 @@ func (s *service) CompleteStep(ctx context.Context, uid string, req CompleteStep
 	var err error
 	// A step that pays gems also writes a grant, in the same transaction; any other step touches the quest
 	// document only (no extra read).
-	if req.StepIndex >= 0 && req.StepIndex < len(def.Steps) && def.Steps[req.StepIndex].GemReward() > 0 {
+	if req.StepIndex >= 0 && req.StepIndex < len(def.Steps) && def.Steps[req.StepIndex].NeedsGrants() {
 		err = s.repo.UpdateWithGrants(ctx, uid, func(doc *QuestsDoc, grants *grant.Doc) (bool, bool, error) {
 			var write, wroteGrant bool
 			var err error
@@ -146,15 +146,40 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 	p.CompletedSteps = append(p.CompletedSteps, step.ID)
 	p.UpdatedAt = now
 	granted := make([]GrantedReward, 0, len(step.Rewards))
-	var gemRewards []grant.Reward
+	var gemRewards, warpRewards []grant.Reward
 	for _, r := range step.Rewards {
 		// Cash, Pull and Unlock are applied by the client from this list. Gems are the server's: they are
-		// stored as a grant below, and listed here only when this call paid them.
-		if r.Type == RewardGem {
+		// stored as a grant below, and listed here only when this call paid them. A time warp is a grant the
+		// client applies (it needs the client's income), so it is not listed.
+		switch r.Type {
+		case RewardGem:
 			gemRewards = append(gemRewards, grant.Reward{Type: grant.RewardGem, Key: r.Key, Amount: r.Amount})
+			continue
+		case RewardTimeWarp:
+			warpRewards = append(warpRewards, grant.Reward{Type: grant.RewardTimeWarp, Key: r.Key, Amount: r.Amount})
 			continue
 		}
 		granted = append(granted, GrantedReward(r))
+	}
+	if len(warpRewards) > 0 {
+		if grants == nil {
+			return nil, false, false, errors.New("quest: a step with a time warp was applied without the grants document")
+		}
+		// Unclaimed: the client applies it and reports it claimed. Paid once per account, like the gems.
+		added, err := grants.Add(grant.Grant{
+			ID:        GemGrantID(def.ID, step.ID) + ":warp",
+			Source:    grant.SourceQuest,
+			SourceRef: def.ID + "/" + step.ID,
+			Rewards:   warpRewards,
+			CreatedAt: now,
+		})
+		if err != nil {
+			return nil, false, false, err
+		}
+		if added {
+			grants.UpdatedAt = now
+			wroteGrant = true
+		}
 	}
 	if len(gemRewards) > 0 {
 		if grants == nil {

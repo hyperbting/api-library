@@ -39,6 +39,16 @@ type Step struct {
 	Rewards    []Reward  `json:"rewards"`
 }
 
+// NeedsGrants reports that paying the step writes to the grant ledger (gems or a time warp).
+func (s Step) NeedsGrants() bool {
+	for _, r := range s.Rewards {
+		if r.Type == RewardGem || r.Type == RewardTimeWarp {
+			return true
+		}
+	}
+	return false
+}
+
 // GemReward is the total Gem reward of a step (0 when it has none).
 func (s Step) GemReward() float64 {
 	var n float64
@@ -157,9 +167,9 @@ func validateSteps(d *Definition) error {
 		for _, r := range s.Rewards {
 			switch r.Type {
 			case RewardCash, RewardPull, RewardUnlock:
-			case RewardGem:
+			case RewardGem, RewardTimeWarp:
 				// Same bounds as the grant ledger applies when the step pays.
-				if err := (grant.Reward{Type: grant.RewardGem, Amount: r.Amount}).Validate(); err != nil {
+				if err := (grant.Reward{Type: grant.RewardType(r.Type), Amount: r.Amount}).Validate(); err != nil {
 					return fmt.Errorf("%w: quest %q step %q: %v", ErrInvalidCatalog, d.ID, s.ID, err)
 				}
 			default:

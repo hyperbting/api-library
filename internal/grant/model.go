@@ -62,6 +62,8 @@ const (
 	SourceGems Source = "gems"
 	// SourceQuest: the Gem reward of a quest step (package quest). ID "quest:<questId>:<stepId>".
 	SourceQuest Source = "quest"
+	// SourceAds: a rewarded ad (a warp), see package gem. ID "ad:<requestId>".
+	SourceAds Source = "ads"
 )
 
 var (
