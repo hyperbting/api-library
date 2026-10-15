@@ -2,6 +2,7 @@ package quest
 
 import (
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -106,11 +107,12 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 		}
 		return -1
 	}
-	if !(idx("buy_decor") >= 0 && idx("buy_decor") < idx("third_deco") && idx("third_deco") < idx("first_warp") &&
-		idx("first_warp") < idx("golden") && idx("golden") < idx("golden_fever")) {
+	// The free first warp comes right after the first decoration, ahead of the third (user, 2026-10-15).
+	if !(idx("buy_decor") >= 0 && idx("buy_decor") < idx("first_warp") && idx("first_warp") < idx("third_deco") &&
+		idx("third_deco") < idx("golden") && idx("golden") < idx("golden_fever")) {
 		t.Errorf("store steps out of order: %v", ids)
 	}
-	// The first warp is a free hour of income (a TimeWarp reward).
+	// The first warp is a free 10 minutes of income (a TimeWarp reward, in hours).
 	var warpHours float64
 	for _, s := range store.Steps {
 		if s.ID != "first_warp" {
@@ -122,8 +124,8 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 			}
 		}
 	}
-	if warpHours != 1 {
-		t.Errorf("first_warp pays %v hours of warp, want 1", warpHours)
+	if want := 10.0 / 60.0; math.Abs(warpHours-want) > 1e-6 {
+		t.Errorf("first_warp pays %v hours of warp, want %v (10 minutes)", warpHours, want)
 	}
 	if gems["golden"] != 15 || gems["golden_fever"] != 5 || gems[ids[len(ids)-1]] != 20 || len(gems) != 3 {
 		t.Errorf("store gems = %v, want golden 15, golden_fever 5 and %s 20", gems, ids[len(ids)-1])

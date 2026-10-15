@@ -1,6 +1,6 @@
 {
-  "version": 9,
-  "exportedAt": "2026-10-15T07:03:22.2075021Z",
+  "version": 10,
+  "exportedAt": "2026-10-15T11:36:08.8812752Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -49,6 +49,22 @@
           "rewards": []
         },
         {
+          "id": "first_warp",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.count",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "TimeWarp",
+              "key": "",
+              "amount": 0.1666667
+            }
+          ]
+        },
+        {
           "id": "third_deco",
           "checkpoint": true,
           "condition": {
@@ -57,22 +73,6 @@
             "target": 3.0
           },
           "rewards": []
-        },
-        {
-          "id": "first_warp",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "store.decor.count",
-            "target": 3.0
-          },
-          "rewards": [
-            {
-              "type": "TimeWarp",
-              "key": "",
-              "amount": 1.0
-            }
-          ]
         },
         {
           "id": "golden",
