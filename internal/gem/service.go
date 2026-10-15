@@ -16,6 +16,8 @@ type Service interface {
 	Spend(ctx context.Context, uid string, req SpendRequest) (*SpendResponse, error)
 	// ConsumeBoost takes seconds of in-store play off the remaining x2 boost (never below zero).
 	ConsumeBoost(ctx context.Context, uid string, seconds int64) (*State, error)
+	// AdReward records a rewarded ad and applies its reward (fever cooldown, a warp hour, offline double): ads.go.
+	AdReward(ctx context.Context, uid string, req AdRewardRequest) (*AdRewardResponse, error)
 
 	// Admin (panel page "Gems"): one player's balance, spends and grants; a gift of gems and / or items.
 	AdminOverview(ctx context.Context, uid string) (*AdminOverview, error)
@@ -153,6 +155,10 @@ func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*Spe
 			d.remember(req.RequestID, &SpendRecord{Product: req.Product, Price: offer.Price, At: now, BalanceAfter: d.Balance, GrantID: g.ID})
 			stored := *grants.Grants[g.ID]
 			res.Grant = &stored
+
+		case offer.Fever:
+			d.Balance -= offer.Price
+			d.remember(req.RequestID, &SpendRecord{Product: req.Product, Price: offer.Price, At: now, BalanceAfter: d.Balance})
 
 		default:
 			if d.BoostSeconds >= MaxBoostSeconds {

@@ -174,6 +174,8 @@ func setupGemRoutes(router fiber.Router, container *app.FirebaseContainer) {
 		gems.Get("/", userLimiter(60), container.GemHdl.State)
 		gems.Post("/spend", userLimiter(20), container.GemHdl.Spend)
 		gems.Post("/boost/consume", userLimiter(30), container.GemHdl.ConsumeBoost)
+		// A rewarded ad (fever, offline double, a warp hour): one call per ad shown.
+		router.Post("/ads/reward", container.FirebaseAuthMw, userLimiter(30), container.GemHdl.AdReward)
 	}
 	if container.IapHdl != nil {
 		router.Post("/iap/purchase", container.FirebaseAuthMw, userLimiter(10), container.IapHdl.Purchase)

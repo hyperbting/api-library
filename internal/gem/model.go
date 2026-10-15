@@ -47,6 +47,9 @@ const (
 	ProductWarp8h   Product = "warp_8h"
 	ProductBoost10m Product = "boost_10m"
 	ProductBoost30m Product = "boost_30m"
+	// ProductFever starts a store's golden fever for gems (the sale itself is client side, like the ad start; the
+	// ad start has the cooldown, this one has none). Decided 2026-10-15: 5 gems.
+	ProductFever Product = "golden_fever"
 )
 
 // Offer is one entry of the shop: its price in gems and what it gives.
@@ -56,6 +59,8 @@ type Offer struct {
 	WarpHours float64
 	// BoostSeconds: seconds of x2 income added to the running boost, 0 for a warp.
 	BoostSeconds int64
+	// Fever: a golden fever start (charged, nothing stored beyond the spend record).
+	Fever bool
 }
 
 // Offers are decided by the user (handoff 4ad): 4 h = 20 gems, 8 h = 37, boost 10 min = 5, 30 min = 13.
@@ -64,6 +69,7 @@ var Offers = map[Product]Offer{
 	ProductWarp8h:   {Price: 37, WarpHours: 8},
 	ProductBoost10m: {Price: 5, BoostSeconds: 10 * 60},
 	ProductBoost30m: {Price: 13, BoostSeconds: 30 * 60},
+	ProductFever:    {Price: 5, Fever: true},
 }
 
 // Error codes returned in SpendResponse.ErrorCode (HTTP 200, ok=false).
@@ -97,6 +103,11 @@ type Doc struct {
 
 	// Results of recent spends by request ID, so a retried request is answered, not charged twice.
 	Spends map[string]*SpendRecord `firestore:"spends"`
+
+	// Rewarded ads: recent results by request ID (idempotency) and when each placement may be rewarded again
+	// ("fever:<store>", see ads.go).
+	Ads       map[string]*AdRecord `firestore:"ads"`
+	AdReadyAt map[string]time.Time `firestore:"adReadyAt"`
 
 	UpdatedAt time.Time `firestore:"updatedAt"`
 }

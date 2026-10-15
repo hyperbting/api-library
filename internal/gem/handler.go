@@ -57,6 +57,31 @@ func (h *Handler) Spend(c fiber.Ctx) error {
 	return c.JSON(res)
 }
 
+// POST /ads/reward
+func (h *Handler) AdReward(c fiber.Ctx) error {
+	user := auth.MustGetUser(c)
+
+	var req AdRewardRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": ErrInvalidRequest.Error()})
+	}
+	if err := validator.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": ErrInvalidRequest.Error()})
+	}
+
+	res, err := h.srv.AdReward(c.Context(), user.UserID, req)
+	if err != nil {
+		log.Printf("[gem] ad reward uid=%s placement=%s: %v", user.UserID, req.Placement, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to record the ad reward"})
+	}
+	if res.OK {
+		log.Printf("[gem] uid=%s ad reward %s", user.UserID, req.Placement)
+	} else {
+		log.Printf("[gem] uid=%s ad reward %s refused: %s", user.UserID, req.Placement, res.ErrorCode)
+	}
+	return c.JSON(res)
+}
+
 // POST /gems/boost/consume
 func (h *Handler) ConsumeBoost(c fiber.Ctx) error {
 	user := auth.MustGetUser(c)
