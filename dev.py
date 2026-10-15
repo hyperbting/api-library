@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Runs the API locally with live reload (`air`), with the development environment variables set.
+Entry points: dev.bat / dev.sh. Needs `air` on PATH (go install github.com/air-verse/air@latest) and the Firebase
+admin SDK key file next to this script. Variables already set in your shell are kept."""
+import os
+import shutil
+import subprocess
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+KEY_FILE = os.path.join(HERE, "additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json")
+
+
+def main():
+    air = shutil.which("air")
+    if not air:
+        print("ERROR: `air` is not on PATH.", file=sys.stderr)
+        return 1
+    env = dict(os.environ)
+    env.setdefault("GOOGLE_APPLICATION_CREDENTIALS", KEY_FILE)
+    env.setdefault("APP_ENV", "development")
+    env.setdefault("APP_PORT", "3000")
+    return subprocess.call([air] + sys.argv[1:], cwd=HERE, env=env)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

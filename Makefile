@@ -17,14 +17,21 @@ check: check-build vet
 test: check
 	go test -v ./...
 
+# Python launcher: `py -3` on Windows, python3 elsewhere. The logic is in deploy.py (cross-OS, standard library only).
+ifeq ($(OS),Windows_NT)
+PY := py -3
+else
+PY := python3
+endif
+
 # Public API only: no /admin routes, no panel.
 deploy:
-	"$(CURDIR)/deploy.bat"
+	$(PY) deploy.py public
 
 # Same image as a second service: game API + /admin routes. ADMIN_PANEL_ENABLED=true also serves the panel.
 # Run `make deploy` first (it pushes the image), or use deploy-all.
 deploy-admin:
-	"$(CURDIR)/deploy-admin.bat"
+	$(PY) deploy.py admin
 
 deploy-all:
-	"$(CURDIR)/deploy-all.bat"
+	$(PY) deploy.py all
