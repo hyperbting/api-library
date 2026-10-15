@@ -5,6 +5,8 @@ import (
 	"api-library/internal/app"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/gem"
+	"api-library/internal/iap"
 	"api-library/internal/news"
 	"api-library/internal/quest"
 	"fmt"
@@ -29,6 +31,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	setupNewsRoutes(api, container)
 	setupSaveRoutes(api, container)
 	setupRedeemRoutes(api, container)
+	setupGemRoutes(api, container)
 
 	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
 	// public service, which runs the same image.
@@ -88,6 +91,19 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 
 	mountAdminQuestRoutes(admin, container.QuestHdl)
 	mountAdminNewsRoutes(admin, container.NewsHdl)
+	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)
+}
+
+// mountAdminGemRoutes: the panel's Gems page. A player's balance, spends and grants by uid, a gift of gems or
+// items, and the newest store orders of everybody. The router must already demand the admin role.
+func mountAdminGemRoutes(admin fiber.Router, gems *gem.Handler, iaps *iap.Handler) {
+	if gems != nil {
+		admin.Get("/gems/user", gems.AdminUser)
+		admin.Post("/gems/gift", userLimiter(30), gems.AdminGift)
+	}
+	if iaps != nil {
+		admin.Get("/iap/orders", iaps.AdminOrders)
+	}
 }
 
 // setupNewsRoutes: GET /news for any signed-in player (public items; the dev items too for an admin account).
@@ -144,6 +160,24 @@ func setupSaveRoutes(router fiber.Router, container *app.FirebaseContainer) {
 	saves.Post("/sync", container.SaveHdl.Sync)
 	// Admin only: drops the caller's own save snapshot. Used by the client dev menu.
 	saves.Post("/admin/reset", auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), container.SaveHdl.Reset)
+}
+
+// setupGemRoutes: the gem balance and what it buys, and the store purchases that fill it (GDD 5.2.1).
+func setupGemRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.Firestore == nil {
+		return
+	}
+	if container.GemHdl != nil {
+		gems := router.Group("/gems", container.FirebaseAuthMw)
+		// Per player and minute. A spend is a tap on a shop button, a purchase one store flow; the boost report
+		// comes about once a minute while the player is in a store.
+		gems.Get("/", userLimiter(60), container.GemHdl.State)
+		gems.Post("/spend", userLimiter(20), container.GemHdl.Spend)
+		gems.Post("/boost/consume", userLimiter(30), container.GemHdl.ConsumeBoost)
+	}
+	if container.IapHdl != nil {
+		router.Post("/iap/purchase", container.FirebaseAuthMw, userLimiter(10), container.IapHdl.Purchase)
+	}
 }
 
 func setupRedeemRoutes(router fiber.Router, container *app.FirebaseContainer) {

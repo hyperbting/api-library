@@ -10,6 +10,7 @@ export const router = createRouter({
     { path: '/password', name: 'password', component: () => import('./views/PasswordView.vue') },
     { path: '/quests', name: 'quests', component: () => import('./views/QuestsView.vue') },
     { path: '/news', name: 'news', component: () => import('./views/NewsView.vue') },
+    { path: '/gems', name: 'gems', component: () => import('./views/GemsView.vue') },
   ],
 })
 

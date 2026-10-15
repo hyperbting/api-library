@@ -305,3 +305,32 @@ func TestVersionRouteOnTheCloudRunEntrypoint(t *testing.T) {
 		t.Fatalf("version: %d %+v", res.StatusCode, body)
 	}
 }
+
+// userLimiter counts per client when there is no signed-in user: the fourth request in a minute is refused, and a
+// different client is not affected.
+func TestUserLimiterFallsBackToClient(t *testing.T) {
+	app := fiber.New()
+	app.Get("/x", userLimiter(3), func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
+
+	do := func(ip string) int {
+		req := httptest.NewRequest("GET", "/x", nil)
+		req.Header.Set("X-Forwarded-For", ip)
+		res, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test: %v", err)
+		}
+		return res.StatusCode
+	}
+
+	for i := 1; i <= 3; i++ {
+		if code := do("203.0.113.5"); code != fiber.StatusOK {
+			t.Fatalf("request %d: %d", i, code)
+		}
+	}
+	if code := do("203.0.113.5"); code != fiber.StatusTooManyRequests {
+		t.Fatalf("fourth request: %d, want 429", code)
+	}
+	if code := do("203.0.113.6"); code != fiber.StatusOK {
+		t.Fatalf("another client: %d, want 200", code)
+	}
+}

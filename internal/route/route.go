@@ -2,6 +2,7 @@ package route
 
 import (
 	"api-library/internal/app"
+	"api-library/internal/auth"
 	"api-library/internal/buildinfo"
 	"api-library/internal/config"
 	"api-library/internal/user"
@@ -63,6 +64,26 @@ func setupFriendRoutes(router fiber.Router, container *app.Container) {
 	//
 	// 	friends.Get("/", container.FriendHdl.ListFriends)
 	// 	friends.Post("/add", container.FriendHdl.AddFriend)
+}
+
+// userLimiter allows max requests per minute from one signed-in player, for routes behind the auth middleware
+// (the key is the user ID, so players behind one carrier address do not share a budget). Without a user it
+// falls back to the client address. The state is in memory: with several instances the cap is max per instance.
+func userLimiter(max int) fiber.Handler {
+	return limiter.New(limiter.Config{
+		Max:        max,
+		Expiration: time.Minute,
+		KeyGenerator: func(c fiber.Ctx) string {
+			if u, ok := auth.GetUser(c); ok && u.UserID != "" {
+				return "uid:" + u.UserID
+			}
+			return clientKey(c)
+		},
+		LimitReached: func(c fiber.Ctx) error {
+			log.Printf("[limit] %s key=%s", c.Path(), clientKey(c))
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "too many requests"})
+		},
+	})
 }
 
 // authLimiter allows max requests per minute from one client (see clientKey) on a credentials route.

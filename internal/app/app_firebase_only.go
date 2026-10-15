@@ -3,6 +3,8 @@ package app
 import (
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/gem"
+	"api-library/internal/iap"
 	"api-library/internal/item"
 	"api-library/internal/news"
 	"api-library/internal/quest"
@@ -13,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/storage"
@@ -35,6 +38,8 @@ type FirebaseContainer struct {
 	NewsHdl   *news.Handler
 	SaveHdl   *save.Handler
 	RedeemHdl *redeem.Handler
+	GemHdl    *gem.Handler
+	IapHdl    *iap.Handler
 
 	// Creates Firebase Auth email/password users (the admin panel's sign-in accounts)
 	EmailUserCreator auth.EmailUserCreator
@@ -95,6 +100,15 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 			return nil, err
 		}
 		container.RedeemHdl = redeem.NewHandler(redeem.NewService(redeem.NewFirestoreRepository(container.Firestore), items))
+		// Gems (server-owned balance, spends, daily warp allowance) and store purchases that deliver them. The
+		// Google Play verifier builds its credentials on the first purchase, so a missing Play API setup never
+		// stops the boot.
+		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items))
+		playPackage := os.Getenv("PLAY_PACKAGE_NAME")
+		if playPackage == "" {
+			playPackage = "com.steadyshellshock.lettucemakemoney"
+		}
+		container.IapHdl = iap.NewHandler(iap.NewService(iap.NewFirestoreRepository(container.Firestore), items, iap.NewGooglePlayVerifier(playPackage)))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
 		if appCfg.SessionKeyUnsafe() {
 			// config.yaml's key is public: tokens signed with it are forgeable, so there is no email login.
