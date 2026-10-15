@@ -208,7 +208,8 @@ type SpendRequest struct {
 	// Chosen by the client for each purchase attempt (a UUID); a retry with the same value is not charged again.
 	RequestID string `json:"requestId" validate:"required,min=8,max=64"`
 	// A warp only works in a store that owns the warp-enabled decoration (GDD 5.2.1). The economy runs on the
-	// client, so the client reports it; the server refuses a warp without it.
+	// client, so the client reports it; the server refuses a warp without it, and also one from a player whose
+	// quest progress has not reached the third decoration (WarpGate, warpgate.go).
 	WarpEnabled bool `json:"warpEnabled"`
 }
 

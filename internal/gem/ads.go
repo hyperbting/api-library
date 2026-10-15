@@ -97,6 +97,15 @@ func (s *service) AdReward(ctx context.Context, uid string, req AdRewardRequest)
 		return &AdRewardResponse{ErrorCode: CodeUnknownPlacement, State: *st}, nil
 	}
 
+	// The gate reads another document, so it is asked before the transaction (see Spend).
+	warpAllowed := true
+	if req.Placement == PlacementWarp {
+		var err error
+		if warpAllowed, err = s.warpAllowed(ctx, uid, req.WarpEnabled); err != nil {
+			return nil, err
+		}
+	}
+
 	var res *AdRewardResponse
 	err := s.repo.Run(ctx, uid, func(d *Doc, grants *grant.Doc) (bool, bool, error) {
 		// fn may be retried by the transaction: build the response from scratch each time.
@@ -142,7 +151,7 @@ func (s *service) AdReward(ctx context.Context, uid string, req AdRewardRequest)
 			d.AdReadyAt[key] = now.Add(FeverAdCooldown)
 
 		case PlacementWarp:
-			if !req.WarpEnabled {
+			if !warpAllowed {
 				return refuse(CodeWarpNotEnabled)
 			}
 			// Same rule as a gem warp: counted double while the x2 boost runs, 8 payout hours per day in all.

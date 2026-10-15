@@ -27,11 +27,16 @@ type Service interface {
 type service struct {
 	repo    Repository
 	catalog *item.Catalog // for gifts of catalog items; may be nil (gems only)
+	gate    WarpGate      // warps need it on top of the client's flag (warpgate.go); nil = the flag only
 	now     func() time.Time
 }
 
-func NewService(repo Repository, catalog *item.Catalog) Service {
-	return &service{repo: repo, catalog: catalog, now: time.Now}
+func NewService(repo Repository, catalog *item.Catalog, opts ...Option) Service {
+	s := &service{repo: repo, catalog: catalog, now: time.Now}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 func (s *service) state(d *Doc, now time.Time) State {
@@ -73,9 +78,10 @@ func (s *service) State(ctx context.Context, uid string) (*State, error) {
 	return &out, nil
 }
 
-// Spend checks in this order: the product, a repeated request, a warp that is not enabled here, gems, the
-// daily allowance (warp) or the boost cap (boost). All inside one transaction with the credit, so a balance can
-// never be spent twice by two devices.
+// Spend checks in this order: the product, a repeated request, a warp that is not enabled here (the client's flag
+// and the WarpGate), gems, the daily allowance (warp) or the boost cap (boost). All inside one transaction with
+// the credit, so a balance can never be spent twice by two devices. The gate is read before the transaction (a
+// different document), so a retried request is still answered from its record.
 func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*SpendResponse, error) {
 	offer, known := Offers[req.Product]
 	if !known {
@@ -84,6 +90,14 @@ func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*Spe
 			return nil, err
 		}
 		return &SpendResponse{ErrorCode: CodeUnknownProduct, State: *st}, nil
+	}
+
+	warpAllowed := true
+	if offer.WarpHours > 0 {
+		var err error
+		if warpAllowed, err = s.warpAllowed(ctx, uid, req.WarpEnabled); err != nil {
+			return nil, err
+		}
 	}
 
 	var res *SpendResponse
@@ -118,7 +132,7 @@ func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*Spe
 			return true, false, nil
 		}
 
-		if offer.WarpHours > 0 && !req.WarpEnabled {
+		if offer.WarpHours > 0 && !warpAllowed {
 			return refuse(CodeWarpNotEnabled)
 		}
 		if d.Balance < offer.Price {

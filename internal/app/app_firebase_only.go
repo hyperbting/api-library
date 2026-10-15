@@ -103,7 +103,9 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		// Gems (server-owned balance, spends, daily warp allowance) and store purchases that deliver them. The
 		// Google Play verifier builds its credentials on the first purchase, so a missing Play API setup never
 		// stops the boot.
-		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items))
+		// Warps also need the store tutorial's third decoration in the player's quest progress (gem.WarpGate).
+		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items,
+			gem.WithWarpGate(gem.WarpGateFunc(quest.NewWarpGate(questRepo)))))
 		playPackage := os.Getenv("PLAY_PACKAGE_NAME")
 		if playPackage == "" {
 			playPackage = "com.steadyshellshock.lettucemakemoney"
