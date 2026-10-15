@@ -14,6 +14,7 @@ func TestRewardValidate(t *testing.T) {
 		{Type: RewardPull, Amount: 3},
 		{Type: RewardUnlock, Key: "home.habitat"},
 		{Type: RewardTimeWarp, Amount: 2},
+		{Type: RewardGem, Amount: 100},
 	}
 	for _, r := range valid {
 		if err := r.Validate(); err != nil {
@@ -28,6 +29,9 @@ func TestRewardValidate(t *testing.T) {
 		{Type: RewardUnlock},
 		{Type: RewardTimeWarp, Amount: 200},
 		{Type: "Gems", Amount: 1},
+		{Type: RewardGem, Amount: 0},
+		{Type: RewardGem, Amount: 1.5},
+		{Type: RewardGem, Amount: MaxGemsPerReward + 1},
 		{Type: RewardCash, Amount: 1, Key: string(make([]byte, 100))},
 	}
 	for _, r := range invalid {

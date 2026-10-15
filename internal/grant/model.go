@@ -43,6 +43,13 @@ const (
 	// RewardTimeWarp: Amount is hours of the player's current income. The server cannot know the income
 	// (the economy runs on the client), so the client computes the cash when it applies the grant.
 	RewardTimeWarp RewardType = "TimeWarp"
+	// RewardGem: premium currency. Amount is a whole number of gems. Unlike the other types the balance is
+	// server-owned (package gem): the gems of a grant are credited when the gem service next reads the user's
+	// state, and the client only shows the balance the server reports. Claiming the grant changes nothing.
+	RewardGem RewardType = "Gem"
+
+	// MaxGemsPerReward bounds one Gem reward line (a pack plus its bonus is a few thousand).
+	MaxGemsPerReward = 1_000_000
 )
 
 type Source string
@@ -51,6 +58,8 @@ const (
 	SourceRedeem Source = "redeem"
 	SourceIAP    Source = "iap"
 	SourceAdmin  Source = "admin"
+	// SourceGems: bought with gems (a time warp), see package gem. ID "gem:<requestId>".
+	SourceGems Source = "gems"
 )
 
 var (
@@ -84,6 +93,10 @@ func (r Reward) Validate() error {
 	case RewardTimeWarp:
 		if r.Amount <= 0 || r.Amount > 24*7 {
 			return fmt.Errorf("%w: TimeWarp hours must be in (0, 168]", ErrInvalidReward)
+		}
+	case RewardGem:
+		if r.Amount < 1 || r.Amount > MaxGemsPerReward || r.Amount != math.Trunc(r.Amount) {
+			return fmt.Errorf("%w: Gem amount must be a whole number in [1, %d]", ErrInvalidReward, MaxGemsPerReward)
 		}
 	case RewardUnlock:
 		if r.Key == "" {

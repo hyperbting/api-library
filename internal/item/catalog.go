@@ -33,12 +33,13 @@ var (
 	ErrUnknownItem    = errors.New("unknown item")
 	ErrInvalidRef     = errors.New("invalid item reference")
 
-	idPattern = regexp.MustCompile(`^[a-z0-9_]{1,48}$`)
+	idPattern  = regexp.MustCompile(`^[a-z0-9_]{1,48}$`)
+	skuPattern = regexp.MustCompile(`^[a-z0-9_.]{1,64}$`)
 )
 
 // Definition is one item: what it is and the size of one unit.
 //
-//	type    reward kind the client knows (Cash, Pull, Unlock, TimeWarp)
+//	type    reward kind the client knows (Cash, Pull, Unlock, TimeWarp, Gem)
 //	amount  size of ONE unit: 1 pull, 1 hour of income, a cash value
 //	key     only for Unlock
 //
@@ -57,11 +58,25 @@ type Ref struct {
 	Count  int    `firestore:"count" json:"count"`
 }
 
-type Catalog struct {
-	Version int          `json:"version"`
-	Items   []Definition `json:"items"`
+// Product is something sold for real money: the store SKU (the Play Console product id) and what one purchase
+// delivers, as item references. Gem packs today. Validated at load like the items, so a SKU that resolves to
+// nothing fails the boot, not a player's purchase.
+type Product struct {
+	SKU   string `json:"sku"`
+	Items []Ref  `json:"items"`
+	// FirstPurchaseDouble doubles the Gem rewards the first time an account buys this SKU (GDD 5.2.1, once per
+	// pack per account).
+	FirstPurchaseDouble bool   `json:"firstPurchaseDouble,omitempty"`
+	Note                string `json:"note,omitempty"`
+}
 
-	byID map[string]*Definition
+type Catalog struct {
+	Version  int          `json:"version"`
+	Items    []Definition `json:"items"`
+	Products []Product    `json:"products,omitempty"`
+
+	byID  map[string]*Definition
+	bySKU map[string]*Product
 }
 
 // LoadCatalog parses and validates the embedded catalog.
@@ -95,12 +110,33 @@ func ParseCatalog(data []byte) (*Catalog, error) {
 		}
 		c.byID[d.ID] = d
 	}
+
+	c.bySKU = make(map[string]*Product, len(c.Products))
+	for i := range c.Products {
+		p := &c.Products[i]
+		if !skuPattern.MatchString(p.SKU) {
+			return nil, fmt.Errorf("%w: product sku %q (use a-z, 0-9, _ and .; up to 64)", ErrInvalidCatalog, p.SKU)
+		}
+		if _, dup := c.bySKU[p.SKU]; dup {
+			return nil, fmt.Errorf("%w: duplicate product %q", ErrInvalidCatalog, p.SKU)
+		}
+		if _, err := c.Resolve(p.Items); err != nil {
+			return nil, fmt.Errorf("%w: product %q: %v", ErrInvalidCatalog, p.SKU, err)
+		}
+		c.bySKU[p.SKU] = p
+	}
 	return &c, nil
 }
 
 func (c *Catalog) Get(id string) (*Definition, bool) {
 	d, ok := c.byID[id]
 	return d, ok
+}
+
+// Product returns the product sold under a store SKU.
+func (c *Catalog) Product(sku string) (*Product, bool) {
+	p, ok := c.bySKU[sku]
+	return p, ok
 }
 
 // Resolve turns references into the rewards a grant stores. Each reward is the item's unit amount times the

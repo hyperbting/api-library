@@ -107,3 +107,49 @@ func TestResolveDoesNotAliasCatalog(t *testing.T) {
 		t.Error("changing a resolved reward changed the catalog")
 	}
 }
+
+func TestProducts(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]float64{"gems_100": 100, "gems_550": 550, "gems_1150": 1150, "gems_2400": 2400}
+	for sku, gems := range want {
+		p, ok := c.Product(sku)
+		if !ok {
+			t.Errorf("missing product %q", sku)
+			continue
+		}
+		rewards, err := c.Resolve(p.Items)
+		if err != nil {
+			t.Errorf("%s: %v", sku, err)
+			continue
+		}
+		var total float64
+		for _, r := range rewards {
+			if r.Type != grant.RewardGem {
+				t.Errorf("%s: reward %+v is not a Gem", sku, r)
+			}
+			total += r.Amount
+		}
+		if total != gems {
+			t.Errorf("%s gives %v gems, want %v", sku, total, gems)
+		}
+		if !p.FirstPurchaseDouble {
+			t.Errorf("%s: first purchase bonus should be on", sku)
+		}
+	}
+}
+
+func TestParseCatalogRejectsBadProducts(t *testing.T) {
+	bad := map[string]string{
+		"unknown item": `{"version":1,"items":[{"id":"a","type":"Pull","amount":1}],"products":[{"sku":"p","items":[{"itemId":"zzz","count":1}]}]}`,
+		"duplicate":    `{"version":1,"items":[{"id":"a","type":"Pull","amount":1}],"products":[{"sku":"p","items":[{"itemId":"a","count":1}]},{"sku":"p","items":[{"itemId":"a","count":1}]}]}`,
+		"bad sku":      `{"version":1,"items":[{"id":"a","type":"Pull","amount":1}],"products":[{"sku":"Bad SKU","items":[{"itemId":"a","count":1}]}]}`,
+	}
+	for name, doc := range bad {
+		if _, err := ParseCatalog([]byte(doc)); !errors.Is(err, ErrInvalidCatalog) {
+			t.Errorf("%s: want ErrInvalidCatalog, got %v", name, err)
+		}
+	}
+}

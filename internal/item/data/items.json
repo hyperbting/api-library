@@ -1,11 +1,18 @@
 {
-  "version": 1,
+  "version": 2,
   "items": [
     { "id": "pull_ticket", "type": "Pull", "amount": 1, "note": "One gacha pull. Nothing spends it yet (GDD 2.0)." },
     { "id": "timewarp_1h", "type": "TimeWarp", "amount": 1, "note": "Instant payout of 1 h of current income (IAP_1hr_CPY)." },
     { "id": "timewarp_2h", "type": "TimeWarp", "amount": 2, "note": "IAP_2hr_CPY." },
     { "id": "timewarp_8h", "type": "TimeWarp", "amount": 8, "note": "IAP_8hr_CPY." },
     { "id": "timewarp_24h", "type": "TimeWarp", "amount": 24, "note": "IAP_24hr_CPY." },
-    { "id": "cash_10k", "type": "Cash", "amount": 10000, "note": "About the first upgrade. A fixed amount stops meaning anything once income grows, so prefer time warps." }
+    { "id": "cash_10k", "type": "Cash", "amount": 10000, "note": "About the first upgrade. A fixed amount stops meaning anything once income grows, so prefer time warps." },
+    { "id": "gems_50", "type": "Gem", "amount": 50, "note": "50 gems: the unit of the gem packs and of gem gifts (GDD 5.2.1). The balance is server-owned (package gem)." }
+  ],
+  "products": [
+    { "sku": "gems_100", "items": [{ "itemId": "gems_50", "count": 2 }], "firstPurchaseDouble": true, "note": "USD 0.99, 100 gems" },
+    { "sku": "gems_550", "items": [{ "itemId": "gems_50", "count": 11 }], "firstPurchaseDouble": true, "note": "USD 4.99, 550 gems (10% bonus)" },
+    { "sku": "gems_1150", "items": [{ "itemId": "gems_50", "count": 23 }], "firstPurchaseDouble": true, "note": "USD 9.99, 1,150 gems (15% bonus)" },
+    { "sku": "gems_2400", "items": [{ "itemId": "gems_50", "count": 48 }], "firstPurchaseDouble": true, "note": "USD 19.99, 2,400 gems (20% bonus)" }
   ]
 }
