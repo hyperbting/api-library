@@ -7,6 +7,7 @@ import (
 	"api-library/internal/iap"
 	"api-library/internal/item"
 	"api-library/internal/news"
+	"api-library/internal/pet"
 	"api-library/internal/quest"
 	"api-library/internal/redeem"
 	"api-library/internal/save"
@@ -40,6 +41,7 @@ type FirebaseContainer struct {
 	RedeemHdl *redeem.Handler
 	GemHdl    *gem.Handler
 	IapHdl    *iap.Handler
+	PetHdl    *pet.Handler
 
 	// Creates Firebase Auth email/password users (the admin panel's sign-in accounts)
 	EmailUserCreator auth.EmailUserCreator
@@ -110,6 +112,8 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		if playPackage == "" {
 			playPackage = "com.steadyshellshock.lettucemakemoney"
 		}
+		// The owned-pet list, rebuilt from the grants ledger (starter pets + Pet rewards).
+		container.PetHdl = pet.NewHandler(pet.NewService(pet.NewFirestoreRepository(container.Firestore)))
 		container.IapHdl = iap.NewHandler(iap.NewService(iap.NewFirestoreRepository(container.Firestore), items, iap.NewGooglePlayVerifier(playPackage)))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
 		if appCfg.SessionKeyUnsafe() {

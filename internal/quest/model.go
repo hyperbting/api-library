@@ -42,6 +42,10 @@ const (
 	// RewardTimeWarp: Amount is hours of the player's current income. Stored as an unclaimed grant
 	// ("quest:<questId>:<stepId>:warp") that the client applies, as for a redeem code; not listed in `granted`.
 	RewardTimeWarp RewardType = "TimeWarp"
+	// RewardPet: Key is the pet's Addressable address. Stored as an unclaimed grant
+	// ("quest:<questId>:<stepId>:pet:<key>") that the client applies to its owned pets; not listed in `granted`.
+	// Ownership is rebuilt from the ledger (package pet), so a reset and replayed quest never pays it twice.
+	RewardPet RewardType = "Pet"
 )
 
 // Progress is one quest's server-owned state. The JSON form is the API shape

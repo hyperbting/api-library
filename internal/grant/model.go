@@ -47,6 +47,10 @@ const (
 	// server-owned (package gem): the gems of a grant are credited when the gem service next reads the user's
 	// state, and the client only shows the balance the server reports. Claiming the grant changes nothing.
 	RewardGem RewardType = "Gem"
+	// RewardPet: the player now owns a pet. Key is the pet's Addressable address in the Unity client (one of
+	// KnownPets), Amount is unused. Ownership is the set of Pet rewards in the ledger, claimed or not (package pet),
+	// so the list can always be rebuilt from the server; the client applies the grant to its own owned list.
+	RewardPet RewardType = "Pet"
 
 	// MaxGemsPerReward bounds one Gem reward line (a pack plus its bonus is a few thousand).
 	MaxGemsPerReward = 1_000_000
@@ -70,6 +74,18 @@ var (
 	ErrInvalidReward = errors.New("invalid reward")
 	ErrTooManyGrants = errors.New("too many grants")
 )
+
+// StarterPets are owned by every account without a grant.
+var StarterPets = []string{"Pet_Tortoise"}
+
+// KnownPets are the pets a Pet reward may name: the Addressable addresses of the Unity client's Characters group.
+var KnownPets = map[string]bool{
+	"Pet_Tortoise": true,
+	"Pet_Turtle":   true,
+	"Pet_Wani":     true,
+	"Pet_Squirrel": true,
+	"Pet_Raccoon":  true,
+}
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).
 // Amount is the total: the item's unit amount times Count. ItemID and Count are for display only (the
@@ -105,6 +121,10 @@ func (r Reward) Validate() error {
 	case RewardUnlock:
 		if r.Key == "" {
 			return fmt.Errorf("%w: Unlock needs a key", ErrInvalidReward)
+		}
+	case RewardPet:
+		if !KnownPets[r.Key] {
+			return fmt.Errorf("%w: unknown pet %q", ErrInvalidReward, r.Key)
 		}
 	default:
 		return fmt.Errorf("%w: unknown type %q", ErrInvalidReward, r.Type)

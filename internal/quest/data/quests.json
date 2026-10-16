@@ -1,6 +1,6 @@
 {
-  "version": 10,
-  "exportedAt": "2026-10-15T11:36:08.8812752Z",
+  "version": 11,
+  "exportedAt": "2026-10-16T07:33:13.8669683Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -105,6 +105,32 @@
               "amount": 5.0
             }
           ]
+        },
+        {
+          "id": "turtle_joins",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.turtle",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Turtle",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "second_fever",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "fever.start",
+            "target": 1.0
+          },
+          "rewards": []
         },
         {
           "id": "level_to_5",

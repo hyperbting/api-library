@@ -32,6 +32,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	setupSaveRoutes(api, container)
 	setupRedeemRoutes(api, container)
 	setupGemRoutes(api, container)
+	setupPetRoutes(api, container)
 
 	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
 	// public service, which runs the same image.
@@ -160,6 +161,14 @@ func setupSaveRoutes(router fiber.Router, container *app.FirebaseContainer) {
 	saves.Post("/sync", container.SaveHdl.Sync)
 	// Admin only: drops the caller's own save snapshot. Used by the client dev menu.
 	saves.Post("/admin/reset", auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), container.SaveHdl.Reset)
+}
+
+// setupPetRoutes: the owned-pet list (GET /pets), rebuilt from the grants ledger.
+func setupPetRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.Firestore == nil || container.PetHdl == nil {
+		return
+	}
+	router.Get("/pets", container.FirebaseAuthMw, userLimiter(60), container.PetHdl.List)
 }
 
 // setupGemRoutes: the gem balance and what it buys, and the store purchases that fill it (GDD 5.2.1).

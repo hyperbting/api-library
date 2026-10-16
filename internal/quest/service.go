@@ -146,7 +146,7 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 	p.CompletedSteps = append(p.CompletedSteps, step.ID)
 	p.UpdatedAt = now
 	granted := make([]GrantedReward, 0, len(step.Rewards))
-	var gemRewards, warpRewards []grant.Reward
+	var gemRewards, warpRewards, petRewards []grant.Reward
 	for _, r := range step.Rewards {
 		// Cash, Pull and Unlock are applied by the client from this list. Gems are the server's: they are
 		// stored as a grant below, and listed here only when this call paid them. A time warp is a grant the
@@ -157,6 +157,10 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 			continue
 		case RewardTimeWarp:
 			warpRewards = append(warpRewards, grant.Reward{Type: grant.RewardTimeWarp, Key: r.Key, Amount: r.Amount})
+			continue
+		case RewardPet:
+			// A pet is a grant too: the ledger is where the server keeps the owned list (package pet).
+			petRewards = append(petRewards, grant.Reward{Type: grant.RewardPet, Key: r.Key, Amount: 1})
 			continue
 		}
 		granted = append(granted, GrantedReward(r))
@@ -171,6 +175,27 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 			Source:    grant.SourceQuest,
 			SourceRef: def.ID + "/" + step.ID,
 			Rewards:   warpRewards,
+			CreatedAt: now,
+		})
+		if err != nil {
+			return nil, false, false, err
+		}
+		if added {
+			grants.UpdatedAt = now
+			wroteGrant = true
+		}
+	}
+	for _, pr := range petRewards {
+		if grants == nil {
+			return nil, false, false, errors.New("quest: a step with a pet was applied without the grants document")
+		}
+		// Unclaimed: the client adds the pet to its owned list and reports the grant claimed. One grant per pet and
+		// step, so a reset and replayed quest never pays it twice.
+		added, err := grants.Add(grant.Grant{
+			ID:        GemGrantID(def.ID, step.ID) + ":pet:" + pr.Key,
+			Source:    grant.SourceQuest,
+			SourceRef: def.ID + "/" + step.ID,
+			Rewards:   []grant.Reward{pr},
 			CreatedAt: now,
 		})
 		if err != nil {
