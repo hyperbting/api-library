@@ -91,6 +91,12 @@ func NewPublicConfig(cfg *config.AppConfig) PublicConfig {
 	return pc
 }
 
+func init() {
+	// The runtime image may have no /etc/mime.types, and Go's built-in table has no .ico: the panel's favicon would be
+	// served without a Content-Type.
+	_ = mime.AddExtensionType(".ico", "image/x-icon")
+}
+
 // Register mounts /admin/config.json and the SPA under /admin. Call it only when the panel is enabled.
 func Register(app *fiber.App, cfg *config.AppConfig) {
 	register(app, cfg, distFS)

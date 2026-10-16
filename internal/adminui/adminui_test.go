@@ -22,6 +22,7 @@ func testApp(t *testing.T, cfg *config.AppConfig) *fiber.App {
 		"dist/assets/app-abc.js": {Data: []byte("console.log(1)")},
 		"dist/assets/big-abc.js": {Data: []byte(strings.Repeat("function f(){return 1}\n", 200))},
 		"dist/assets/font.woff2": {Data: []byte(strings.Repeat("w", 2000))},
+		"dist/favicon.ico":       {Data: []byte{0, 0, 1, 0, 1, 0}},
 	}
 	app := fiber.New()
 	register(app, cfg, files)
@@ -52,6 +53,9 @@ func TestServe(t *testing.T) {
 	}
 	if code, _, ct := get(t, app, "/admin/assets/app-abc.js"); code != 200 || ct == "" {
 		t.Fatalf("asset: %d %q", code, ct)
+	}
+	if code, _, ct := get(t, app, "/admin/favicon.ico"); code != 200 || ct != "image/x-icon" {
+		t.Fatalf("favicon: %d %q", code, ct)
 	}
 	if code, _, _ := get(t, app, "/admin/assets/missing.js"); code != 404 {
 		t.Fatalf("missing asset: %d", code)
