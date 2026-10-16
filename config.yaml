@@ -6,6 +6,12 @@ app:
   version: "v99"
   register_enabled: true # enable the email/password registration route
 
+# Forced client update by version NAME (env CLIENT_MIN_VERSION / CLIENT_LATEST_VERSION). A client below the minimum
+# gets 426 Upgrade Required; empty = nobody is blocked. Publish the new client BEFORE raising the minimum.
+client:
+  min_version: "1.0"
+  latest_version: ""
+
 # Admin API and panel. Same image, switched per service by env (all off by default):
 #   neither flag                      game API only                         (deploy.bat)
 #   ADMIN_ENABLED=true                game API + /api/<v>/admin routes      (deploy-admin.bat)

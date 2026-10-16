@@ -38,6 +38,22 @@ func healthz(c fiber.Ctx) error {
 	})
 }
 
+// versionHandler is healthz plus the supported client versions (empty strings when none is configured).
+func versionHandler(cfg *config.AppConfig) fiber.Handler {
+	var minV, latestV string
+	if cfg != nil {
+		minV, latestV = cfg.Client.MinVersion, cfg.Client.LatestVersion
+	}
+	return func(c fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":              "ok",
+			"commit":              buildinfo.Commit,
+			"minClientVersion":    minV,
+			"latestClientVersion": latestV,
+		})
+	}
+}
+
 func setupUserRoutes(router fiber.Router, container *app.Container, cfg *config.AppConfig) {
 	mountUserRoutes(router, container.UserHdl, cfg)
 }

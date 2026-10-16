@@ -306,6 +306,25 @@ func TestVersionRouteOnTheCloudRunEntrypoint(t *testing.T) {
 	}
 }
 
+// /version also reports the configured client versions for the Splash check.
+func TestVersionRouteReportsClientVersions(t *testing.T) {
+	app := fiber.New()
+	cfg := &config.AppConfig{App: config.AppDetail{Version: "v99"}, Client: config.ClientConfig{MinVersion: "1.1", LatestVersion: "1.2"}}
+	RegisterFirebaseCloudFunctionRoutes(app, cfg, nil)
+	res, err := app.Test(httptest.NewRequest("GET", "/version", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var body struct{ MinClientVersion, LatestClientVersion string }
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.MinClientVersion != "1.1" || body.LatestClientVersion != "1.2" {
+		t.Fatalf("version: %+v", body)
+	}
+}
+
 // userLimiter counts per client when there is no signed-in user: the fourth request in a minute is refused, and a
 // different client is not affected.
 func TestUserLimiterFallsBackToClient(t *testing.T) {

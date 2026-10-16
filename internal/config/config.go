@@ -27,6 +27,14 @@ type AppDetail struct {
 // forgeable; a deployed service must override it with SESSION_SECRET_KEY.
 const DevSessionSecretKey = "c2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtMzA4OQ"
 
+// ClientConfig is the forced client update (see package clientver). Version names, e.g. "1.1".
+type ClientConfig struct {
+	// env CLIENT_MIN_VERSION: clients below this get 426 on /api/<v>/*. Empty = nobody is blocked.
+	MinVersion string `mapstructure:"min_version"`
+	// env CLIENT_LATEST_VERSION: shown by GET /version so a client can offer an optional "update available".
+	LatestVersion string `mapstructure:"latest_version"`
+}
+
 type FirebaseConfig struct {
 	Enabled             bool   `mapstructure:"enabled"`               // 是否啟用 Firebase 服務
 	ProjectID           string `mapstructure:"project_id"`            // GCP/Firebase Project ID
@@ -67,7 +75,8 @@ type AdminConfig struct {
 type AppConfig struct {
 	Admin      AdminConfig                 `mapstructure:"admin"`
 	App        AppDetail                   `mapstructure:"app"`
-	Database   *infrastructure.DBConfig    `mapstructure:"database"`
+	Client     ClientConfig                `mapstructure:"client"`
+	Database  *infrastructure.DBConfig    `mapstructure:"database"`
 	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`
 	Elastic    *infrastructure.ESConfig    `mapstructure:"elastic"`
 	SessionJWT *session.Config             `mapstructure:"session"`

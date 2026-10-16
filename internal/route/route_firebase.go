@@ -4,6 +4,7 @@ import (
 	"api-library/internal/adminui"
 	"api-library/internal/app"
 	"api-library/internal/auth"
+	"api-library/internal/clientver"
 	"api-library/internal/config"
 	"api-library/internal/gem"
 	"api-library/internal/iap"
@@ -16,7 +17,8 @@ import (
 
 func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, container *app.FirebaseContainer) {
 	// Which commit is running, readable over HTTP. Not /healthz: the Cloud Run service only mounts these routes.
-	app.Get("/version", healthz)
+	// Also says which client versions are supported (forced update): unauthenticated, read by the client's Splash.
+	app.Get("/version", versionHandler(cfg))
 
 	// container is nil when Firebase is disabled
 	if cfg == nil || container == nil {
@@ -24,7 +26,8 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	}
 
 	apiPath := fmt.Sprintf("/api/%s", cfg.App.Version)
-	api := app.Group(apiPath)
+	// A client below CLIENT_MIN_VERSION gets 426 on every API call (sessions left open past a raised minimum).
+	api := app.Group(apiPath, clientver.Middleware(cfg.Client.MinVersion))
 
 	mountUserRoutes(api, container.UserHdl, cfg)
 	setupQuestRoutes(api, container)
