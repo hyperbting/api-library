@@ -1,6 +1,7 @@
 package app
 
 import (
+	"api-library/internal/account"
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/gem"
@@ -43,6 +44,9 @@ type FirebaseContainer struct {
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
 
+	// Linked players (Play Games / Game Center), read from Firebase Auth for the admin panel
+	AccountHdl *account.Handler
+
 	// Creates Firebase Auth email/password users (the admin panel's sign-in accounts)
 	EmailUserCreator auth.EmailUserCreator
 
@@ -78,6 +82,7 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 	}
 	container.FirebaseAuthMw = authProvider.Middleware()
 	container.EmailUserCreator = auth.NewFirebaseEmailUserCreator(fbAuthClient)
+	container.AccountHdl = account.NewHandler(account.NewService(account.FirebaseSource{Client: fbAuthClient}))
 
 	// Firestore Database Service
 	if appCfg.Firebase.UseFirestore {

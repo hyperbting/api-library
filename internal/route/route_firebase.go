@@ -1,6 +1,7 @@
 package route
 
 import (
+	"api-library/internal/account"
 	"api-library/internal/adminui"
 	"api-library/internal/app"
 	"api-library/internal/auth"
@@ -96,6 +97,16 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 	mountAdminQuestRoutes(admin, container.QuestHdl)
 	mountAdminNewsRoutes(admin, container.NewsHdl)
 	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)
+	mountAdminAccountRoutes(admin, container.AccountHdl)
+}
+
+// mountAdminAccountRoutes: the panel's Players page, the players linked to Play Games / Game Center. The router must
+// already demand the admin role.
+func mountAdminAccountRoutes(admin fiber.Router, h *account.Handler) {
+	if h == nil {
+		return
+	}
+	admin.Get("/accounts", userLimiter(30), h.AdminList)
 }
 
 // mountAdminGemRoutes: the panel's Gems page. A player's balance, spends and grants by uid, a gift of gems or

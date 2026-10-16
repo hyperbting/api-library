@@ -11,6 +11,7 @@ export const router = createRouter({
     { path: '/quests', name: 'quests', component: () => import('./views/QuestsView.vue') },
     { path: '/news', name: 'news', component: () => import('./views/NewsView.vue') },
     { path: '/gems', name: 'gems', component: () => import('./views/GemsView.vue') },
+    { path: '/accounts', name: 'accounts', component: () => import('./views/AccountsView.vue') },
   ],
 })
 
