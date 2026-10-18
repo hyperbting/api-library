@@ -25,6 +25,11 @@ with `$env:NAME = "value"`, in sh with `export NAME=value`:
   ADMIN_ACCEPT_CUSTOM_TOKEN=true  the /admin routes also accept an ID token from a custom token signed with the
                                Firebase Admin service account (Tools/publish_build.py in the Unity repo). Off by default.
 
+  CLIENT_MIN_VERSION=1.1       forced client update: clients with a lower version NAME get 426 Upgrade Required on every
+                               API call and the Splash shows "please update". CLIENT_LATEST_VERSION=1.1 is shown by
+                               GET /version. Both apply to the public and the admin service; unset = unchanged. Publish the
+                               new client BEFORE raising the minimum, or every player is blocked with nothing to update to.
+
 Why the digest: deploying the bare `:latest` tag can make Cloud Run re-serve the digest it resolved earlier, i.e. the
 old image.
 """
@@ -93,6 +98,14 @@ def commit_stamp():
     return commit
 
 
+CLIENT_VERSION_ENV = ("CLIENT_MIN_VERSION", "CLIENT_LATEST_VERSION")
+
+
+def client_version_env():
+    """The forced-update settings set in the shell, as NAME=value pairs (merged into the service, so unset = unchanged)."""
+    return [f"{name}={os.environ[name]}" for name in CLIENT_VERSION_ENV if os.environ.get(name)]
+
+
 def deploy_public(dry_run):
     commit = commit_stamp()
     commit_image = f"{IMAGE_BASE}:{commit}"
@@ -110,7 +123,8 @@ def deploy_public(dry_run):
         "run", "deploy", PUBLIC_SERVICE, f"--project={PROJECT_ID}", f"--image={IMAGE_TAG}", "--platform=managed",
         f"--region={REGION}", f"--service-account={RUNTIME_SA}", "--port=3000", "--allow-unauthenticated",
         "--min-instances=0", "--max-instances=10", "--cpu=1", "--memory=256Mi",
-        "--update-env-vars=ADMIN_ENABLED=false,ADMIN_PANEL_ENABLED=false,ADMIN_REGISTER_EMAIL=false",
+        "--update-env-vars=" + ",".join(
+            ["ADMIN_ENABLED=false", "ADMIN_PANEL_ENABLED=false", "ADMIN_REGISTER_EMAIL=false"] + client_version_env()),
     ], dry_run)
     say("=== Deploy completed ===" if code == 0 else f"=== Deploy failed (exit {code}) ===")
     return code
@@ -137,7 +151,7 @@ def deploy_admin(dry_run):
         return 1
     say(f"Image to deploy: {image_ref}")
 
-    env_vars = ["ADMIN_ENABLED=true"]
+    env_vars = ["ADMIN_ENABLED=true"] + client_version_env()
     for name in ADMIN_FLAGS:
         if os.environ.get(name):
             env_vars.append(f"{name}={os.environ[name]}")
