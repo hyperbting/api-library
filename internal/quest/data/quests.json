@@ -1,6 +1,6 @@
 {
-  "version": 13,
-  "exportedAt": "2026-10-19T01:33:50.2769033Z",
+  "version": 14,
+  "exportedAt": "2026-10-19T02:01:10.0124676Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -279,6 +279,16 @@
           "condition": {
             "eventType": "ActionDone",
             "key": "home.incomejar.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "work_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Prologue/GoToWork",
             "target": 1.0
           },
           "rewards": []
