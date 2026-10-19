@@ -1,6 +1,6 @@
 {
-  "version": 14,
-  "exportedAt": "2026-10-19T02:01:10.0124676Z",
+  "version": 15,
+  "exportedAt": "2026-10-19T02:45:24.0159467Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -89,6 +89,16 @@
               "amount": 15.0
             }
           ]
+        },
+        {
+          "id": "golden_why",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/GoldenWhy",
+            "target": 1.0
+          },
+          "rewards": []
         },
         {
           "id": "golden_fever",
