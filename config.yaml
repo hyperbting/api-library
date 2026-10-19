@@ -12,6 +12,14 @@ client:
   min_version: "1.0"
   latest_version: ""
 
+# AdMob server-side verification of rewarded ads (env ADS_SSV_AD_UNITS / ADS_REQUIRE_SSV). The callback route
+# GET /api/<v>/webhooks/admob/ssv is on when ssv_ad_units is set; require_ssv makes POST /ads/reward wait for it.
+# Rollout: deploy with the units and require_ssv=false, ship the client that sets the SSV options, check the logs for
+# "[adssv] verified", then deploy with ADS_REQUIRE_SSV=true. Never before the new client is downloadable.
+ads:
+  ssv_ad_units: ""
+  require_ssv: false
+
 # Admin API and panel. Same image, switched per service by env (all off by default):
 #   neither flag                      game API only                         (deploy.bat)
 #   ADMIN_ENABLED=true                game API + /api/<v>/admin routes      (deploy-admin.bat)

@@ -16,8 +16,10 @@ import (
 //	warp            one payout hour of the player's income (a TimeWarp grant) per ad, counted against the same
 //	                8 h per day as the gem warps (double while the x2 boost runs); no limit on ads beyond that
 //
-// The server cannot see the ad (AdMob server-side verification is a later hardening), so a modified client can claim
-// a reward without one; what it cannot do is beat the cooldown or the day's allowance.
+// Without verification the server cannot see the ad, so a modified client can claim a reward without one; what it
+// cannot do is beat the cooldown or the day's allowance. With an AdVerifier (WithAdVerification, package adssv) a
+// request is rewarded only after AdMob's server-side verification callback for its requestId has arrived: until then
+// the answer is ad_pending and the client asks again with the same requestId.
 
 type Placement string
 
@@ -35,6 +37,11 @@ const (
 
 	CodeUnknownPlacement = "unknown_placement"
 	CodeAdCooldown       = "ad_cooldown"
+	// CodeAdPending: the verification callback for this requestId has not arrived (yet). Ask again.
+	CodeAdPending = "ad_pending"
+
+	// AdPendingRetrySeconds is the wait the client is told to keep between two asks.
+	AdPendingRetrySeconds = 3
 
 	maxAdRecords = 64
 )
@@ -95,6 +102,22 @@ func (s *service) AdReward(ctx context.Context, uid string, req AdRewardRequest)
 			return nil, err
 		}
 		return &AdRewardResponse{ErrorCode: CodeUnknownPlacement, State: *st}, nil
+	}
+
+	// Verification reads another collection, so it is asked before the transaction too. A request that was already
+	// rewarded still finds its callback (the record outlives the retry window), so a retry is answered as before.
+	if s.ads != nil {
+		ok, err := s.ads.Verified(ctx, uid, req.RequestID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			st, err := s.State(ctx, uid)
+			if err != nil {
+				return nil, err
+			}
+			return &AdRewardResponse{ErrorCode: CodeAdPending, RetryAfterSeconds: AdPendingRetrySeconds, State: *st}, nil
+		}
 	}
 
 	// The gate reads another document, so it is asked before the transaction (see Spend).
@@ -195,4 +218,14 @@ func (s *service) AdReward(ctx context.Context, uid string, req AdRewardRequest)
 		return nil, err
 	}
 	return res, nil
+}
+
+// AdVerifier says whether AdMob confirmed that this player finished the ad behind requestId.
+type AdVerifier interface {
+	Verified(ctx context.Context, uid, requestID string) (bool, error)
+}
+
+// WithAdVerification makes every ad reward wait for its verification callback (see the top of this file).
+func WithAdVerification(v AdVerifier) Option {
+	return func(s *service) { s.ads = v }
 }

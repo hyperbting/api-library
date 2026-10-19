@@ -2,6 +2,7 @@ package app
 
 import (
 	"api-library/internal/account"
+	"api-library/internal/adssv"
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/gem"
@@ -41,6 +42,7 @@ type FirebaseContainer struct {
 	SaveHdl   *save.Handler
 	RedeemHdl *redeem.Handler
 	GemHdl    *gem.Handler
+	AdSsvHdl  *adssv.Handler // AdMob SSV callback; nil unless ADS_SSV_AD_UNITS is set
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
 
@@ -111,8 +113,19 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		// Google Play verifier builds its credentials on the first purchase, so a missing Play API setup never
 		// stops the boot.
 		// Warps also need the store tutorial's third decoration in the player's quest progress (gem.WarpGate).
-		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items,
-			gem.WithWarpGate(gem.WarpGateFunc(quest.NewWarpGate(questRepo)))))
+		gemOpts := []gem.Option{gem.WithWarpGate(gem.WarpGateFunc(quest.NewWarpGate(questRepo)))}
+		// AdMob server-side verification: the callback route when ad units are set, the reward gate when required.
+		if units := adssv.ParseAdUnits(appCfg.Ads.SSVAdUnits); len(units) > 0 {
+			ssv := adssv.NewService(adssv.NewVerifier(units), adssv.NewFirestoreRepository(container.Firestore))
+			container.AdSsvHdl = adssv.NewHandler(ssv)
+			if appCfg.Ads.RequireSSV {
+				gemOpts = append(gemOpts, gem.WithAdVerification(ssv))
+			}
+			log.Printf("[BOOT] AdMob SSV callback is ON (%d ad unit entries), ad rewards require it: %v", len(units), appCfg.Ads.RequireSSV)
+		} else if appCfg.Ads.RequireSSV {
+			log.Printf("[BOOT] ADS_REQUIRE_SSV is set but ADS_SSV_AD_UNITS is empty: ad rewards stay unverified")
+		}
+		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items, gemOpts...))
 		playPackage := os.Getenv("PLAY_PACKAGE_NAME")
 		if playPackage == "" {
 			playPackage = "com.steadyshellshock.lettucemakemoney"

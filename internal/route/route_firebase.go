@@ -200,6 +200,11 @@ func setupGemRoutes(router fiber.Router, container *app.FirebaseContainer) {
 		// A rewarded ad (fever, offline double, a warp hour): one call per ad shown.
 		router.Post("/ads/reward", container.FirebaseAuthMw, userLimiter(30), container.GemHdl.AdReward)
 	}
+	// AdMob's server-side verification callback. Public (Google calls it, the signature is the credential), so no
+	// auth middleware and no per-player limiter; it only verifies and stores.
+	if container.AdSsvHdl != nil {
+		router.Get("/webhooks/admob/ssv", container.AdSsvHdl.Callback)
+	}
 	if container.IapHdl != nil {
 		router.Post("/iap/purchase", container.FirebaseAuthMw, userLimiter(10), container.IapHdl.Purchase)
 	}

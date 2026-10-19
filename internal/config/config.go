@@ -35,6 +35,17 @@ type ClientConfig struct {
 	LatestVersion string `mapstructure:"latest_version"`
 }
 
+// AdsConfig is the AdMob server-side verification (package adssv).
+type AdsConfig struct {
+	// env ADS_SSV_AD_UNITS: comma separated rewarded ad units whose callbacks are accepted ("ca-app-pub-x/y" or the
+	// bare unit number y). Non-empty turns the callback route on. Required: anyone with an AdMob account can get a
+	// callback signed for a user_id of their choice, so only the game's own units may count.
+	SSVAdUnits string `mapstructure:"ssv_ad_units"`
+	// env ADS_REQUIRE_SSV: POST /ads/reward pays only after the callback for its requestId arrived (ad_pending until
+	// then). Off while old clients, which set no SSV options, are still in use.
+	RequireSSV bool `mapstructure:"require_ssv"`
+}
+
 type FirebaseConfig struct {
 	Enabled             bool   `mapstructure:"enabled"`               // 是否啟用 Firebase 服務
 	ProjectID           string `mapstructure:"project_id"`            // GCP/Firebase Project ID
@@ -76,6 +87,7 @@ type AppConfig struct {
 	Admin      AdminConfig                 `mapstructure:"admin"`
 	App        AppDetail                   `mapstructure:"app"`
 	Client     ClientConfig                `mapstructure:"client"`
+	Ads        AdsConfig                   `mapstructure:"ads"`
 	Database  *infrastructure.DBConfig    `mapstructure:"database"`
 	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`
 	Elastic    *infrastructure.ESConfig    `mapstructure:"elastic"`

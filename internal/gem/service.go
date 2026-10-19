@@ -28,6 +28,7 @@ type service struct {
 	repo    Repository
 	catalog *item.Catalog // for gifts of catalog items; may be nil (gems only)
 	gate    WarpGate      // warps need it on top of the client's flag (warpgate.go); nil = the flag only
+	ads     AdVerifier    // ad rewards wait for AdMob's callback (ads.go); nil = the client's word
 	now     func() time.Time
 }
 

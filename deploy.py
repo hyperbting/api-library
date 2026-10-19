@@ -30,6 +30,11 @@ with `$env:NAME = "value"`, in sh with `export NAME=value`:
                                GET /version. Both apply to the public and the admin service; unset = unchanged. Publish the
                                new client BEFORE raising the minimum, or every player is blocked with nothing to update to.
 
+  ADS_SSV_AD_UNITS=ca-app-pub-x/y  AdMob server-side verification: the rewarded ad units whose callbacks are accepted; turns on
+                               GET /api/<v>/webhooks/admob/ssv (set this URL on the unit in the AdMob console).
+  ADS_REQUIRE_SSV=true         POST /ads/reward then pays only after that callback arrived. Turn it on only once the client
+                               that sets the SSV options is downloadable. Both apply to the public and the admin service.
+
 Why the digest: deploying the bare `:latest` tag can make Cloud Run re-serve the digest it resolved earlier, i.e. the
 old image.
 """
@@ -98,7 +103,7 @@ def commit_stamp():
     return commit
 
 
-CLIENT_VERSION_ENV = ("CLIENT_MIN_VERSION", "CLIENT_LATEST_VERSION")
+CLIENT_VERSION_ENV = ("CLIENT_MIN_VERSION", "CLIENT_LATEST_VERSION", "ADS_SSV_AD_UNITS", "ADS_REQUIRE_SSV")
 
 
 def client_version_env():
