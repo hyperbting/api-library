@@ -106,8 +106,10 @@ func TestVerifyRejects(t *testing.T) {
 		"no ad units set":   {query: good, units: nil, want: ErrAdUnit},
 		"stale":             {query: k.callback(t, func(q url.Values) { q.Set("timestamp", strconv.FormatInt(clock.Add(-2*time.Hour).UnixMilli(), 10)) }), units: []string{"1234567890"}, want: ErrStale},
 		"from the future":   {query: k.callback(t, func(q url.Values) { q.Set("timestamp", strconv.FormatInt(clock.Add(time.Hour).UnixMilli(), 10)) }), units: []string{"1234567890"}, want: ErrStale},
-		"no custom data":    {query: k.callback(t, func(q url.Values) { q.Del("custom_data") }), units: []string{"1234567890"}, want: ErrBadRequest},
-		"no transaction id": {query: k.callback(t, func(q url.Values) { q.Del("transaction_id") }), units: []string{"1234567890"}, want: ErrBadRequest},
+		"no custom data":    {query: k.callback(t, func(q url.Values) { q.Del("custom_data") }), units: []string{"1234567890"}, want: ErrNoReward},
+		"no transaction id": {query: k.callback(t, func(q url.Values) { q.Del("transaction_id") }), units: []string{"1234567890"}, want: ErrNoReward},
+		"no user id":        {query: k.callback(t, func(q url.Values) { q.Del("user_id") }), units: []string{"1234567890"}, want: ErrNoReward},
+		"bad timestamp":     {query: k.callback(t, func(q url.Values) { q.Set("timestamp", "x") }), units: []string{"1234567890"}, want: ErrBadRequest},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -214,6 +216,18 @@ func TestHandlerStoresAVerifiedCallbackOnce(t *testing.T) {
 	}
 	if got := get(replace(good, "uid-1", "uid-2")); got != 400 {
 		t.Errorf("tampered status = %d, want 400", got)
+	}
+	// AdMob's URL check: signed, dummy ad unit, no player: 200, nothing stored.
+	test := k.callback(t, func(q url.Values) { q.Del("user_id"); q.Del("custom_data"); q.Set("ad_unit", "1234567890") })
+	if got := get(test); got != 200 {
+		t.Errorf("test call status = %d, want 200", got)
+	}
+	if len(repo.recs) != 1 {
+		t.Errorf("records = %d after the test call, want 1", len(repo.recs))
+	}
+	// An unsigned look-alike of it is still refused.
+	if got := get(replace(test, "ad_unit=1234567890", "ad_unit=1234567891")); got != 400 {
+		t.Errorf("tampered test call status = %d, want 400", got)
 	}
 	if got := get(""); got != 400 {
 		t.Errorf("empty status = %d, want 400", got)

@@ -21,6 +21,10 @@ func (h *Handler) Callback(c fiber.Ctx) error {
 	raw := string(c.Request().URI().QueryString())
 	cb, err := h.srv.Handle(c.Context(), raw)
 	switch {
+	case errors.Is(err, ErrNoReward):
+		// AdMob's own test of the URL (saving it in the console): signed, so it is Google's, but it rewards nothing.
+		log.Printf("[adssv] test call from AdMob, nothing stored")
+		return c.SendStatus(fiber.StatusOK)
 	case err == nil:
 		log.Printf("[adssv] verified uid=%s ad_unit=%s request=%s", cb.UserID, cb.AdUnit, cb.CustomData)
 		return c.SendStatus(fiber.StatusOK)

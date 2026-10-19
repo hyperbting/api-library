@@ -46,6 +46,10 @@ var (
 	ErrStale        = errors.New("callback timestamp out of range")
 	ErrAdUnit       = errors.New("ad unit not accepted")
 	ErrUnknownKey   = errors.New("unknown key id")
+	// ErrNoReward is a callback with a good signature that names no player or request: the test call AdMob sends
+	// when the callback URL is saved in the console (dummy values, no user_id or custom_data). It is answered 200
+	// and nothing is stored, so it can never pay anything.
+	ErrNoReward = errors.New("signed callback without a player or request")
 )
 
 // Callback is one verified SSV call.
@@ -162,9 +166,12 @@ func (v *Verifier) Verify(ctx context.Context, rawQuery string) (*Callback, erro
 		CustomData:    q.Get("custom_data"),
 	}
 	cb.RewardAmount, _ = strconv.Atoi(q.Get("reward_amount"))
+	if cb.TransactionID == "" || cb.UserID == "" || cb.CustomData == "" {
+		return nil, ErrNoReward
+	}
 	ms, err := strconv.ParseInt(q.Get("timestamp"), 10, 64)
-	if err != nil || cb.TransactionID == "" || cb.UserID == "" || cb.CustomData == "" {
-		return nil, fmt.Errorf("%w: missing fields", ErrBadRequest)
+	if err != nil {
+		return nil, fmt.Errorf("%w: timestamp", ErrBadRequest)
 	}
 	cb.At = time.UnixMilli(ms)
 
