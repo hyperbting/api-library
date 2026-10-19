@@ -2,6 +2,7 @@ package gem
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"api-library/internal/grant"
@@ -32,7 +33,7 @@ const (
 const (
 	// FeverAdCooldown is the wait between two ad-started fevers of one store.
 	FeverAdCooldown = 5 * time.Minute
-	// AdWarpHours is the payout hours one warp ad gives.
+	// AdWarpHours is the payout hours one warp ad gave in the first build; now InvestHours[level] (invest.go).
 	AdWarpHours = 1.0
 
 	CodeUnknownPlacement = "unknown_placement"
@@ -177,22 +178,29 @@ func (s *service) AdReward(ctx context.Context, uid string, req AdRewardRequest)
 			if !warpAllowed {
 				return refuse(CodeWarpNotEnabled)
 			}
-			// Same rule as a gem warp: counted double while the x2 boost runs, 8 payout hours per day in all.
-			counted := AdWarpHours
+			// Same rule as a gem warp: counted double while the x2 boost runs, 8 payout hours per day in all. The hours
+			// are the player's Investment level (invest.go); an ad that would go past the day's allowance pays what
+			// is left of it, since the ad is already watched (the refusal is only for an allowance that is used up).
+			hours := d.InvestAdHours()
+			factor := 1.0
 			if d.BoostSeconds > 0 {
-				counted *= 2
+				factor = 2
 			}
-			if d.WarpHours+counted > MaxWarpHoursPerDay+1e-9 {
+			if room := (MaxWarpHoursPerDay - d.WarpHours) / factor; room < hours {
+				hours = math.Floor(room*100+1e-9) / 100 // whole hundredths, so the sum never drifts past the cap
+			}
+			if hours < 0.01 {
 				return refuse(CodeWarpLimit)
 			}
+			counted := hours * factor
 			g := grant.Grant{
 				ID:        "ad:" + req.RequestID,
 				Source:    grant.SourceAds,
 				SourceRef: string(req.Placement),
 				Rewards: []grant.Reward{{
 					Type:   grant.RewardTimeWarp,
-					Amount: AdWarpHours,
-					ItemID: "warp_ad_1h",
+					Amount: hours,
+					ItemID: "warp_ad",
 					Count:  1,
 				}},
 				CreatedAt: now,

@@ -101,6 +101,9 @@ type Doc struct {
 	// reports what it used; the server only caps the report at what is left.
 	BoostSeconds int64 `firestore:"boostSeconds"`
 
+	// Investment level (0 to MaxInvestLevel): how many hours one warp ad gives, see invest.go.
+	InvestLevel int `firestore:"investLevel"`
+
 	// Results of recent spends by request ID, so a retried request is answered, not charged twice.
 	Spends map[string]*SpendRecord `firestore:"spends"`
 
@@ -200,6 +203,14 @@ type State struct {
 	WarpResetsInSeconds int64 `json:"warpResetsInSeconds"`
 	BoostSeconds        int64 `json:"boostSeconds"`
 	ServerNowMs         int64 `json:"serverNowMs"`
+	// Investment (invest.go): the level, the payout hours one warp ad gives now, what the next level costs in gems
+	// (0 at the top) and the highest level.
+	InvestLevel     int     `json:"investLevel"`
+	InvestAdHours   float64 `json:"investAdHours"`
+	InvestNextPrice int64   `json:"investNextPrice"`
+	// The hours per ad the next level gives (0 at the top).
+	InvestNextAdHours float64 `json:"investNextAdHours"`
+	InvestMaxLevel    int     `json:"investMaxLevel"`
 }
 
 // POST /api/{version}/gems/spend

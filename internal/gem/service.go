@@ -58,6 +58,11 @@ func (s *service) state(d *Doc, now time.Time) State {
 		WarpResetsInSeconds: int64(math.Ceil(resetAt.Sub(now).Seconds())),
 		BoostSeconds:        d.BoostSeconds,
 		ServerNowMs:         now.UnixMilli(),
+		InvestLevel:         d.investLevel(),
+		InvestAdHours:       d.InvestAdHours(),
+		InvestNextPrice:     d.InvestNextPrice(),
+		InvestNextAdHours:   d.InvestNextAdHours(),
+		InvestMaxLevel:      MaxInvestLevel(),
 	}
 }
 
@@ -85,6 +90,9 @@ func (s *service) State(ctx context.Context, uid string) (*State, error) {
 // different document), so a retried request is still answered from its record.
 func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*SpendResponse, error) {
 	offer, known := Offers[req.Product]
+	if req.Product == ProductInvest {
+		known = true
+	}
 	if !known {
 		st, err := s.State(ctx, uid)
 		if err != nil {
@@ -133,6 +141,9 @@ func (s *service) Spend(ctx context.Context, uid string, req SpendRequest) (*Spe
 			return true, false, nil
 		}
 
+		if req.Product == ProductInvest {
+			return s.spendInvest(d, req, res, refuse)
+		}
 		if offer.WarpHours > 0 && !warpAllowed {
 			return refuse(CodeWarpNotEnabled)
 		}
