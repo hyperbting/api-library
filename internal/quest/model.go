@@ -46,6 +46,8 @@ const (
 	// ("quest:<questId>:<stepId>:pet:<key>") that the client applies to its owned pets; not listed in `granted`.
 	// Ownership is rebuilt from the ledger (package pet), so a reset and replayed quest never pays it twice.
 	RewardPet RewardType = "Pet"
+	// RewardJar: Amount coins go into the player's Home Income Jar. Applied by the client from `granted`, like Cash.
+	RewardJar RewardType = "Jar"
 )
 
 // Progress is one quest's server-owned state. The JSON form is the API shape

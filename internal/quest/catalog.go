@@ -166,7 +166,7 @@ func validateSteps(d *Definition) error {
 
 		for _, r := range s.Rewards {
 			switch r.Type {
-			case RewardCash, RewardPull, RewardUnlock:
+			case RewardCash, RewardPull, RewardUnlock, RewardJar:
 			case RewardGem, RewardTimeWarp:
 				// Same bounds as the grant ledger applies when the step pays.
 				if err := (grant.Reward{Type: grant.RewardType(r.Type), Amount: r.Amount}).Validate(); err != nil {

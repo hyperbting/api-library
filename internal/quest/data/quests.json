@@ -1,6 +1,6 @@
 {
-  "version": 11,
-  "exportedAt": "2026-10-16T07:33:13.8669683Z",
+  "version": 12,
+  "exportedAt": "2026-10-19T00:54:43.8762070Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -235,7 +235,13 @@
             "key": "Prologue/TrophyShelf",
             "target": 1.0
           },
-          "rewards": []
+          "rewards": [
+            {
+              "type": "Jar",
+              "key": "",
+              "amount": 20.0
+            }
+          ]
         },
         {
           "id": "board_tap",
