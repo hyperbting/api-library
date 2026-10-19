@@ -1,6 +1,6 @@
 {
-  "version": 12,
-  "exportedAt": "2026-10-19T00:54:43.8762070Z",
+  "version": 13,
+  "exportedAt": "2026-10-19T01:33:50.2769033Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -235,13 +235,7 @@
             "key": "Prologue/TrophyShelf",
             "target": 1.0
           },
-          "rewards": [
-            {
-              "type": "Jar",
-              "key": "",
-              "amount": 20.0
-            }
-          ]
+          "rewards": []
         },
         {
           "id": "board_tap",
@@ -264,21 +258,27 @@
           "rewards": []
         },
         {
-          "id": "jar_tap",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ActionDone",
-            "key": "home.incomejar.open",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
           "id": "jar_talk",
           "checkpoint": false,
           "condition": {
             "eventType": "ConversationEnded",
             "key": "Prologue/IncomeJar",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Jar",
+              "key": "",
+              "amount": 20.0
+            }
+          ]
+        },
+        {
+          "id": "jar_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.incomejar.open",
             "target": 1.0
           },
           "rewards": []
