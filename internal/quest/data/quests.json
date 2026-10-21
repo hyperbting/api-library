@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 17,
   "exportedAt": "2026-10-21T06:08:52.3222265Z",
   "quests": [
     {
@@ -24,6 +24,16 @@
           "condition": {
             "eventType": "ActionDone",
             "key": "staff.joined.tortoise",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "pet_talks",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/PetGreets",
             "target": 1.0
           },
           "rewards": []

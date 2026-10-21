@@ -107,9 +107,9 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 		}
 		return -1
 	}
-	// The store opens empty (monologue, the pet walks in, the rush tap and the customer lesson), the staff lesson follows
+	// The store opens empty (monologue, the pet walks in and talks, the rush tap and the customer lesson), the staff lesson follows
 	// the first upgrade, and the free first warp comes right after the third decoration (user, 2026-10-21).
-	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("rush_tap") &&
+	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("pet_talks") && idx("pet_talks") < idx("rush_tap") &&
 		idx("rush_tap") < idx("customer_asleep") && idx("customer_asleep") < idx("earn_level") &&
 		idx("level_first") < idx("staff_asleep") && idx("staff_asleep") < idx("buy_decor") &&
 		idx("buy_decor") >= 0 && idx("buy_decor") < idx("third_deco") && idx("third_deco") < idx("first_warp") &&
