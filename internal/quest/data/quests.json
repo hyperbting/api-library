@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "exportedAt": "2026-10-21T06:08:52.3222265Z",
   "quests": [
     {
@@ -44,6 +44,16 @@
           "condition": {
             "eventType": "ActionDone",
             "key": "bubble.rushed",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "first_served",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "lesson.served",
             "target": 1.0
           },
           "rewards": []

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs the API locally with live reload (`air`), with the development environment variables set.
+"""Runs the API locally with live reload (`air`), with the development environment variables set (admin API and panel on).
 Entry points: dev.bat / dev.sh. Needs `air` on PATH (go install github.com/air-verse/air@latest) and the Firebase
 admin SDK key file next to this script. Variables already set in your shell are kept."""
 import os
@@ -20,6 +20,9 @@ def main():
     env.setdefault("GOOGLE_APPLICATION_CREDENTIALS", KEY_FILE)
     env.setdefault("APP_ENV", "development")
     env.setdefault("APP_PORT", "3000")
+    # The admin API and the embedded panel (http://localhost:3000/admin) are off by default (config.yaml); on for local runs
+    env.setdefault("ADMIN_ENABLED", "true")
+    env.setdefault("ADMIN_PANEL_ENABLED", "true")
     return subprocess.call([air] + sys.argv[1:], cwd=HERE, env=env)
 
 
