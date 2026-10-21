@@ -1,6 +1,6 @@
 {
-  "version": 15,
-  "exportedAt": "2026-10-19T02:45:24.0159467Z",
+  "version": 16,
+  "exportedAt": "2026-10-21T06:08:52.3222265Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -8,6 +8,46 @@
       "initial": false,
       "followUp": null,
       "steps": [
+        {
+          "id": "store_quiet",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/StoreQuiet",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "pet_arrives",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.tortoise",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "rush_tap",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "bubble.rushed",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "customer_asleep",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "customer.woken",
+            "target": 1.0
+          },
+          "rewards": []
+        },
         {
           "id": "earn_level",
           "checkpoint": true,
@@ -25,6 +65,16 @@
             "eventType": "StateChanged",
             "key": "pet.level",
             "target": 2.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "staff_asleep",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.woken",
+            "target": 1.0
           },
           "rewards": []
         },
@@ -49,6 +99,16 @@
           "rewards": []
         },
         {
+          "id": "third_deco",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.count",
+            "target": 3.0
+          },
+          "rewards": []
+        },
+        {
           "id": "first_warp",
           "checkpoint": true,
           "condition": {
@@ -63,16 +123,6 @@
               "amount": 0.1666667
             }
           ]
-        },
-        {
-          "id": "third_deco",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "store.decor.count",
-            "target": 3.0
-          },
-          "rewards": []
         },
         {
           "id": "golden",
