@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "exportedAt": "2026-10-21T06:08:52.3222265Z",
   "quests": [
     {
@@ -69,26 +69,6 @@
           "rewards": []
         },
         {
-          "id": "earn_level",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "pet.upgrade.ready",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "level_first",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "pet.level",
-            "target": 2.0
-          },
-          "rewards": []
-        },
-        {
           "id": "staff_asleep",
           "checkpoint": true,
           "condition": {
@@ -97,52 +77,6 @@
             "target": 1.0
           },
           "rewards": []
-        },
-        {
-          "id": "earn_decor",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "store.decor.ready",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "buy_decor",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "CountIncrement",
-            "key": "store.upgrade",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "third_deco",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "store.decor.count",
-            "target": 3.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "first_warp",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "StateChanged",
-            "key": "store.decor.count",
-            "target": 1.0
-          },
-          "rewards": [
-            {
-              "type": "TimeWarp",
-              "key": "",
-              "amount": 0.1666667
-            }
-          ]
         },
         {
           "id": "golden",
@@ -187,6 +121,56 @@
           ]
         },
         {
+          "id": "tell_staff_short",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/TooManyCustomers",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "earn_level",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.upgrade.ready",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "level_first",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.level",
+            "target": 2.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "earn_decor",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.ready",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "buy_decor",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "store.upgrade",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
           "id": "turtle_joins",
           "checkpoint": true,
           "condition": {
@@ -211,6 +195,42 @@
             "target": 1.0
           },
           "rewards": []
+        },
+        {
+          "id": "turtle_leaves",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/TurtleLeaves",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "third_deco",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.count",
+            "target": 3.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "first_warp",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.decor.count",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "TimeWarp",
+              "key": "",
+              "amount": 0.1666667
+            }
+          ]
         },
         {
           "id": "level_to_5",

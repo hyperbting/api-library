@@ -107,13 +107,13 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 		}
 		return -1
 	}
-	// The store opens empty (monologue, the pet walks in and talks, the rush tap and the customer lesson), the staff lesson follows
-	// the first upgrade, and the free first warp comes right after the third decoration (user, 2026-10-21).
+	// The store opens empty (monologue, the pet walks in and talks, the rush tap and the customer lesson), the staff lesson follows the customer lesson
+	// directly, then the golden customer, its talk and the free sale (the first upgrade comes after them, user 2026-10-22), the Turtle and the second fever follow the first decoration, and the free first warp comes right after the third decoration (user, 2026-10-21).
 	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("pet_talks") && idx("pet_talks") < idx("rush_tap") &&
-		idx("rush_tap") < idx("first_served") && idx("first_served") < idx("customer_asleep") && idx("customer_asleep") < idx("earn_level") &&
-		idx("level_first") < idx("staff_asleep") && idx("staff_asleep") < idx("buy_decor") &&
-		idx("buy_decor") >= 0 && idx("buy_decor") < idx("third_deco") && idx("third_deco") < idx("first_warp") &&
-		idx("first_warp") < idx("golden") && idx("golden") < idx("golden_fever")) {
+		idx("rush_tap") < idx("first_served") && idx("first_served") < idx("customer_asleep") && idx("customer_asleep") < idx("staff_asleep") && idx("staff_asleep") < idx("golden") && idx("golden") < idx("golden_why") &&
+		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("earn_level") && idx("earn_level") < idx("level_first") && idx("level_first") < idx("buy_decor") &&
+		idx("buy_decor") >= 0 && idx("buy_decor") < idx("turtle_joins") && idx("second_fever")+1 == idx("turtle_leaves") && idx("turtle_leaves") < idx("third_deco") &&
+		idx("third_deco") < idx("first_warp")) {
 		t.Errorf("store steps out of order: %v", ids)
 	}
 	// The first warp is a free 10 minutes of income (a TimeWarp reward, in hours).

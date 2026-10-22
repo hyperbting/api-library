@@ -89,7 +89,7 @@ func TestShippedTutorialTurtleJoinsThenSecondFever(t *testing.T) {
 		}
 		return -1
 	}
-	if !(idx("golden_fever") >= 0 && idx("golden_fever")+1 == idx("turtle_joins") && idx("turtle_joins")+1 == idx("second_fever") &&
+	if !(idx("golden_fever") >= 0 && idx("golden_fever") < idx("turtle_joins") && idx("turtle_joins")+1 == idx("second_fever") &&
 		idx("second_fever") < idx("level_to_5")) {
 		t.Fatalf("store steps out of order: %v", ids)
 	}
