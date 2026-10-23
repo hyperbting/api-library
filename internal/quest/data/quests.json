@@ -1,6 +1,6 @@
 {
-  "version": 19,
-  "exportedAt": "2026-10-21T06:08:52.3222265Z",
+  "version": 20,
+  "exportedAt": "2026-10-22T11:30:50.3616455Z",
   "quests": [
     {
       "id": "tut_ch1_store",
@@ -213,6 +213,16 @@
             "eventType": "StateChanged",
             "key": "store.decor.count",
             "target": 3.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "third_deco_golden",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "qte.finished",
+            "target": 1.0
           },
           "rewards": []
         },
