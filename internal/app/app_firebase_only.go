@@ -5,6 +5,7 @@ import (
 	"api-library/internal/adssv"
 	"api-library/internal/auth"
 	"api-library/internal/config"
+	"api-library/internal/gacha"
 	"api-library/internal/gem"
 	"api-library/internal/iap"
 	"api-library/internal/item"
@@ -42,6 +43,7 @@ type FirebaseContainer struct {
 	SaveHdl   *save.Handler
 	RedeemHdl *redeem.Handler
 	GemHdl    *gem.Handler
+	GachaHdl  *gacha.Handler
 	AdSsvHdl  *adssv.Handler // AdMob SSV callback; nil unless ADS_SSV_AD_UNITS is set
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
@@ -126,6 +128,13 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 			log.Printf("[BOOT] ADS_REQUIRE_SSV is set but ADS_SSV_AD_UNITS is empty: ad rewards stay unverified")
 		}
 		container.GemHdl = gem.NewHandler(gem.NewService(gem.NewFirestoreRepository(container.Firestore), items, gemOpts...))
+		// Gacha: the pool is embedded and validated at boot like the quest table; draws spend gems from the gem document.
+		pool, err := gacha.LoadCatalog()
+		if err != nil {
+			return nil, err
+		}
+		container.GachaHdl = gacha.NewHandler(gacha.NewService(gacha.NewFirestoreRepository(container.Firestore), pool))
+		log.Printf("[BOOT] gacha pool version %d, %d pets, %d accessories", pool.Version, len(pool.Pets), len(pool.Accessories))
 		playPackage := os.Getenv("PLAY_PACKAGE_NAME")
 		if playPackage == "" {
 			playPackage = "com.steadyshellshock.lettucemakemoney"

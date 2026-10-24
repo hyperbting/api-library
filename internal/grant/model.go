@@ -68,6 +68,9 @@ const (
 	SourceQuest Source = "quest"
 	// SourceAds: a rewarded ad (a warp), see package gem. ID "ad:<requestId>".
 	SourceAds Source = "ads"
+	// SourceGacha: the new pets and the duplicate cash of a gacha draw (package gacha). IDs "gacha:<requestId>:pets"
+	// and "gacha:<requestId>:cash".
+	SourceGacha Source = "gacha"
 )
 
 var (
@@ -85,6 +88,15 @@ var KnownPets = map[string]bool{
 	"Pet_Wani":     true,
 	"Pet_Squirrel": true,
 	"Pet_Raccoon":  true,
+	// Gacha pool pets (internal/gacha/data/pool.json) and the rest of CustomerManager.StaffChoices.
+	"Pet_Cheetah":      true,
+	"Pet_Sloth":        true,
+	"Pet_Doberman":     true,
+	"Pet_DobermanSide": true,
+	"Pet_Corgi":        true,
+	"Pet_Hamster":      true,
+	"Pet_Owl":          true,
+	"Pet_Shepherd":     true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).

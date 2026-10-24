@@ -36,6 +36,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	setupSaveRoutes(api, container)
 	setupRedeemRoutes(api, container)
 	setupGemRoutes(api, container)
+	setupGachaRoutes(api, container)
 	setupPetRoutes(api, container)
 
 	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
@@ -208,6 +209,17 @@ func setupGemRoutes(router fiber.Router, container *app.FirebaseContainer) {
 	if container.IapHdl != nil {
 		router.Post("/iap/purchase", container.FirebaseAuthMw, userLimiter(10), container.IapHdl.Purchase)
 	}
+}
+
+// setupGachaRoutes: the character and accessory draws (GDD 5.2.2). A draw is a tap on a shop button, so it is
+// limited per player and minute.
+func setupGachaRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.Firestore == nil || container.GachaHdl == nil {
+		return
+	}
+	gacha := router.Group("/gacha", container.FirebaseAuthMw)
+	gacha.Get("/", userLimiter(60), container.GachaHdl.State)
+	gacha.Post("/draw", userLimiter(20), container.GachaHdl.Draw)
 }
 
 func setupRedeemRoutes(router fiber.Router, container *app.FirebaseContainer) {

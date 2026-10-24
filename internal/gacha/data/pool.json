@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "rows": {
+    "character": {
+      "freeIntervalSeconds": 14400,
+      "freeMax": 2,
+      "gemPrice1": 150,
+      "gemPrice10": 1350,
+      "ticketCost1": 1,
+      "tiers": [
+        { "tier": 1, "name": "1-star", "rate": 4500, "dupMinutes": 2 },
+        { "tier": 2, "name": "2-star", "rate": 3000, "dupMinutes": 4 },
+        { "tier": 3, "name": "3-star", "rate": 1700, "dupMinutes": 8 },
+        { "tier": 4, "name": "4-star", "rate": 650, "dupMinutes": 15 },
+        { "tier": 5, "name": "5-star", "rate": 150, "dupMinutes": 30 }
+      ],
+      "pity": {
+        "tenMinTier": 3,
+        "hard": [
+          { "minTier": 4, "every": 20 },
+          { "minTier": 5, "every": 80 }
+        ]
+      }
+    },
+    "accessory": {
+      "freeIntervalSeconds": 3600,
+      "freeMax": 3,
+      "gemPrice1": 30,
+      "gemPrice10": 270,
+      "ticketCost1": 0,
+      "tiers": [
+        { "tier": 1, "name": "Common", "rate": 6000, "dupMinutes": 2 },
+        { "tier": 2, "name": "Rare", "rate": 2800, "dupMinutes": 5 },
+        { "tier": 3, "name": "Epic", "rate": 1000, "dupMinutes": 12 },
+        { "tier": 4, "name": "Legendary", "rate": 200, "dupMinutes": 30 }
+      ],
+      "pity": {
+        "tenMinTier": 2,
+        "hard": [
+          { "minTier": 4, "every": 60 }
+        ]
+      }
+    }
+  },
+  "pets": [
+    { "id": "Pet_Squirrel", "address": "Pet_Squirrel", "species": "Squirrel", "stars": 1, "category": "Critter", "role": "Technician" },
+    { "id": "Pet_Hamster", "address": "Pet_Hamster", "species": "Hamster", "stars": 1, "category": "Critter", "role": "Concierge" },
+    { "id": "Pet_Raccoon", "address": "Pet_Raccoon", "species": "Raccoon", "stars": 2, "category": "Critter", "role": "Technician" },
+    { "id": "Pet_Corgi", "address": "Pet_Corgi", "species": "Corgi", "stars": 2, "category": "Canine", "role": "Concierge" },
+    { "id": "Pet_Turtle", "address": "Pet_Turtle", "species": "Turtle", "stars": 3, "category": "Shell", "role": "Cashier" },
+    { "id": "Pet_Sloth", "address": "Pet_Sloth", "species": "Sloth", "stars": 3, "category": "Shell", "role": "Cashier" },
+    { "id": "Pet_Wani", "address": "Pet_Wani", "species": "Wani", "stars": 3, "category": "Scaled", "role": "Advertiser" },
+    { "id": "Pet_Cheetah", "address": "Pet_Cheetah", "species": "Cheetah", "stars": 4, "category": "Feline", "role": "Advertiser" },
+    { "id": "Pet_Owl", "address": "Pet_Owl", "species": "Owl", "stars": 4, "category": "Avian", "role": "Cashier" },
+    { "id": "Pet_Shepherd", "address": "Pet_Shepherd", "species": "Shepherd", "stars": 4, "category": "Canine", "role": "Security" },
+    { "id": "Pet_Doberman", "address": "Pet_Doberman", "species": "Doberman", "stars": 5, "category": "Canine", "role": "Security" },
+    { "id": "Pet_DobermanSide", "address": "Pet_DobermanSide", "species": "Doberman", "stars": 5, "category": "Canine", "role": "Security" }
+  ],
+  "accessories": [
+    { "id": "acc_hat_cap", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_hat_beanie", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_face_glasses", "slot": "Face", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_neck_scarf", "slot": "Neck", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_back_backpack", "slot": "Back", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_waist_belt", "slot": "Waist", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_torso_vest", "slot": "Torso", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_tail_ribbon", "slot": "Tail", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_hat_crown", "slot": "Hat", "rarity": "Epic", "fits": ["all"] },
+    { "id": "acc_held_umbrella", "slot": "Held", "rarity": "Epic", "fits": ["all"] },
+    { "id": "acc_neck_bowtie", "slot": "Neck", "rarity": "Epic", "fits": ["all"] },
+    { "id": "acc_face_aviators", "slot": "Face", "rarity": "Legendary", "fits": ["Hare"] },
+    { "id": "acc_face_owl_specs", "slot": "Face", "rarity": "Legendary", "fits": ["Owl"] },
+    { "id": "acc_back_wings", "slot": "Back", "rarity": "Legendary", "fits": ["all"] }
+  ]
+}
