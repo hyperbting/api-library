@@ -23,7 +23,10 @@ def main():
     # The admin API and the embedded panel (http://localhost:3000/admin) are off by default (config.yaml); on for local runs
     env.setdefault("ADMIN_ENABLED", "true")
     env.setdefault("ADMIN_PANEL_ENABLED", "true")
-    return subprocess.call([air] + sys.argv[1:], cwd=HERE, env=env)
+    # .air.toml builds tmp/main.exe (Windows); its entrypoint is tmp/main, which does not exist on macOS / Linux
+    exe = "./tmp/main.exe" if os.name == "nt" else "./tmp/main"
+    build = ["--build.cmd", f"go build -o {exe} ./internal/cmd/gcp_cloud_run", "--build.bin", exe, "--build.entrypoint", exe]
+    return subprocess.call([air] + build + sys.argv[1:], cwd=HERE, env=env)
 
 
 if __name__ == "__main__":
