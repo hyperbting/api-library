@@ -16,8 +16,11 @@ import (
 
 type Service interface {
 	// State credits gems and tickets granted since the last read, brings the free draw timers up to date and
-	// reports both rows, the accessory inventory and the owned pets.
-	State(ctx context.Context, uid string) (*State, error)
+	// reports the rows that are open, the accessory inventory and the owned pets. A row opens the first time it is
+	// asked for (or drawn from): it starts with one free draw and its free-draw clock starts then, so a row the
+	// client keeps hidden (the accessory row until its lesson) does not pile up free draws. `open` names the rows to
+	// open; none = both (a client that does not say, and the tests).
+	State(ctx context.Context, uid string, open ...Row) (*State, error)
 	// Draw pays (a stored free draw, gems or tickets) and rolls in one transaction. A refusal is ok=false with an
 	// error code; a malformed request is ErrInvalidRequest.
 	Draw(ctx context.Context, uid string, req DrawRequest) (*DrawResponse, error)
@@ -35,7 +38,7 @@ func NewService(repo Repository, cat *Catalog) Service {
 }
 
 // touch settles credits and brings both rows up to date. It reports whether the gacha document changed.
-func (s *service) touch(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) (gachaChanged, gemsChanged bool) {
+func (s *service) touch(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time, open []Row) (gachaChanged, gemsChanged bool) {
 	if s.settleGems(g, grants, now) {
 		gemsChanged = true
 	}
@@ -43,6 +46,10 @@ func (s *service) touch(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) (g
 		gachaChanged = true
 	}
 	for _, row := range Rows {
+		// A row nobody has asked for yet stays closed: no draw, no clock.
+		if d.Rows[string(row)] == nil && !hasRow(open, row) {
+			continue
+		}
 		cfg := s.cat.Rows[row]
 		rs, created := d.openRow(cfg, row, now)
 		if created || rs.accrue(cfg, now) {
@@ -84,7 +91,7 @@ func (s *service) state(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) St
 		maxTier := cfg.maxAvailable(has)
 		rs := d.Rows[string(row)]
 		if rs == nil {
-			rs = &RowState{Stored: 1}
+			continue // not opened yet: the row is not reported
 		}
 		v := RowView{
 			Row: row, FreeStored: rs.Stored, FreeMax: cfg.FreeMax, FreeIntervalSecs: cfg.FreeIntervalSeconds,
@@ -148,11 +155,23 @@ func (s *service) state(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) St
 	return st
 }
 
-func (s *service) State(ctx context.Context, uid string) (*State, error) {
+func hasRow(rows []Row, row Row) bool {
+	for _, r := range rows {
+		if r == row {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *service) State(ctx context.Context, uid string, open ...Row) (*State, error) {
+	if len(open) == 0 {
+		open = Rows
+	}
 	var out State
 	err := s.repo.Run(ctx, uid, func(d *Doc, g *gem.Doc, grants *grant.Doc) (bool, bool, bool, error) {
 		now := s.now().UTC()
-		wd, wg := s.touch(d, g, grants, now)
+		wd, wg := s.touch(d, g, grants, now, open)
 		out = s.state(d, g, grants, now)
 		return wd, wg, false, nil
 	})
@@ -180,7 +199,7 @@ func (s *service) Draw(ctx context.Context, uid string, req DrawRequest) (*DrawR
 		// fn may be retried by the transaction: build everything from scratch each time.
 		now := s.now().UTC()
 		res = &DrawResponse{}
-		s.touch(d, g, grants, now)
+		s.touch(d, g, grants, now, []Row{req.Row})
 
 		refuse := func(code string) (bool, bool, bool, error) {
 			res.ErrorCode = code

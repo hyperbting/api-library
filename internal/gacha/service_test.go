@@ -797,3 +797,33 @@ func TestShippedPool(t *testing.T) {
 		}
 	}
 }
+
+// A row opens when it is asked for: until then it is not reported and its free-draw clock does not run, so the
+// accessory row (hidden by the client until its lesson) starts with one free draw, not with a pile of them.
+func TestRowOpensWhenAsked(t *testing.T) {
+	f := newFixture(t)
+	st := f.stateRows("u", RowCharacter)
+	if len(st.Rows) != 1 || st.Rows[0].Row != RowCharacter || st.Rows[0].FreeStored != 1 {
+		t.Fatalf("only the character row, with one free draw: %+v", st.Rows)
+	}
+	f.now = f.now.Add(10 * time.Hour) // far longer than the accessory interval and its cap
+	st = f.stateRows("u", RowCharacter, RowAccessory)
+	if len(st.Rows) != 2 {
+		t.Fatalf("both rows now: %+v", st.Rows)
+	}
+	acc := rowView(st, RowAccessory)
+	if acc.FreeStored != 1 || acc.NextFreeInSeconds != 3600 {
+		t.Fatalf("the accessory row opens with one free draw and its clock starting now: stored=%d next=%ds", acc.FreeStored, acc.NextFreeInSeconds)
+	}
+	if got := len(f.state("u").Rows); got != 2 {
+		t.Fatalf("a client that names no rows gets both: %d", got)
+	}
+}
+
+func (f *fixture) stateRows(uid string, rows ...Row) *State {
+	st, err := f.srv.State(f.ctx, uid, rows...)
+	if err != nil {
+		panic(err)
+	}
+	return st
+}
