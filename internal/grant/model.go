@@ -97,6 +97,8 @@ var KnownPets = map[string]bool{
 	"Pet_Hamster":      true,
 	"Pet_Owl":          true,
 	"Pet_Shepherd":     true,
+	"Pet_Ragdoll":      true,
+	"Pet_Exotic":       true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).

@@ -2,6 +2,7 @@ package gacha
 
 import (
 	"context"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -9,6 +10,16 @@ import (
 	"api-library/internal/gem"
 	"api-library/internal/grant"
 )
+
+// loadFiveTierCatalog is the pool the rate, pity and pool tests were written against (1 to 5 stars, a x10 floor of
+// 3 stars, hard pity at 4 and 5 stars). The shipped pool tops out at 3 stars (TestShippedPool).
+func loadFiveTierCatalog() (*Catalog, error) {
+	data, err := os.ReadFile("testdata/pool_five_tier.json")
+	if err != nil {
+		return nil, err
+	}
+	return ParseCatalog(data)
+}
 
 // memRepo mimics the Firestore repository: Run works on copies and keeps them only when fn asks.
 type memRepo struct {
@@ -98,9 +109,13 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	cat, err := LoadCatalog()
+	cat, err := loadFiveTierCatalog()
 	if err != nil {
 		t.Fatal(err)
+	}
+	cat.Rows[RowCharacter].FirstDraw = nil // the tests script their own first rolls; TestFirstDraw turns it on
+	for i := range cat.Pets {
+		cat.Pets[i].Pool = 1 // every pet is open: the tests roll every tier; TestPetPools uses the real pools
 	}
 	f := &fixture{repo: newMemRepo(), cat: cat, ctx: context.Background(), now: clock}
 	f.srv = NewService(f.repo, cat).(*service)
@@ -156,7 +171,7 @@ func rowView(st *State, row Row) RowView {
 }
 
 func TestCatalogValid(t *testing.T) {
-	cat, err := LoadCatalog()
+	cat, err := loadFiveTierCatalog()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +196,7 @@ func TestCatalogRejects(t *testing.T) {
 	}
 	for name, mutate := range tests {
 		t.Run(name, func(t *testing.T) {
-			c, err := LoadCatalog()
+			c, err := loadFiveTierCatalog()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -194,7 +209,7 @@ func TestCatalogRejects(t *testing.T) {
 }
 
 func TestRatesCoverTheTableExactly(t *testing.T) {
-	cat, _ := LoadCatalog()
+	cat, _ := loadFiveTierCatalog()
 	want := map[Row][]int{
 		RowCharacter: {4500, 3000, 1700, 650, 150},
 		RowAccessory: {6000, 2800, 1000, 200},
@@ -217,7 +232,7 @@ func TestRatesCoverTheTableExactly(t *testing.T) {
 }
 
 func TestHardPity(t *testing.T) {
-	cat, _ := LoadCatalog()
+	cat, _ := loadFiveTierCatalog()
 	tests := []struct {
 		name  string
 		row   Row
@@ -243,7 +258,7 @@ func TestHardPity(t *testing.T) {
 }
 
 func TestPityCountersResetAndShare(t *testing.T) {
-	cat, _ := LoadCatalog()
+	cat, _ := loadFiveTierCatalog()
 	cfg := cat.Rows[RowCharacter]
 	rs := &RowState{Pity: map[string]int{}}
 	// 5-star roll value (top of the table) resets both counters.
@@ -494,15 +509,15 @@ func TestIdempotentFreeDrawUsesOneStoredDraw(t *testing.T) {
 }
 
 func TestDuplicatePetBecomesCash(t *testing.T) {
-	cat, _ := LoadCatalog()
-	// Tier 1 pet at pool index 0 = Pet_Squirrel; two 1-star rolls in a row: new, then duplicate.
+	cat, _ := loadFiveTierCatalog()
+	// Tier 1 pet at pool index 0 = Pet_Hamster; two 1-star rolls in a row: new, then duplicate.
 	f := newFixture(t)
 	f.giveGems("u", "g1", 1000)
 	first := f.draw("u", RowCharacter, ModeGem, 1, "req-dup-0001")
-	if !first.Results[0].New || first.Results[0].ID != "Pet_Squirrel" || first.CashHours != 0 {
+	if !first.Results[0].New || first.Results[0].ID != "Pet_Hamster" || first.CashHours != 0 {
 		t.Fatalf("first: %+v", first)
 	}
-	if len(first.Grants) != 1 || first.Grants[0].Rewards[0].Type != grant.RewardPet || first.Grants[0].Rewards[0].Key != "Pet_Squirrel" {
+	if len(first.Grants) != 1 || first.Grants[0].Rewards[0].Type != grant.RewardPet || first.Grants[0].Rewards[0].Key != "Pet_Hamster" {
 		t.Fatalf("new pet grant: %+v", first.Grants)
 	}
 	second := f.draw("u", RowCharacter, ModeGem, 1, "req-dup-0002")
@@ -527,7 +542,7 @@ func TestDuplicatePetBecomesCash(t *testing.T) {
 	// The pet is owned once.
 	pets := 0
 	for _, p := range second.State.Pets {
-		if p.ID == "Pet_Squirrel" {
+		if p.ID == "Pet_Hamster" {
 			pets++
 			if p.Stars != 1 || p.MaxAccessories != 1 {
 				t.Fatalf("%+v", p)
@@ -535,7 +550,7 @@ func TestDuplicatePetBecomesCash(t *testing.T) {
 		}
 	}
 	if pets != 1 {
-		t.Fatalf("Pet_Squirrel owned %d times", pets)
+		t.Fatalf("Pet_Hamster owned %d times", pets)
 	}
 }
 
@@ -543,7 +558,7 @@ func TestStarterPetIsOwnedAndPaysCash(t *testing.T) {
 	// A pet the account already owns (here through the ledger) pays cash even on the first draw.
 	f := newFixture(t)
 	f.giveGems("u", "g1", 1000)
-	f.giveReward("u", "gift", grant.Reward{Type: grant.RewardPet, Key: "Pet_Squirrel", Amount: 1})
+	f.giveReward("u", "gift", grant.Reward{Type: grant.RewardPet, Key: "Pet_Hamster", Amount: 1})
 	res := f.draw("u", RowCharacter, ModeGem, 1, "req-dup-0003")
 	if res.Results[0].New || res.CashHours <= 0 {
 		t.Fatalf("%+v", res)
@@ -608,10 +623,10 @@ func TestAccessoryFitsAreReported(t *testing.T) {
 func TestStarsSetAccessorySlots(t *testing.T) {
 	f := newFixture(t)
 	f.giveGems("u", "g1", 5000)
-	for i, addr := range []string{"Pet_Owl", "Pet_Doberman"} {
+	for i, addr := range []string{"Pet_Sloth", "Pet_Doberman"} {
 		f.giveReward("u", "gift"+strconv.Itoa(i), grant.Reward{Type: grant.RewardPet, Key: addr, Amount: 1})
 	}
-	want := map[string]int{"Pet_Tortoise": 1, "Pet_Owl": 4, "Pet_Doberman": 5}
+	want := map[string]int{"Pet_Tortoise": 1, "Pet_Sloth": 3, "Pet_Doberman": 5}
 	for _, p := range f.state("u").Pets {
 		if w, ok := want[p.ID]; ok {
 			if p.MaxAccessories != w || p.Stars != w {
@@ -696,5 +711,89 @@ func TestPruneClaimedCashMakesRoom(t *testing.T) {
 	pruneClaimedCash(grants)
 	if len(grants.Grants) != 2 || grants.Grants["gacha:r1:pets"] == nil || grants.Grants["unclaimed:cash"] == nil {
 		t.Fatalf("%d grants left", len(grants.Grants))
+	}
+}
+
+// The first ever character draw is a pet the player does not own, from the row's FirstDraw list (the tutorial's
+// second pet); after it the row rolls normally, and pity counts it as a result of its stars.
+func TestFirstDraw(t *testing.T) {
+	f := newFixture(t)
+	f.cat.Rows[RowCharacter].FirstDraw = []string{"Pet_Hamster", "Pet_Squirrel"}
+	f.seq = []int{1, 7600} // the first pick is the second FirstDraw pet; the next draw rolls tier 3
+	first := f.draw("u", RowCharacter, ModeFree, 1, "req-first-1")
+	if !first.OK || len(first.Results) != 1 {
+		t.Fatalf("%+v", first)
+	}
+	r := first.Results[0]
+	if r.ID != "Pet_Squirrel" || !r.New || r.Tier != 1 || len(first.Grants) != 1 {
+		t.Fatalf("first draw: %+v grants=%d", r, len(first.Grants))
+	}
+	f.now = f.now.Add(5 * time.Hour)
+	second := f.draw("u", RowCharacter, ModeGem, 1, "req-first-2")
+	if second.OK && second.Results[0].Tier != 3 {
+		t.Fatalf("the second draw rolls normally: %+v", second)
+	}
+}
+
+// Pool 2 pets (the 4- and 5-star ones) are not drawn until a grant carries the Unlock reward "gacha_pool_2"; until then
+// their tiers are not rolled, the odds shown add up over the open tiers, and the hard pity of a closed tier waits.
+func TestPetPools(t *testing.T) {
+	f := newFixture(t)
+	cat := f.cat
+	for i := range cat.Pets {
+		if cat.Pets[i].Stars >= 4 {
+			cat.Pets[i].Pool = 2
+		}
+	}
+	f.giveGems("u", "g1", 100000)
+	// A roll at the top of the open table lands on the highest open tier: 3-star, not 5.
+	f.seq = []int{9199, 0}
+	res := f.draw("u", RowCharacter, ModeGem, 1, "req-pool-1")
+	if !res.OK || res.Results[0].Tier != 3 {
+		t.Fatalf("pool 1 only: %+v", res.Results)
+	}
+	var sum float64
+	var tiers []int
+	for _, row := range res.State.Rows {
+		if row.Row != RowCharacter {
+			continue
+		}
+		for _, tv := range row.Tiers {
+			sum += tv.RatePct
+			tiers = append(tiers, tv.Tier)
+		}
+		if row.TenMinTier != 3 || len(row.Pity) != 0 {
+			t.Fatalf("closed tiers show no pity: ten=%d pity=%v", row.TenMinTier, row.Pity)
+		}
+	}
+	if len(tiers) != 3 || sum < 99.99 || sum > 100.01 {
+		t.Fatalf("odds of the open tiers: %v sum=%v", tiers, sum)
+	}
+	f.giveReward("u", "unlock-pool-2", grant.Reward{Type: grant.RewardUnlock, Key: "gacha_pool_2"})
+	f.seq = []int{9999, 0}
+	res = f.draw("u", RowCharacter, ModeGem, 1, "req-pool-2")
+	if !res.OK || res.Results[0].Tier != 5 {
+		t.Fatalf("pool 2 open: %+v", res.Results)
+	}
+}
+
+// The pool that ships: draws top out at 3 stars (user, 2026-10-24); a pet may be able to upgrade its stars later
+// (MaxStars above Stars), a fixed one has MaxStars equal to Stars.
+func TestShippedPool(t *testing.T) {
+	cat, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	chars := cat.Rows[RowCharacter]
+	if len(chars.Tiers) != 3 {
+		t.Fatalf("character tiers %d, want 3 (1 to 3 stars)", len(chars.Tiers))
+	}
+	for _, p := range cat.Pets {
+		if p.Stars < 1 || p.Stars > 3 {
+			t.Errorf("%s: %d stars, draws top out at 3", p.ID, p.Stars)
+		}
+		if p.MaxStars < p.Stars || p.MaxStars > 5 {
+			t.Errorf("%s: maxStars %d (stars %d)", p.ID, p.MaxStars, p.Stars)
+		}
 	}
 }

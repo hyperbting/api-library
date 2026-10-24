@@ -73,8 +73,15 @@ func (s *service) state(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) St
 		Accessories: []OwnedAccessory{},
 		Pets:        []OwnedPet{},
 	}
+	openPets := s.cat.openPetsByTier(grants)
 	for _, row := range Rows {
 		cfg := s.cat.Rows[row]
+		// The tiers that have something to give now: the character row shows only the stars of the open pools.
+		has := allTiers
+		if row == RowCharacter {
+			has = func(tier int) bool { return len(openPets[tier]) > 0 }
+		}
+		maxTier := cfg.maxAvailable(has)
 		rs := d.Rows[string(row)]
 		if rs == nil {
 			rs = &RowState{Stored: 1}
@@ -84,12 +91,18 @@ func (s *service) state(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) St
 			GemPrice1: cfg.GemPrice1, GemPrice10: cfg.GemPrice10, TicketCost1: cfg.TicketCost1,
 			TenMinTier: cfg.Pity.TenMinTier, Pity: []PityView{}, Tiers: []TierView{},
 		}
+		if v.TenMinTier > maxTier {
+			v.TenMinTier = maxTier
+		}
 		if !rs.NextFreeAt.IsZero() && rs.Stored < cfg.FreeMax {
 			t := rs.NextFreeAt
 			v.NextFreeAt = &t
 			v.NextFreeInSeconds = int64(math.Max(0, math.Ceil(t.Sub(now).Seconds())))
 		}
 		for _, h := range cfg.Pity.Hard {
+			if h.MinTier > maxTier {
+				continue
+			}
 			since := rs.Pity[strconv.Itoa(h.MinTier)]
 			left := h.Every - since
 			if left < 1 {
@@ -97,8 +110,17 @@ func (s *service) state(d *Doc, g *gem.Doc, grants *grant.Doc, now time.Time) St
 			}
 			v.Pity = append(v.Pity, PityView{MinTier: h.MinTier, Every: h.Every, Since: since, Left: left})
 		}
+		openRate := 0
 		for _, t := range cfg.Tiers {
-			v.Tiers = append(v.Tiers, TierView{Tier: t.Tier, Name: t.Name, RatePct: float64(t.Rate) / float64(RateScale) * 100, DupMinutes: t.DupMinutes})
+			if has(t.Tier) {
+				openRate += t.Rate
+			}
+		}
+		for _, t := range cfg.Tiers {
+			if !has(t.Tier) {
+				continue
+			}
+			v.Tiers = append(v.Tiers, TierView{Tier: t.Tier, Name: t.Name, RatePct: float64(t.Rate) / float64(openRate) * 100, DupMinutes: t.DupMinutes})
 		}
 		st.Rows = append(st.Rows, v)
 	}
@@ -270,20 +292,38 @@ func (s *service) roll(req DrawRequest, cfg *RowConfig, rs *RowState, d *Doc, gr
 	for _, addr := range pet.Owned(grants) {
 		ownedPets[addr] = true
 	}
+	// The character row draws from the pet pools that are open for this player; a tier with no pet there is not rolled.
+	has := allTiers
+	var openPets map[int][]*PetDef
+	if req.Row == RowCharacter {
+		openPets = s.cat.openPetsByTier(grants)
+		has = func(tier int) bool { return len(openPets[tier]) > 0 }
+	}
 	var results []Result
 	var newPets []string
 	reachedTen := false
 	for i := 0; i < req.Count; i++ {
+		// The first ever draw of the character row gives a pet the player does not own (the tutorial's second pet).
+		if first := s.firstDrawPet(req, cfg, rs, i, ownedPets, grants); first != nil {
+			cfg.noteTier(rs, first.Stars, has)
+			if first.Stars >= cfg.Pity.TenMinTier {
+				reachedTen = true
+			}
+			ownedPets[first.Address] = true
+			newPets = append(newPets, first.Address)
+			results = append(results, Result{Kind: "pet", ID: first.ID, Tier: first.Stars, TierName: cfg.tier(first.Stars).Name, New: true})
+			continue
+		}
 		// The guarantee of a x10 draw falls on its last roll when no earlier one reached the tier.
 		forceTen := req.Count == 10 && i == req.Count-1 && !reachedTen
-		tier, pity := cfg.rollTier(rs, forceTen, s.intn)
+		tier, pity := cfg.rollTierAvail(rs, forceTen, s.intn, has)
 		if tier >= cfg.Pity.TenMinTier {
 			reachedTen = true
 		}
 		t := cfg.tier(tier)
 		r := Result{Tier: tier, TierName: t.Name, Pity: pity, New: true}
 		if req.Row == RowCharacter {
-			pool := s.cat.petsByTier[tier]
+			pool := openPets[tier]
 			p := pool[s.intn(len(pool))]
 			r.Kind, r.ID = "pet", p.ID
 			if ownedPets[p.Address] {
@@ -308,6 +348,24 @@ func (s *service) roll(req DrawRequest, cfg *RowConfig, rs *RowState, d *Doc, gr
 		results = append(results, r)
 	}
 	return results, newPets
+}
+
+// firstDrawPet is the pet of the row's first ever draw (rs.Total == 0, first roll of the request), picked at random
+// among the FirstDraw pets the player does not own; nil when this is not that draw or they are all owned.
+func (s *service) firstDrawPet(req DrawRequest, cfg *RowConfig, rs *RowState, i int, owned map[string]bool, grants *grant.Doc) *PetDef {
+	if req.Row != RowCharacter || i != 0 || rs.Total != 0 || len(cfg.FirstDraw) == 0 {
+		return nil
+	}
+	var free []*PetDef
+	for _, id := range cfg.FirstDraw {
+		if p := s.cat.pets[id]; p != nil && !owned[p.Address] && poolUnlocked(grants, p.Pool) {
+			free = append(free, p)
+		}
+	}
+	if len(free) == 0 {
+		return nil
+	}
+	return free[s.intn(len(free))]
 }
 
 // cashHours is the duplicates' payout in hours of current income.

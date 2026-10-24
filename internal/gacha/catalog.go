@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"api-library/internal/grant"
 )
@@ -52,6 +53,9 @@ type RowConfig struct {
 	TicketCost1 int64  `json:"ticketCost1"`
 	Tiers       []Tier `json:"tiers"`
 	Pity        Pity   `json:"pity"`
+	// FirstDraw (character row only): the pets the player's first ever draw of the row picks from, never one they
+	// own already. It is the tutorial's second pet (GDD 5.2.2); empty = the first draw rolls like any other.
+	FirstDraw []string `json:"firstDraw,omitempty"`
 }
 
 // Tier is a star level (character) or a rarity (accessory), 1 = lowest.
@@ -82,6 +86,12 @@ type PetDef struct {
 	Stars    int    `json:"stars"`
 	Category string `json:"category"`
 	Role     string `json:"role"`
+	// Pool: 1 (default) is open from the start; a later pool opens with a grant that carries the Unlock reward
+	// "gacha_pool_<n>" (the quest step that opens it, e.g. in the middle of Chapter 2, or an admin grant).
+	Pool int `json:"pool,omitempty"`
+	// MaxStars: how far the pet can upgrade its stars later (the upgrade is not built, GDD 5.2.2); equal to Stars (or
+	// left out) = fixed stars. Draws top out at 3 stars, so a pet that was a 4 or 5-star keeps that as its ceiling.
+	MaxStars int `json:"maxStars,omitempty"`
 }
 
 type AccessoryDef struct {
@@ -95,6 +105,35 @@ type AccessoryDef struct {
 }
 
 var validSlots = map[string]bool{"Hat": true, "Face": true, "Neck": true, "Torso": true, "Waist": true, "Back": true, "Butt": true, "Tail": true, "Held": true}
+
+// poolUnlocked reports whether a pet pool is open for this player: pool 1 always, a later pool once a grant carries
+// its Unlock reward ("gacha_pool_2", ...).
+func poolUnlocked(grants *grant.Doc, pool int) bool {
+	if pool <= 1 {
+		return true
+	}
+	key := "gacha_pool_" + strconv.Itoa(pool)
+	for _, g := range grants.Grants {
+		for _, r := range g.Rewards {
+			if r.Type == grant.RewardUnlock && r.Key == key {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// openPetsByTier is the pets the player can draw now, by stars: those of the pools that are open for them.
+func (c *Catalog) openPetsByTier(grants *grant.Doc) map[int][]*PetDef {
+	out := map[int][]*PetDef{}
+	for i := range c.Pets {
+		p := &c.Pets[i]
+		if poolUnlocked(grants, p.Pool) {
+			out[p.Stars] = append(out[p.Stars], p)
+		}
+	}
+	return out
+}
 
 // LoadCatalog parses and validates the embedded pool; the server refuses to boot on an invalid one.
 func LoadCatalog() (*Catalog, error) { return ParseCatalog(catalogJSON) }
@@ -169,6 +208,9 @@ func (c *Catalog) validate() error {
 	}
 
 	chars, accs := c.Rows[RowCharacter], c.Rows[RowAccessory]
+	if len(accs.FirstDraw) > 0 {
+		return fmt.Errorf("accessory row: firstDraw is for the character row only")
+	}
 	c.pets = map[string]*PetDef{}
 	c.petsByTier = map[int][]*PetDef{}
 	for i := range c.Pets {
@@ -187,8 +229,22 @@ func (c *Catalog) validate() error {
 				return fmt.Errorf("pet %s is a starter pet: it would always be a duplicate", p.ID)
 			}
 		}
+		if p.Pool == 0 {
+			p.Pool = 1
+		}
+		if p.MaxStars == 0 {
+			p.MaxStars = p.Stars
+		}
+		if p.MaxStars < p.Stars || p.MaxStars > 5 {
+			return fmt.Errorf("pet %s: maxStars %d must be between stars %d and 5", p.ID, p.MaxStars, p.Stars)
+		}
 		c.pets[p.ID] = p
 		c.petsByTier[p.Stars] = append(c.petsByTier[p.Stars], p)
+	}
+	for _, id := range chars.FirstDraw {
+		if c.pets[id] == nil {
+			return fmt.Errorf("character row: firstDraw %q is not a pet of the pool", id)
+		}
 	}
 	c.accs = map[string]*AccessoryDef{}
 	c.accsByTier = map[int][]*AccessoryDef{}
