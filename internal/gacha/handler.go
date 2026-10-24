@@ -3,6 +3,7 @@ package gacha
 import (
 	"errors"
 	"log"
+	"strings"
 
 	"api-library/internal/auth"
 	"api-library/pkg/validator"
@@ -23,7 +24,17 @@ func NewHandler(srv Service) *Handler {
 // GET /gacha
 func (h *Handler) State(c fiber.Ctx) error {
 	user := auth.MustGetUser(c)
-	st, err := h.srv.State(c.Context(), user.UserID)
+	// ?rows=character,accessory names the rows to open; without it both open (an older client).
+	var open []Row
+	for _, name := range strings.Split(c.Query("rows"), ",") {
+		switch Row(strings.TrimSpace(name)) {
+		case RowCharacter:
+			open = append(open, RowCharacter)
+		case RowAccessory:
+			open = append(open, RowAccessory)
+		}
+	}
+	st, err := h.srv.State(c.Context(), user.UserID, open...)
 	if err != nil {
 		log.Printf("[gacha] state uid=%s: %v", user.UserID, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to read the gacha"})
