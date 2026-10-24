@@ -35,8 +35,8 @@ func TestParseCatalog(t *testing.T) {
 		t.Fatal("ch1 not indexed")
 	}
 
-	none := func(string) bool { return false }
-	done := func(id string) bool { return id == "tut_prologue" }
+	none := &QuestsDoc{Quests: map[string]*Progress{}}
+	done := &QuestsDoc{Quests: map[string]*Progress{"tut_prologue": {QuestID: "tut_prologue", Completed: true}}}
 	if !c.IsUnlockedBy("tut_prologue", none) {
 		t.Error("initial quest should be unlocked")
 	}
@@ -50,13 +50,16 @@ func TestParseCatalog(t *testing.T) {
 
 func TestParseCatalogRejects(t *testing.T) {
 	cases := map[string]string{
-		"duplicate quest": `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]},{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
-		"no steps":        `{"quests":[{"id":"a","type":"Goal","steps":[]}]}`,
-		"duplicate step":  `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}},{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
-		"bad type":        `{"quests":[{"id":"a","type":"Daily","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
-		"bad event":       `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"Tapped"}}]}]}`,
-		"bad reward":      `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"},"rewards":[{"type":"Gems"}]}]}]}`,
-		"missing follow":  `{"quests":[{"id":"a","type":"Goal","followUp":"b","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"duplicate quest":           `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]},{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"no steps":                  `{"quests":[{"id":"a","type":"Goal","steps":[]}]}`,
+		"duplicate step":            `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}},{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"bad type":                  `{"quests":[{"id":"a","type":"Daily","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"bad event":                 `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"Tapped"}}]}]}`,
+		"bad reward":                `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"},"rewards":[{"type":"Gems"}]}]}]}`,
+		"start after unknown quest": `{"quests":[{"id":"a","type":"Goal","startAfter":{"quest":"b","step":"s"},"steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"start after unknown step":  `{"quests":[{"id":"a","type":"Goal","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]},{"id":"b","type":"Chapter","startAfter":{"quest":"a","step":"x"},"steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"start after itself":        `{"quests":[{"id":"a","type":"Goal","startAfter":{"quest":"a","step":"s"},"steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
+		"missing follow":            `{"quests":[{"id":"a","type":"Goal","followUp":"b","steps":[{"id":"s","condition":{"eventType":"ActionDone"}}]}]}`,
 	}
 	for name, data := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -133,5 +136,28 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 	}
 	if gems["golden"] != 15 || gems["golden_fever"] != 5 || gems[ids[len(ids)-1]] != 20 || len(gems) != 3 {
 		t.Errorf("store gems = %v, want golden 15, golden_fever 5 and %s 20", gems, ids[len(ids)-1])
+	}
+}
+
+// The shipped Chapter 1 story quest runs alongside the store tutorial from the Tortoise's greeting on, and pays
+// 10 gems at its end (GDD 5.2.1: 10 x chapter number).
+func TestShippedChapterOneStory(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, ok := c.Get("sto_ch1_first_job")
+	if !ok {
+		t.Fatal("sto_ch1_first_job missing")
+	}
+	if d.Type != QuestTypeChapter || d.Initial || d.StartAfter == nil ||
+		d.StartAfter.Quest != "tut_ch1_store" || d.StartAfter.Step != "pet_talks" {
+		t.Fatalf("unexpected start: %+v", d)
+	}
+	if got := d.Steps[len(d.Steps)-1].GemReward(); got != 10 {
+		t.Errorf("last step gems = %v, want 10", got)
+	}
+	if ids := c.StartedAfter("tut_ch1_store", "pet_talks"); len(ids) != 1 || ids[0] != "sto_ch1_first_job" {
+		t.Errorf("StartedAfter = %v", ids)
 	}
 }

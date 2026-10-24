@@ -228,3 +228,48 @@ func TestRejections(t *testing.T) {
 		t.Fatalf("rejections must not write, got %d writes", repo.writes)
 	}
 }
+
+// A quest with startAfter is locked until that step of the other quest is done, is created by the server when the
+// step completes (and sent in Started), and an account that passed the step before the quest existed may start it.
+func TestStartAfterStep(t *testing.T) {
+	c, err := ParseCatalog([]byte(`{"version":1,"quests":[
+	  {"id":"tut","type":"Tutorial","initial":true,"steps":[
+	    {"id":"a","condition":{"eventType":"ActionDone","key":"x"}},
+	    {"id":"b","condition":{"eventType":"ActionDone","key":"y"}},
+	    {"id":"c","condition":{"eventType":"ActionDone","key":"z"}}]},
+	  {"id":"sto","type":"Chapter","startAfter":{"quest":"tut","step":"b"},"steps":[
+	    {"id":"talk","condition":{"eventType":"ConversationEnded","key":"T"}},
+	    {"id":"goal","condition":{"eventType":"StateChanged","key":"g","target":1}}]}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := NewService(newMemRepo(), c)
+
+	if res := complete(t, s, "sto", "talk", 0); res.Accepted || res.ErrorCode != CodeQuestLocked {
+		t.Fatalf("before tut/b the story quest must be locked, got %+v", res)
+	}
+	if res := complete(t, s, "tut", "a", 0); !res.Accepted || len(res.Started) != 0 {
+		t.Fatalf("tut/a: %+v", res)
+	}
+	res := complete(t, s, "tut", "b", 1)
+	if !res.Accepted || len(res.Started) != 1 || res.Started[0].QuestID != "sto" {
+		t.Fatalf("tut/b should start sto, got %+v", res)
+	}
+	if res := complete(t, s, "sto", "talk", 0); !res.Accepted {
+		t.Fatalf("sto/talk after tut/b: %+v", res)
+	}
+	// Both run side by side: the tutorial goes on, and the story quest is not started a second time.
+	if res := complete(t, s, "tut", "c", 2); !res.Accepted || len(res.Started) != 0 {
+		t.Fatalf("tut/c: %+v", res)
+	}
+
+	// An account that had passed tut/b before sto was in the catalog: no progress for sto, but it is unlocked.
+	old := &QuestsDoc{Quests: map[string]*Progress{"tut": {QuestID: "tut", StepIndex: 2, CompletedSteps: []string{"a", "b"}}}}
+	if !c.IsUnlockedBy("sto", old) {
+		t.Error("sto should be unlocked for an account past tut/b")
+	}
+	early := &QuestsDoc{Quests: map[string]*Progress{"tut": {QuestID: "tut", StepIndex: 1, CompletedSteps: []string{"a"}}}}
+	if c.IsUnlockedBy("sto", early) {
+		t.Error("sto should stay locked before tut/b")
+	}
+}

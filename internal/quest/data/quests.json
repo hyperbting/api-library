@@ -1,12 +1,111 @@
 {
-  "version": 20,
-  "exportedAt": "2026-10-22T11:30:50.3616455Z",
+  "version": 21,
+  "exportedAt": "2026-10-24T05:56:07.8739457Z",
   "quests": [
+    {
+      "id": "sto_ch1_first_job",
+      "type": "Chapter",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "tut_ch1_store",
+        "step": "pet_talks"
+      },
+      "steps": [
+        {
+          "id": "meet_hoot",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/MeetHoot",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "first_shift",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "qte.finished",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "ask_upgrade_store",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/FixItUp",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "first_decor",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "store.upgrade",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "level_up_pet",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "pet.level",
+            "target": 5.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "retail_t1",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.retail.tier",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "handover",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/Handover",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "quickhop_sign",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/QuickHopSign",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 10.0
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "tut_ch1_store",
       "type": "Tutorial",
       "initial": false,
       "followUp": null,
+      "startAfter": null,
       "steps": [
         {
           "id": "store_quiet",
@@ -275,6 +374,7 @@
       "type": "Tutorial",
       "initial": true,
       "followUp": "tut_ch1_store",
+      "startAfter": null,
       "steps": [
         {
           "id": "hello",

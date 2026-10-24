@@ -149,6 +149,14 @@ func (s *service) AdminSetProgress(ctx context.Context, uid string, req SetProgr
 		if f := def.FollowUp; req.Completed && f != "" && doc.Quests[f] == nil {
 			doc.Quests[f] = &Progress{QuestID: f, StartedAt: now, UpdatedAt: now}
 		}
+		// The quests that start after a step now marked done (the client would start them anyway on its next load).
+		for _, st := range def.Steps[:done] {
+			for _, id := range s.catalog.StartedAfter(def.ID, st.ID) {
+				if doc.Quests[id] == nil {
+					doc.Quests[id] = &Progress{QuestID: id, StartedAt: now, UpdatedAt: now}
+				}
+			}
+		}
 
 		doc.CatalogVersion = s.catalog.Version
 		doc.UpdatedAt = now

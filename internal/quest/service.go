@@ -122,8 +122,7 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 	// Rejections never write; a quest created here is only stored if the step is accepted.
 	p := doc.Quests[def.ID]
 	if p == nil {
-		completed := func(id string) bool { q := doc.Quests[id]; return q != nil && q.Completed }
-		if !s.catalog.IsUnlockedBy(def.ID, completed) {
+		if !s.catalog.IsUnlockedBy(def.ID, doc) {
 			return reject(CodeQuestLocked, nil), false, false, nil
 		}
 		p = &Progress{QuestID: def.ID, StartedAt: now, UpdatedAt: now}
@@ -233,6 +232,14 @@ func (s *service) apply(doc *QuestsDoc, grants *grant.Doc, def *Definition, req 
 	}
 
 	var started []Progress
+	// Quests that start after this step (a story quest alongside its tutorial).
+	for _, id := range s.catalog.StartedAfter(def.ID, step.ID) {
+		if doc.Quests[id] == nil {
+			next := &Progress{QuestID: id, StartedAt: now, UpdatedAt: now}
+			doc.Quests[id] = next
+			started = append(started, *next)
+		}
+	}
 	if p.StepIndex+1 < len(def.Steps) {
 		p.StepIndex++
 		if def.Steps[p.StepIndex].Checkpoint {

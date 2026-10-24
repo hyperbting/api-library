@@ -29,7 +29,16 @@ type Definition struct {
 	Type     QuestType `json:"type"`
 	Initial  bool      `json:"initial"`            // started for a fresh account
 	FollowUp string    `json:"followUp,omitempty"` // started when this quest completes
-	Steps    []Step    `json:"steps"`
+	// Started when another quest completes one of its steps, e.g. a chapter's story quest that runs alongside its
+	// tutorial from the tutorial's third step on.
+	StartAfter *StartAfter `json:"startAfter,omitempty"`
+	Steps      []Step      `json:"steps"`
+}
+
+// StartAfter names the step of another quest whose completion starts a quest.
+type StartAfter struct {
+	Quest string `json:"quest"`
+	Step  string `json:"step"`
 }
 
 type Step struct {
@@ -93,9 +102,9 @@ func (c *Catalog) Get(id string) (*Definition, bool) {
 	return d, ok
 }
 
-// IsUnlockedBy reports whether questID may be started given the completed quests:
-// initial quests always, others only as the follow-up of a completed quest.
-func (c *Catalog) IsUnlockedBy(questID string, completed func(id string) bool) bool {
+// IsUnlockedBy reports whether questID may be started given the user's progress: initial quests always,
+// others as the follow-up of a completed quest, or once the step their StartAfter names is completed.
+func (c *Catalog) IsUnlockedBy(questID string, doc *QuestsDoc) bool {
 	d, ok := c.byID[questID]
 	if !ok {
 		return false
@@ -103,12 +112,38 @@ func (c *Catalog) IsUnlockedBy(questID string, completed func(id string) bool) b
 	if d.Initial {
 		return true
 	}
+	if a := d.StartAfter; a != nil && stepDone(doc, a.Quest, a.Step) {
+		return true
+	}
 	for i := range c.Quests {
-		if c.Quests[i].FollowUp == questID && completed(c.Quests[i].ID) {
+		if c.Quests[i].FollowUp == questID && stepDone(doc, c.Quests[i].ID, "") {
 			return true
 		}
 	}
 	return false
+}
+
+// StartedAfter lists the quests whose StartAfter is the given step.
+func (c *Catalog) StartedAfter(questID, stepID string) []string {
+	var ids []string
+	for i := range c.Quests {
+		if a := c.Quests[i].StartAfter; a != nil && a.Quest == questID && a.Step == stepID {
+			ids = append(ids, c.Quests[i].ID)
+		}
+	}
+	return ids
+}
+
+// stepDone: the quest is completed, or (with a step id) that step of it is.
+func stepDone(doc *QuestsDoc, questID, stepID string) bool {
+	if doc == nil {
+		return false
+	}
+	p := doc.Quests[questID]
+	if p == nil {
+		return false
+	}
+	return p.Completed || (stepID != "" && p.HasCompletedStep(stepID))
 }
 
 func (c *Catalog) validate() error {
@@ -137,6 +172,19 @@ func (c *Catalog) validate() error {
 
 	for i := range c.Quests {
 		d := &c.Quests[i]
+		if a := d.StartAfter; a != nil {
+			src, ok := c.byID[a.Quest]
+			if !ok || a.Quest == d.ID {
+				return fmt.Errorf("%w: quest %q starts after unknown quest %q", ErrInvalidCatalog, d.ID, a.Quest)
+			}
+			found := false
+			for _, s := range src.Steps {
+				found = found || s.ID == a.Step
+			}
+			if !found {
+				return fmt.Errorf("%w: quest %q starts after unknown step %q of %q", ErrInvalidCatalog, d.ID, a.Step, a.Quest)
+			}
+		}
 		if d.FollowUp == "" {
 			continue
 		}
