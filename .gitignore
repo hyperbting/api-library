@@ -25,3 +25,6 @@ additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json
 internal/adminui/dist/*
 !internal/adminui/dist/.gitkeep
 admin/node_modules/
+
+# Local build output (air, go build)
+/tmp/
