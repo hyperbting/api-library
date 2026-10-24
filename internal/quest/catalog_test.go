@@ -116,7 +116,7 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 	// decoration (`third_deco_golden`), and the free first warp comes right after it.
 	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("pet_talks") && idx("pet_talks") < idx("rush_tap") &&
 		idx("rush_tap") < idx("first_served") && idx("first_served") < idx("customer_asleep") && idx("customer_asleep") < idx("staff_asleep") && idx("staff_asleep") < idx("golden") && idx("golden") < idx("golden_why") &&
-		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("turtle_joins") && idx("turtle_joins") < idx("second_fever") &&
+		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("turtle_joins") && idx("turtle_joins")+1 == idx("turtle_talks") && idx("turtle_talks") < idx("second_fever") &&
 		idx("second_fever")+1 == idx("turtle_leaves") && idx("turtle_leaves")+1 == idx("gacha_shop") && idx("gacha_shop")+1 == idx("gacha_open") && idx("gacha_open")+1 == idx("gacha_character") &&
 		idx("gacha_character") < idx("earn_level") && idx("earn_level") < idx("level_first") && idx("level_first") < idx("earn_decor") && idx("earn_decor") < idx("buy_decor") && idx("buy_decor") < idx("third_deco") &&
 		idx("third_deco")+1 == idx("third_deco_golden") && idx("third_deco_golden")+1 == idx("first_warp")) {
