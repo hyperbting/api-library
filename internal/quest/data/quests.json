@@ -1,6 +1,6 @@
 {
-  "version": 21,
-  "exportedAt": "2026-10-24T05:56:07.8739457Z",
+  "version": 22,
+  "exportedAt": "2026-10-24T10:10:15.5661184Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -230,6 +230,72 @@
           "rewards": []
         },
         {
+          "id": "turtle_joins",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.turtle",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Turtle",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "second_fever",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "fever.start",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "turtle_leaves",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch1/TurtleLeaves",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "gacha_shop",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "ui.shop.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "gacha_open",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "ui.gacha.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "gacha_character",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "gacha.drawn.character",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
           "id": "earn_level",
           "checkpoint": true,
           "condition": {
@@ -265,42 +331,6 @@
           "condition": {
             "eventType": "CountIncrement",
             "key": "store.upgrade",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "turtle_joins",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ActionDone",
-            "key": "staff.joined.turtle",
-            "target": 1.0
-          },
-          "rewards": [
-            {
-              "type": "Pet",
-              "key": "Pet_Turtle",
-              "amount": 1.0
-            }
-          ]
-        },
-        {
-          "id": "second_fever",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ActionDone",
-            "key": "fever.start",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "turtle_leaves",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ConversationEnded",
-            "key": "Ch1/TurtleLeaves",
             "target": 1.0
           },
           "rewards": []

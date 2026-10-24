@@ -111,11 +111,14 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 		return -1
 	}
 	// The store opens empty (monologue, the pet walks in and talks, the rush tap and the customer lesson), the staff lesson follows the customer lesson
-	// directly, then the golden customer, its talk and the free sale (the first upgrade comes after them, user 2026-10-22), the Turtle and the second fever follow the first decoration, a golden customer follows the third decoration (`third_deco_golden`), and the free first warp comes right after it (user, 2026-10-21 / 2026-10-22).
+	// directly, then the golden customer, its talk and the free sale; the Turtle joins, the second fever runs and the Turtle leaves, then the gacha lessons
+	// (Shop, the draws, the free character draw: the second pet) come before the first upgrade (user, 2026-10-24); a golden customer follows the third
+	// decoration (`third_deco_golden`), and the free first warp comes right after it.
 	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("pet_talks") && idx("pet_talks") < idx("rush_tap") &&
 		idx("rush_tap") < idx("first_served") && idx("first_served") < idx("customer_asleep") && idx("customer_asleep") < idx("staff_asleep") && idx("staff_asleep") < idx("golden") && idx("golden") < idx("golden_why") &&
-		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("earn_level") && idx("earn_level") < idx("level_first") && idx("level_first") < idx("buy_decor") &&
-		idx("buy_decor") >= 0 && idx("buy_decor") < idx("turtle_joins") && idx("second_fever")+1 == idx("turtle_leaves") && idx("turtle_leaves") < idx("third_deco") &&
+		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("turtle_joins") && idx("turtle_joins") < idx("second_fever") &&
+		idx("second_fever")+1 == idx("turtle_leaves") && idx("turtle_leaves")+1 == idx("gacha_shop") && idx("gacha_shop")+1 == idx("gacha_open") && idx("gacha_open")+1 == idx("gacha_character") &&
+		idx("gacha_character") < idx("earn_level") && idx("earn_level") < idx("level_first") && idx("level_first") < idx("earn_decor") && idx("earn_decor") < idx("buy_decor") && idx("buy_decor") < idx("third_deco") &&
 		idx("third_deco")+1 == idx("third_deco_golden") && idx("third_deco_golden")+1 == idx("first_warp")) {
 		t.Errorf("store steps out of order: %v", ids)
 	}
