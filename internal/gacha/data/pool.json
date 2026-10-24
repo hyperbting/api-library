@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "rows": {
     "character": {
       "freeIntervalSeconds": 14400,
@@ -57,19 +57,34 @@
     { "id": "Pet_DobermanSide", "address": "Pet_DobermanSide", "species": "Doberman", "stars": 5, "category": "Canine", "role": "Security" }
   ],
   "accessories": [
-    { "id": "acc_hat_cap", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
-    { "id": "acc_hat_beanie", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
-    { "id": "acc_face_glasses", "slot": "Face", "rarity": "Common", "fits": ["all"] },
-    { "id": "acc_neck_scarf", "slot": "Neck", "rarity": "Common", "fits": ["all"] },
-    { "id": "acc_back_backpack", "slot": "Back", "rarity": "Rare", "fits": ["all"] },
-    { "id": "acc_waist_belt", "slot": "Waist", "rarity": "Rare", "fits": ["all"] },
-    { "id": "acc_torso_vest", "slot": "Torso", "rarity": "Rare", "fits": ["all"] },
-    { "id": "acc_tail_ribbon", "slot": "Tail", "rarity": "Rare", "fits": ["all"] },
-    { "id": "acc_hat_crown", "slot": "Hat", "rarity": "Epic", "fits": ["all"] },
-    { "id": "acc_held_umbrella", "slot": "Held", "rarity": "Epic", "fits": ["all"] },
-    { "id": "acc_neck_bowtie", "slot": "Neck", "rarity": "Epic", "fits": ["all"] },
-    { "id": "acc_face_aviators", "slot": "Face", "rarity": "Legendary", "fits": ["Hare"] },
-    { "id": "acc_face_owl_specs", "slot": "Face", "rarity": "Legendary", "fits": ["Owl"] },
-    { "id": "acc_back_wings", "slot": "Back", "rarity": "Legendary", "fits": ["all"] }
+    { "id": "acc_hat_straw", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_hat_flower", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_hat_clip", "slot": "Hat", "rarity": "Common", "fits": ["Hamster", "Sloth"] },
+    { "id": "acc_hat_beanie", "slot": "Hat", "rarity": "Common", "fits": ["Corgi", "Monkey"] },
+    { "id": "acc_neck_scarf", "slot": "Neck", "rarity": "Common", "fits": ["Biped", "Cat", "Cheetah", "Hamster", "Raccoon", "Sloth", "Squirrel"] },
+    { "id": "acc_neck_bell", "slot": "Neck", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_neck_kerchief", "slot": "Neck", "rarity": "Common", "fits": ["Corgi"] },
+    { "id": "acc_neck_neckerchief", "slot": "Neck", "rarity": "Common", "fits": ["Corgi", "Monkey"] },
+    { "id": "acc_waist_pouch", "slot": "Waist", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_butt_bow", "slot": "Butt", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_hat_cap", "slot": "Hat", "rarity": "Rare", "fits": ["Owl", "Shepherd"] },
+    { "id": "acc_hat_bow", "slot": "Hat", "rarity": "Rare", "fits": ["Corgi"] },
+    { "id": "acc_face_glasses", "slot": "Face", "rarity": "Rare", "fits": ["Cat", "Corgi", "Monkey", "Owl"] },
+    { "id": "acc_neck_collar", "slot": "Neck", "rarity": "Rare", "fits": ["Doberman", "Shepherd"] },
+    { "id": "acc_neck_tie", "slot": "Neck", "rarity": "Rare", "fits": ["Hare"] },
+    { "id": "acc_torso_badge", "slot": "Torso", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_held_carrot", "slot": "Held", "rarity": "Rare", "fits": ["quad"] },
+    { "id": "acc_held_fish", "slot": "Held", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_tail_ribbon", "slot": "Tail", "rarity": "Rare", "fits": ["quad"] },
+    { "id": "acc_back_bundle", "slot": "Back", "rarity": "Rare", "fits": ["quad"] },
+    { "id": "acc_hat_strawhat", "slot": "Hat", "rarity": "Epic", "fits": ["Corgi", "Monkey"] },
+    { "id": "acc_hat_flowercrown", "slot": "Hat", "rarity": "Epic", "fits": ["Corgi", "Monkey"] },
+    { "id": "acc_neck_bellcollar", "slot": "Neck", "rarity": "Epic", "fits": ["Corgi"] },
+    { "id": "acc_neck_pearlnecklace", "slot": "Neck", "rarity": "Epic", "fits": ["Monkey"] },
+    { "id": "acc_tail_tailbow", "slot": "Tail", "rarity": "Epic", "fits": ["Monkey"] },
+    { "id": "acc_torso_shawl", "slot": "Torso", "rarity": "Epic", "fits": ["Owl"] },
+    { "id": "acc_face_shades", "slot": "Face", "rarity": "Legendary", "fits": ["Hare"] },
+    { "id": "acc_hat_crown", "slot": "Hat", "rarity": "Legendary", "fits": ["all"] },
+    { "id": "acc_back_wings", "slot": "Back", "rarity": "Legendary", "fits": ["biped"] }
   ]
 }

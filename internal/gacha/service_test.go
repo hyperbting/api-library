@@ -600,7 +600,7 @@ func TestAccessoryFitsAreReported(t *testing.T) {
 	f.seq = []int{9990, 0}
 	res := f.draw("u", RowAccessory, ModeGem, 1, "req-acc-fit-1")
 	got := res.State.Accessories[0]
-	if got.ID != "acc_face_aviators" || len(got.Fits) != 1 || got.Fits[0] != "Hare" || got.Slot != "Face" {
+	if got.ID != "acc_face_shades" || len(got.Fits) != 1 || got.Fits[0] != "Hare" || got.Slot != "Face" {
 		t.Fatalf("%+v", got)
 	}
 }
