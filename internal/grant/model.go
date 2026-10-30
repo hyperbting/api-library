@@ -103,6 +103,8 @@ var KnownPets = map[string]bool{
 	"Pet_Duck":         true,
 	"Pet_Beaver":       true,
 	"Pet_Crow":         true,
+	"Pet_Pig":          true,
+	"Pet_Woodpecker":   true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).

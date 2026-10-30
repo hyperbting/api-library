@@ -49,6 +49,8 @@
     { "id": "Pet_Duck", "address": "Pet_Duck", "species": "Duck", "stars": 2, "category": "Avian", "role": "Cashier" },
     { "id": "Pet_Beaver", "address": "Pet_Beaver", "species": "Beaver", "stars": 2, "category": "Critter", "role": "Technician" },
     { "id": "Pet_Crow", "address": "Pet_Crow", "species": "Crow", "stars": 3, "category": "Avian", "role": "Technician" },
+    { "id": "Pet_Pig", "address": "Pet_Pig", "species": "Pig", "stars": 2, "category": "Critter", "role": "Concierge" },
+    { "id": "Pet_Woodpecker", "address": "Pet_Woodpecker", "species": "Woodpecker", "stars": 2, "category": "Avian", "role": "Technician" },
     { "id": "Pet_Ragdoll", "address": "Pet_Ragdoll", "species": "Ragdoll", "stars": 3, "category": "Feline", "role": "Concierge", "pool": 2 },
     { "id": "Pet_Exotic", "address": "Pet_Exotic", "species": "Exotic", "stars": 3, "category": "Feline", "role": "Advertiser", "pool": 2, "maxStars": 4 },
     { "id": "Pet_Shepherd", "address": "Pet_Shepherd", "species": "Shepherd", "stars": 3, "category": "Canine", "role": "Security", "pool": 2, "maxStars": 4 },
