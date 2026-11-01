@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "rows": {
     "character": {
       "freeIntervalSeconds": 14400,
@@ -51,6 +51,7 @@
     { "id": "Pet_Crow", "address": "Pet_Crow", "species": "Crow", "stars": 3, "category": "Avian", "role": "Technician" },
     { "id": "Pet_Pig", "address": "Pet_Pig", "species": "Pig", "stars": 2, "category": "Critter", "role": "Concierge" },
     { "id": "Pet_Woodpecker", "address": "Pet_Woodpecker", "species": "Woodpecker", "stars": 2, "category": "Avian", "role": "Technician" },
+    { "id": "Pet_Capybara", "address": "Pet_Capybara", "species": "Capybara", "stars": 2, "category": "Critter", "role": "Cashier" },
     { "id": "Pet_Ragdoll", "address": "Pet_Ragdoll", "species": "Ragdoll", "stars": 3, "category": "Feline", "role": "Concierge", "pool": 2 },
     { "id": "Pet_Exotic", "address": "Pet_Exotic", "species": "Exotic", "stars": 3, "category": "Feline", "role": "Advertiser", "pool": 2, "maxStars": 4 },
     { "id": "Pet_Shepherd", "address": "Pet_Shepherd", "species": "Shepherd", "stars": 3, "category": "Canine", "role": "Security", "pool": 2, "maxStars": 4 },
@@ -86,6 +87,24 @@
     { "id": "acc_torso_shawl", "slot": "Torso", "rarity": "Epic", "fits": ["Owl"] },
     { "id": "acc_face_shades", "slot": "Face", "rarity": "Legendary", "fits": ["Hare"] },
     { "id": "acc_hat_crown", "slot": "Hat", "rarity": "Legendary", "fits": ["all"] },
-    { "id": "acc_back_wings", "slot": "Back", "rarity": "Legendary", "fits": ["biped"] }
+    { "id": "acc_back_wings", "slot": "Back", "rarity": "Legendary", "fits": ["biped"] },
+    { "id": "acc_hat_party", "slot": "Hat", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_hat_chef", "slot": "Hat", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_face_roundglasses", "slot": "Face", "rarity": "Rare", "fits": ["Capybara", "Cat", "Corgi", "Duck", "Hamster", "Owl", "Pig", "Sheep", "Shepherd", "Sloth", "Turtle", "Beaver", "Monkey"] },
+    { "id": "acc_face_heartshades", "slot": "Face", "rarity": "Epic", "fits": ["Capybara", "Cat", "Corgi", "Duck", "Hamster", "Owl", "Pig", "Sheep", "Shepherd", "Sloth", "Turtle", "Beaver", "Monkey"] },
+    { "id": "acc_neck_bowtie", "slot": "Neck", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_neck_bandana", "slot": "Neck", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_torso_heart", "slot": "Torso", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_torso_apron", "slot": "Torso", "rarity": "Rare", "fits": ["biped"] },
+    { "id": "acc_waist_keys", "slot": "Waist", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_waist_belt", "slot": "Waist", "rarity": "Rare", "fits": ["biped"] },
+    { "id": "acc_back_balloon", "slot": "Back", "rarity": "Epic", "fits": ["all"] },
+    { "id": "acc_back_flag", "slot": "Back", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_butt_star", "slot": "Butt", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_butt_pompom", "slot": "Butt", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_tail_bell", "slot": "Tail", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_tail_flower", "slot": "Tail", "rarity": "Common", "fits": ["all"] },
+    { "id": "acc_held_icecream", "slot": "Held", "rarity": "Rare", "fits": ["all"] },
+    { "id": "acc_held_lollipop", "slot": "Held", "rarity": "Rare", "fits": ["all"] }
   ]
 }

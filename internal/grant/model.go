@@ -82,6 +82,7 @@ var (
 var StarterPets = []string{"Pet_Tortoise"}
 
 // KnownPets are the pets a Pet reward may name: the Addressable addresses of the Unity client's Characters group.
+// One entry per pet: art variants (Pet_DobermanSide, Pet_Tortoise128) are not pets of their own.
 var KnownPets = map[string]bool{
 	"Pet_Tortoise": true,
 	"Pet_Turtle":   true,
@@ -89,22 +90,22 @@ var KnownPets = map[string]bool{
 	"Pet_Squirrel": true,
 	"Pet_Raccoon":  true,
 	// Gacha pool pets (internal/gacha/data/pool.json) and the rest of CustomerManager.StaffChoices.
-	"Pet_Cheetah":      true,
-	"Pet_Sloth":        true,
-	"Pet_Doberman":     true,
-	"Pet_DobermanSide": true,
-	"Pet_Corgi":        true,
-	"Pet_Hamster":      true,
-	"Pet_Owl":          true,
-	"Pet_Shepherd":     true,
-	"Pet_Ragdoll":      true,
-	"Pet_Exotic":       true,
-	"Pet_Sheep":        true,
-	"Pet_Duck":         true,
-	"Pet_Beaver":       true,
-	"Pet_Crow":         true,
-	"Pet_Pig":          true,
-	"Pet_Woodpecker":   true,
+	"Pet_Cheetah":    true,
+	"Pet_Sloth":      true,
+	"Pet_Doberman":   true,
+	"Pet_Corgi":      true,
+	"Pet_Hamster":    true,
+	"Pet_Owl":        true,
+	"Pet_Shepherd":   true,
+	"Pet_Ragdoll":    true,
+	"Pet_Exotic":     true,
+	"Pet_Sheep":      true,
+	"Pet_Duck":       true,
+	"Pet_Beaver":     true,
+	"Pet_Crow":       true,
+	"Pet_Pig":        true,
+	"Pet_Woodpecker": true,
+	"Pet_Capybara":   true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).
