@@ -11,10 +11,19 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 KEY_FILE = os.path.join(HERE, "additive-idle-simulation-firebase-adminsdk-fbsvc-ac30a17c67.json")
 
 
+def find_air():
+    """`air` on PATH, else in the Go bin folder (go install puts it there, and that folder is often not on PATH)."""
+    found = shutil.which("air")
+    if found:
+        return found
+    gobin = os.environ.get("GOBIN") or os.path.join(os.environ.get("GOPATH") or os.path.expanduser("~/go"), "bin")
+    return shutil.which("air", path=gobin)
+
+
 def main():
-    air = shutil.which("air")
+    air = find_air()
     if not air:
-        print("ERROR: `air` is not on PATH.", file=sys.stderr)
+        print("ERROR: `air` not found on PATH or in the Go bin folder (go install github.com/air-verse/air@latest).", file=sys.stderr)
         return 1
     env = dict(os.environ)
     env.setdefault("GOOGLE_APPLICATION_CREDENTIALS", KEY_FILE)
