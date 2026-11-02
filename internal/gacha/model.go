@@ -268,6 +268,15 @@ type OwnedPet struct {
 	MaxAccessories int    `json:"maxAccessories"`
 }
 
+// MaxAdminFreeGrant bounds one POST /gacha/admin/free.
+const MaxAdminFreeGrant = 100
+
+// POST /api/{version}/gacha/admin/free (admin role): stored free draws for the caller, past FreeMax.
+type AdminFreeRequest struct {
+	Row   Row `json:"row" validate:"required,oneof=character accessory"`
+	Count int `json:"count" validate:"required,min=1,max=100"`
+}
+
 // POST /api/{version}/gacha/draw
 type DrawRequest struct {
 	Row  Row  `json:"row" validate:"required,oneof=character accessory"`

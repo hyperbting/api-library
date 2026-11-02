@@ -447,6 +447,39 @@ func TestFreeDrawNeedsAStoredDraw(t *testing.T) {
 	}
 }
 
+func TestAdminGrantFreeGoesPastTheCap(t *testing.T) {
+	f := newFixture(t)
+	capacity := f.cat.Rows[RowCharacter].FreeMax
+	st, err := f.srv.AdminGrantFree(f.ctx, "u", RowCharacter, capacity+3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := rowView(st, RowCharacter)
+	if v.FreeStored != 1+capacity+3 || v.NextFreeAt != nil {
+		t.Fatalf("after the grant: stored %d, next %v", v.FreeStored, v.NextFreeAt)
+	}
+	for i := 0; i < v.FreeStored; i++ {
+		if res := f.draw("u", RowCharacter, ModeFree, 1, "req-adm-"+strconv.Itoa(i)+"-aa"); !res.OK {
+			t.Fatalf("free draw %d refused: %+v", i, res)
+		}
+	}
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-adm-last-a"); res.OK || res.ErrorCode != CodeNoFreeDraw {
+		t.Fatalf("one draw too many: %+v", res)
+	}
+}
+
+func TestAdminGrantFreeRefusesBadInput(t *testing.T) {
+	f := newFixture(t)
+	for _, c := range []struct {
+		row   Row
+		count int
+	}{{RowCharacter, 0}, {RowCharacter, -1}, {RowCharacter, MaxAdminFreeGrant + 1}, {Row("nope"), 1}} {
+		if _, err := f.srv.AdminGrantFree(f.ctx, "u", c.row, c.count); err != ErrInvalidRequest {
+			t.Fatalf("%+v: %v", c, err)
+		}
+	}
+}
+
 func TestFreeAndGemDrawsShareThePity(t *testing.T) {
 	f := newFixture(t)
 	f.giveGems("u", "g1", 1000)

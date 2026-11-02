@@ -220,6 +220,8 @@ func setupGachaRoutes(router fiber.Router, container *app.FirebaseContainer) {
 	gacha := router.Group("/gacha", container.FirebaseAuthMw)
 	gacha.Get("/", userLimiter(60), container.GachaHdl.State)
 	gacha.Post("/draw", userLimiter(20), container.GachaHdl.Draw)
+	// Admin only (users/{uid}.UserRoles includes "admin"): stored free draws for the caller. Used by the client dev menu.
+	gacha.Post("/admin/free", auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), container.GachaHdl.AdminFree)
 }
 
 func setupRedeemRoutes(router fiber.Router, container *app.FirebaseContainer) {

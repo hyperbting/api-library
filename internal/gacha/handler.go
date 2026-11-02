@@ -69,3 +69,27 @@ func (h *Handler) Draw(c fiber.Ctx) error {
 	}
 	return c.JSON(res)
 }
+
+// POST /gacha/admin/free (admin role required, enforced by the route)
+func (h *Handler) AdminFree(c fiber.Ctx) error {
+	user := auth.MustGetUser(c)
+
+	var req AdminFreeRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": ErrInvalidRequest.Error()})
+	}
+	if err := validator.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": ErrInvalidRequest.Error()})
+	}
+
+	st, err := h.srv.AdminGrantFree(c.Context(), user.UserID, req.Row, req.Count)
+	switch {
+	case errors.Is(err, ErrInvalidRequest):
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	case err != nil:
+		log.Printf("[gacha] admin free uid=%s row=%s x%d: %v", user.UserID, req.Row, req.Count, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to grant free draws"})
+	}
+	log.Printf("[gacha] admin free uid=%s row=%s +%d", user.UserID, req.Row, req.Count)
+	return c.JSON(st)
+}

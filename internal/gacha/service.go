@@ -24,6 +24,9 @@ type Service interface {
 	// Draw pays (a stored free draw, gems or tickets) and rolls in one transaction. A refusal is ok=false with an
 	// error code; a malformed request is ErrInvalidRequest.
 	Draw(ctx context.Context, uid string, req DrawRequest) (*DrawResponse, error)
+	// AdminGrantFree adds `count` stored free draws to the caller's row, past FreeMax (a test aid for the client dev
+	// menu; the route checks the admin role). The row opens first if it was closed. Returns the new state.
+	AdminGrantFree(ctx context.Context, uid string, row Row, count int) (*State, error)
 }
 
 type service struct {
@@ -174,6 +177,28 @@ func (s *service) State(ctx context.Context, uid string, open ...Row) (*State, e
 		wd, wg := s.touch(d, g, grants, now, open)
 		out = s.state(d, g, grants, now)
 		return wd, wg, false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (s *service) AdminGrantFree(ctx context.Context, uid string, row Row, count int) (*State, error) {
+	cfg := s.cat.Rows[row]
+	if cfg == nil || count < 1 || count > MaxAdminFreeGrant {
+		return nil, ErrInvalidRequest
+	}
+	var out State
+	err := s.repo.Run(ctx, uid, func(d *Doc, g *gem.Doc, grants *grant.Doc) (bool, bool, bool, error) {
+		now := s.now().UTC()
+		_, wg := s.touch(d, g, grants, now, []Row{row})
+		rs := d.Rows[string(row)]
+		rs.Stored += count
+		rs.NextFreeAt = time.Time{} // at or past the cap: no timer runs
+		d.UpdatedAt = now
+		out = s.state(d, g, grants, now)
+		return true, wg, false, nil
 	})
 	if err != nil {
 		return nil, err
