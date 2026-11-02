@@ -1,6 +1,6 @@
 {
-  "version": 24,
-  "exportedAt": "2026-11-02T21:50:34.4791100Z",
+  "version": 25,
+  "exportedAt": "2026-11-02T22:30:18.8117030Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -374,6 +374,32 @@
             "target": 1.0
           },
           "rewards": []
+        },
+        {
+          "id": "chore_break",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "store.decor.repaired",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "chore_popup",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "store.maintenance.answered",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 5.0
+            }
+          ]
         },
         {
           "id": "first_warp",

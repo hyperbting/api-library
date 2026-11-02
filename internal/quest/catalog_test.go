@@ -113,13 +113,14 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 	// The store opens empty (monologue, the pet walks in and talks, the rush tap and the customer lesson), the staff lesson follows the customer lesson
 	// directly, then the golden customer, its talk and the free sale; the Turtle joins, the second fever runs and the Turtle leaves, then the gacha lessons
 	// (Shop, the draws, the free character draw: the second pet) come before the first upgrade (user, 2026-10-24); a golden customer follows the third
-	// decoration (`third_deco_golden`), and the free first warp comes right after it.
+	// decoration (`third_deco_golden`), then the maintenance lesson (`chore_break`, `chore_popup`: the game breaks one decoration, the player repairs it,
+	// then one popup is answered; 5 gems on the second), and the free first warp comes right after it.
 	if !(idx("store_quiet") == 0 && idx("store_quiet") < idx("pet_arrives") && idx("pet_arrives") < idx("pet_talks") && idx("pet_talks") < idx("rush_tap") &&
 		idx("rush_tap") < idx("first_served") && idx("first_served") < idx("customer_asleep") && idx("customer_asleep") < idx("staff_asleep") && idx("staff_asleep") < idx("golden") && idx("golden") < idx("golden_why") &&
 		idx("golden_why") < idx("golden_fever") && idx("golden_fever")+1 == idx("tell_staff_short") && idx("tell_staff_short") < idx("turtle_joins") && idx("turtle_joins")+1 == idx("turtle_talks") && idx("turtle_talks") < idx("second_fever") &&
 		idx("second_fever")+1 == idx("turtle_leaves") && idx("turtle_leaves")+1 == idx("gacha_shop") && idx("gacha_shop")+1 == idx("gacha_open") && idx("gacha_open")+1 == idx("gacha_character") &&
 		idx("gacha_character") < idx("earn_level") && idx("earn_level") < idx("level_first") && idx("level_first") < idx("earn_decor") && idx("earn_decor") < idx("buy_decor") && idx("buy_decor") < idx("third_deco") &&
-		idx("third_deco")+1 == idx("third_deco_golden") && idx("third_deco_golden")+1 == idx("first_warp")) {
+		idx("third_deco")+1 == idx("third_deco_golden") && idx("third_deco_golden")+1 == idx("chore_break") && idx("chore_break")+1 == idx("chore_popup") && idx("chore_popup")+1 == idx("first_warp")) {
 		t.Errorf("store steps out of order: %v", ids)
 	}
 	// The first warp is a free 10 minutes of income (a TimeWarp reward, in hours).
@@ -137,8 +138,8 @@ func TestShippedTutorialChainAndGems(t *testing.T) {
 	if want := 10.0 / 60.0; math.Abs(warpHours-want) > 1e-6 {
 		t.Errorf("first_warp pays %v hours of warp, want %v (10 minutes)", warpHours, want)
 	}
-	if gems["golden"] != 15 || gems["golden_fever"] != 5 || gems[ids[len(ids)-1]] != 20 || len(gems) != 3 {
-		t.Errorf("store gems = %v, want golden 15, golden_fever 5 and %s 20", gems, ids[len(ids)-1])
+	if gems["golden"] != 15 || gems["golden_fever"] != 5 || gems["chore_popup"] != 5 || gems[ids[len(ids)-1]] != 20 || len(gems) != 4 {
+		t.Errorf("store gems = %v, want golden 15, golden_fever 5, chore_popup 5 and %s 20", gems, ids[len(ids)-1])
 	}
 }
 
