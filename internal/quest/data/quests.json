@@ -1,6 +1,6 @@
 {
-  "version": 23,
-  "exportedAt": "2026-10-24T12:10:58.2956256Z",
+  "version": 24,
+  "exportedAt": "2026-11-02T21:50:34.4791100Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -68,6 +68,16 @@
           "condition": {
             "eventType": "StateChanged",
             "key": "store.retail.tier",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "page_one",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.board.page",
             "target": 1.0
           },
           "rewards": []
