@@ -165,3 +165,51 @@ func TestShippedChapterOneStory(t *testing.T) {
 		t.Errorf("StartedAfter = %v", ids)
 	}
 }
+
+// Chapter 2 part A (Reopening Day) follows Chapter 1 and hands the Raccoon over as a Pet reward; the Technician tutorial
+// starts after the outage step. No gems in part A (the chapter pays at the end of part B).
+func TestShippedChapterTwoPartA(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ch1, ok := c.Get("sto_ch1_first_job")
+	if !ok || ch1.FollowUp != "sto_ch2_reopening" {
+		t.Fatalf("Chapter 1 follow-up = %q, want sto_ch2_reopening", ch1.FollowUp)
+	}
+	d, ok := c.Get("sto_ch2_reopening")
+	if !ok {
+		t.Fatal("sto_ch2_reopening missing")
+	}
+	if d.Type != QuestTypeChapter || d.Initial || d.StartAfter != nil {
+		t.Fatalf("unexpected start: %+v", d)
+	}
+	var ids []string
+	var petReward string
+	for _, s := range d.Steps {
+		ids = append(ids, s.ID)
+		if s.GemReward() != 0 {
+			t.Errorf("step %s pays gems; part A pays none", s.ID)
+		}
+		for _, r := range s.Rewards {
+			if r.Type == RewardPet {
+				petReward = s.ID + ":" + r.Key
+			}
+		}
+	}
+	want := []string{"reopening_day", "hand_over", "open_staff", "assign_technician", "power_outage", "outage_talk", "postcard_one"}
+	if len(ids) != len(want) {
+		t.Fatalf("steps = %v, want %v", ids, want)
+	}
+	for i := range want {
+		if ids[i] != want[i] {
+			t.Fatalf("steps = %v, want %v", ids, want)
+		}
+	}
+	if petReward != "hand_over:Pet_Raccoon" {
+		t.Errorf("pet reward = %q, want hand_over:Pet_Raccoon", petReward)
+	}
+	if got := c.StartedAfter("sto_ch2_reopening", "power_outage"); len(got) != 1 || got[0] != "tut_ch2_repair" {
+		t.Errorf("StartedAfter(power_outage) = %v", got)
+	}
+}

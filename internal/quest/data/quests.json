@@ -1,12 +1,12 @@
 {
-  "version": 25,
-  "exportedAt": "2026-11-02T22:30:18.8117030Z",
+  "version": 26,
+  "exportedAt": "2026-11-02T23:58:49.3775520Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
       "type": "Chapter",
       "initial": false,
-      "followUp": null,
+      "followUp": "sto_ch2_reopening",
       "startAfter": {
         "quest": "tut_ch1_store",
         "step": "pet_talks"
@@ -107,6 +107,91 @@
               "amount": 10.0
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "sto_ch2_reopening",
+      "type": "Chapter",
+      "initial": false,
+      "followUp": null,
+      "startAfter": null,
+      "steps": [
+        {
+          "id": "reopening_day",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/Reopening",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "hand_over",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/Applications",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Raccoon",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "open_staff",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "ui.staff.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "assign_technician",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "pet.assign.technician",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "power_outage",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "event.power_outage.solved",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "outage_talk",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/Outage",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "postcard_one",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/Postcard",
+            "target": 1.0
+          },
+          "rewards": []
         }
       ]
     },
@@ -442,6 +527,28 @@
               "amount": 20.0
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "tut_ch2_repair",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "sto_ch2_reopening",
+        "step": "power_outage"
+      },
+      "steps": [
+        {
+          "id": "watch_repair",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "store.decor.repaired",
+            "target": 1.0
+          },
+          "rewards": []
         }
       ]
     },
