@@ -3,6 +3,7 @@ package app
 import (
 	"api-library/internal/account"
 	"api-library/internal/adssv"
+	"api-library/internal/apiinfo"
 	"api-library/internal/auth"
 	"api-library/internal/config"
 	"api-library/internal/gacha"
@@ -47,6 +48,8 @@ type FirebaseContainer struct {
 	AdSsvHdl  *adssv.Handler // AdMob SSV callback; nil unless ADS_SSV_AD_UNITS is set
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
+	// What is running (version, build, revision, catalog versions) for the admin panel.
+	InfoHdl *apiinfo.Handler
 
 	// Linked players (Play Games / Game Center), read from Firebase Auth for the admin panel
 	AccountHdl *account.Handler
@@ -157,6 +160,11 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 			container.UserHdl = user.NewHandler(userSrv)
 		}
 
+		container.InfoHdl = apiinfo.NewHandler(appCfg, map[string]apiinfo.Catalog{
+			"quests": {Version: catalog.Version, Entries: len(catalog.Quests)},
+			"items":  {Version: items.Version, Entries: len(items.Items)},
+			"gacha":  {Version: pool.Version, Entries: len(pool.Pets) + len(pool.Accessories)},
+		})
 		log.Printf("[BOOT] quest catalog version %d, %d quests", catalog.Version, len(catalog.Quests))
 		log.Printf("[BOOT] item catalog version %d, %d items", items.Version, len(items.Items))
 	}

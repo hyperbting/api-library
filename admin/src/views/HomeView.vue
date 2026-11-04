@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
@@ -6,6 +7,61 @@ import { useSession } from '../session'
 
 const session = useSession()
 const router = useRouter()
+
+// GET /admin/info: what this service is running (version, build, revision, catalogs, client limits).
+interface ApiInfo {
+  apiVersion: string
+  apiBase: string
+  env: string
+  authMode: string
+  commit: string
+  goVersion: string
+  startedAt: string
+  serverTime: string
+  uptimeSeconds: number
+  cloudRun: { service: string; revision: string; configuration: string }
+  client: { minVersion: string; latestVersion: string }
+  admin: { panelEnabled: boolean; loginGoogle: boolean; loginEmail: boolean; registerEmail: boolean; acceptCustomToken: boolean }
+  catalogs: Record<string, { version: number; entries: number }>
+}
+
+const info = ref<ApiInfo | null>(null)
+const infoError = ref('')
+
+onMounted(async () => {
+  try {
+    const res = await session.api('/admin/info')
+    if (res.ok) info.value = (await res.json()) as ApiInfo
+    else infoError.value = `Could not read the API info (${res.status}).`
+  } catch {
+    infoError.value = 'Could not reach the server.'
+  }
+})
+
+function uptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400)
+  const h = Math.floor((seconds % 86400) / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return d > 0 ? `${d} d ${h} h` : h > 0 ? `${h} h ${m} min` : `${m} min`
+}
+
+const rows = computed<[string, string][]>(() => {
+  const i = info.value
+  if (!i) return []
+  const on = (v: boolean) => (v ? 'on' : 'off')
+  const out: [string, string][] = [
+    ['API version', `${i.apiVersion} (${i.apiBase})`],
+    ['Build', i.commit],
+    ['Environment', `${i.env}, auth ${i.authMode}`],
+    ['Revision', i.cloudRun.revision ? `${i.cloudRun.service} / ${i.cloudRun.revision}` : 'not on Cloud Run'],
+    ['Started', `${new Date(i.startedAt).toLocaleString()} (up ${uptime(i.uptimeSeconds)})`],
+    ['Go', i.goVersion],
+    ['Client versions', `minimum ${i.client.minVersion || 'none'}, latest ${i.client.latestVersion || 'not set'}`],
+    ['Admin sign-in', `Google ${on(i.admin.loginGoogle)}, email ${on(i.admin.loginEmail)}, register ${on(i.admin.registerEmail)}, custom token ${on(i.admin.acceptCustomToken)}`],
+  ]
+  for (const [name, c] of Object.entries(i.catalogs)) out.push([`${name} catalog`, `v${c.version}, ${c.entries} entries`])
+  return out
+})
 
 async function logout() {
   await session.logout()
@@ -32,10 +88,28 @@ async function logout() {
         </div>
       </template>
     </Card>
+    <Card class="info">
+      <template #title>API</template>
+      <template #content>
+        <p v-if="infoError" class="error">{{ infoError }}</p>
+        <p v-else-if="!info">Loading...</p>
+        <dl v-else class="rows">
+          <template v-for="[label, value] in rows" :key="label">
+            <dt>{{ label }}</dt>
+            <dd>{{ value }}</dd>
+          </template>
+        </dl>
+      </template>
+    </Card>
   </main>
 </template>
 
 <style scoped>
 .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.info { margin-top: 16px; }
+.rows { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.rows dt { font-weight: 600; }
+.rows dd { margin: 0; overflow-wrap: anywhere; }
+.error { color: var(--p-red-500, #c62828); }
 </style>

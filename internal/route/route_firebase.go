@@ -95,6 +95,9 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 		return c.JSON(fiber.Map{"uid": u.UserID, "provider": u.SignInProvider})
 	})
 
+	if container.InfoHdl != nil {
+		admin.Get("/info", container.InfoHdl.Get)
+	}
 	mountAdminQuestRoutes(admin, container.QuestHdl)
 	mountAdminNewsRoutes(admin, container.NewsHdl)
 	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)
