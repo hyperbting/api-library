@@ -2,6 +2,7 @@ package gacha
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strconv"
 	"testing"
@@ -859,4 +860,57 @@ func (f *fixture) stateRows(uid string, rows ...Row) *State {
 		panic(err)
 	}
 	return st
+}
+
+func TestLessonGateKeepsOneFreeDraw(t *testing.T) {
+	f := newFixture(t)
+	on := false
+	f.srv.lesson = LessonGateFunc(func(context.Context, string) (bool, error) { return on, nil })
+
+	// The free draw is spent (a dev who reset the quests and plays the tutorial again).
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-a"); !res.OK {
+		t.Fatalf("%+v", res)
+	}
+	if v := rowView(f.state("u"), RowCharacter); v.FreeStored != 0 {
+		t.Fatalf("gate off: stored=%d, want 0", v.FreeStored)
+	}
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-b"); res.OK || res.ErrorCode != CodeNoFreeDraw {
+		t.Fatalf("gate off: %+v", res)
+	}
+
+	// The tutorial reaches the draw lessons: the state shows one ready, and it is never more than one.
+	on = true
+	if v := rowView(f.state("u"), RowCharacter); v.FreeStored != 1 {
+		t.Fatalf("gate on: stored=%d, want 1", v.FreeStored)
+	}
+	if v := rowView(f.state("u"), RowCharacter); v.FreeStored != 1 {
+		t.Fatalf("gate on, asked twice: stored=%d, want 1", v.FreeStored)
+	}
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-c"); !res.OK {
+		t.Fatalf("lesson draw: %+v", res)
+	}
+
+	// A client that draws before it asked for the state still gets it (the draw tops the row up itself).
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-d"); !res.OK {
+		t.Fatalf("lesson draw without a state read: %+v", res)
+	}
+
+	// Outside the lessons the timer rules again; the accessory row is never touched.
+	on = false
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-e"); res.OK {
+		t.Fatal("a free draw outside the lessons")
+	}
+	on = true
+	if v := rowView(f.state("u"), RowAccessory); v.FreeStored != 1 {
+		t.Fatalf("accessory stored=%d, want its own first draw only", v.FreeStored)
+	}
+}
+
+func TestLessonGateErrorLeavesTheRulesAlone(t *testing.T) {
+	f := newFixture(t)
+	f.srv.lesson = LessonGateFunc(func(context.Context, string) (bool, error) { return true, errors.New("boom") })
+	f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-err-a")
+	if res := f.draw("u", RowCharacter, ModeFree, 1, "req-lesson-err-b"); res.OK {
+		t.Fatal("a gate error gave a free draw")
+	}
 }

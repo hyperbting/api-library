@@ -34,10 +34,16 @@ type service struct {
 	cat  *Catalog
 	now  func() time.Time
 	intn func(n int) int // injectable for tests
+	// lesson says whether the player's tutorial is on the character draw lessons (lessongate.go); nil = never.
+	lesson LessonGate
 }
 
-func NewService(repo Repository, cat *Catalog) Service {
-	return &service{repo: repo, cat: cat, now: time.Now, intn: rand.IntN}
+func NewService(repo Repository, cat *Catalog, opts ...Option) Service {
+	s := &service{repo: repo, cat: cat, now: time.Now, intn: rand.IntN}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 // touch settles credits and brings both rows up to date. It reports whether the gacha document changed.
@@ -171,10 +177,14 @@ func (s *service) State(ctx context.Context, uid string, open ...Row) (*State, e
 	if len(open) == 0 {
 		open = Rows
 	}
+	lesson := s.lessonOn(ctx, uid)
 	var out State
 	err := s.repo.Run(ctx, uid, func(d *Doc, g *gem.Doc, grants *grant.Doc) (bool, bool, bool, error) {
 		now := s.now().UTC()
 		wd, wg := s.touch(d, g, grants, now, open)
+		if lesson && s.ensureLessonDraw(d, now) {
+			wd = true
+		}
 		out = s.state(d, g, grants, now)
 		return wd, wg, false, nil
 	})
@@ -219,12 +229,16 @@ func (s *service) Draw(ctx context.Context, uid string, req DrawRequest) (*DrawR
 		return nil, ErrInvalidRequest
 	}
 
+	lesson := req.Row == RowCharacter && req.Mode == ModeFree && s.lessonOn(ctx, uid)
 	var res *DrawResponse
 	err := s.repo.Run(ctx, uid, func(d *Doc, g *gem.Doc, grants *grant.Doc) (bool, bool, bool, error) {
 		// fn may be retried by the transaction: build everything from scratch each time.
 		now := s.now().UTC()
 		res = &DrawResponse{}
 		s.touch(d, g, grants, now, []Row{req.Row})
+		if lesson {
+			s.ensureLessonDraw(d, now)
+		}
 
 		refuse := func(code string) (bool, bool, bool, error) {
 			res.ErrorCode = code

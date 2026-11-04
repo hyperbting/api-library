@@ -133,7 +133,9 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		if err != nil {
 			return nil, err
 		}
-		container.GachaHdl = gacha.NewHandler(gacha.NewService(gacha.NewFirestoreRepository(container.Firestore), pool))
+		// While the tutorial is on the character draw lessons the character row always holds one free draw (lessongate.go).
+		lessonGate := gacha.WithLessonGate(gacha.LessonGateFunc(quest.NewDrawLessonGate(questRepo, catalog)))
+		container.GachaHdl = gacha.NewHandler(gacha.NewService(gacha.NewFirestoreRepository(container.Firestore), pool, lessonGate))
 		log.Printf("[BOOT] gacha pool version %d, %d pets, %d accessories", pool.Version, len(pool.Pets), len(pool.Accessories))
 		playPackage := os.Getenv("PLAY_PACKAGE_NAME")
 		if playPackage == "" {
