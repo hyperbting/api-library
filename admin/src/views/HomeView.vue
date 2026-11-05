@@ -59,9 +59,13 @@ const rows = computed<[string, string][]>(() => {
     ['Client versions', `minimum ${i.client.minVersion || 'none'}, latest ${i.client.latestVersion || 'not set'}`],
     ['Admin sign-in', `Google ${on(i.admin.loginGoogle)}, email ${on(i.admin.loginEmail)}, register ${on(i.admin.registerEmail)}, custom token ${on(i.admin.acceptCustomToken)}`],
   ]
-  for (const [name, c] of Object.entries(i.catalogs)) out.push([`${name} catalog`, `v${c.version}, ${c.entries} entries${c.steps ? `, ${c.steps} steps` : ''}`])
   return out
 })
+
+// The catalogs get their own block under the rows, in a different colour, so a version is easy to find.
+const catalogRows = computed<[string, string][]>(() =>
+  Object.entries(info.value?.catalogs ?? {}).map(([name, c]) => [name, `v${c.version}, ${c.entries} entries${c.steps ? `, ${c.steps} steps` : ''}`]),
+)
 
 async function logout() {
   await session.logout()
@@ -100,6 +104,18 @@ async function logout() {
             <dd>{{ value }}</dd>
           </template>
         </dl>
+        <div v-if="catalogRows.length" class="catalogs">
+          <div class="catalogs-title">
+            Catalogs
+            <a class="catalogs-link" href="#" @click.prevent="router.push({ name: 'catalogs' })">open</a>
+          </div>
+          <dl class="rows">
+            <template v-for="[label, value] in catalogRows" :key="label">
+              <dt>{{ label }}</dt>
+              <dd>{{ value }}</dd>
+            </template>
+          </dl>
+        </div>
       </template>
     </Card>
   </main>
@@ -112,5 +128,9 @@ async function logout() {
 .rows { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
 .rows dt { font-weight: 600; }
 .rows dd { margin: 0; overflow-wrap: anywhere; }
+.catalogs { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--p-primary-50, #eef6ff); color: var(--p-primary-700, #1d4e89); }
+.catalogs-title { font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.catalogs-link { font-weight: 400; color: inherit; }
+@media (prefers-color-scheme: dark) { .catalogs { background: rgba(120, 170, 255, 0.14); color: var(--p-primary-200, #b9d4ff); } }
 .error { color: var(--p-red-500, #c62828); }
 </style>
