@@ -49,7 +49,8 @@ type FirebaseContainer struct {
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
 	// What is running (version, build, revision, catalog versions) for the admin panel.
-	InfoHdl *apiinfo.Handler
+	InfoHdl     *apiinfo.Handler
+	CatalogsHdl *apiinfo.CatalogsHandler
 
 	// Linked players (Play Games / Game Center), read from Firebase Auth for the admin panel
 	AccountHdl *account.Handler
@@ -164,6 +165,11 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 			"quests": {Version: catalog.Version, Entries: len(catalog.Quests), Steps: questSteps(catalog)},
 			"items":  {Version: items.Version, Entries: len(items.Items)},
 			"gacha":  {Version: pool.Version, Entries: len(pool.Pets) + len(pool.Accessories)},
+		})
+		container.CatalogsHdl = apiinfo.NewCatalogsHandler(map[string]apiinfo.CatalogFile{
+			"gacha":  {Path: "internal/gacha/data/pool.json", Version: pool.Version, Data: pool},
+			"items":  {Path: "internal/item/data/items.json", Version: items.Version, Data: items},
+			"quests": {Path: "internal/quest/data/quests.json", Version: catalog.Version}, // content: the Quests page
 		})
 		log.Printf("[BOOT] quest catalog version %d, %d quests", catalog.Version, len(catalog.Quests))
 		log.Printf("[BOOT] item catalog version %d, %d items", items.Version, len(items.Items))

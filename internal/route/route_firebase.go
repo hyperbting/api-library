@@ -98,6 +98,9 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 	if container.InfoHdl != nil {
 		admin.Get("/info", container.InfoHdl.Get)
 	}
+	if container.CatalogsHdl != nil {
+		admin.Get("/catalogs", container.CatalogsHdl.Get)
+	}
 	mountAdminQuestRoutes(admin, container.QuestHdl)
 	mountAdminNewsRoutes(admin, container.NewsHdl)
 	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)

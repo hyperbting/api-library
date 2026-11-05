@@ -43,3 +43,14 @@ func TestInfo(t *testing.T) {
 		t.Error("catalogs is nil")
 	}
 }
+
+func TestCatalogsHandlerReturnsTheLoadedFiles(t *testing.T) {
+	h := NewCatalogsHandler(map[string]CatalogFile{"items": {Path: "internal/item/data/items.json", Version: 2, Data: map[string]int{"n": 7}}})
+	r := h.Catalogs()
+	if r.Repo != RepoURL || r.Catalogs["items"].Path != "internal/item/data/items.json" || r.Catalogs["items"].Version != 2 {
+		t.Fatalf("unexpected answer: %+v", r)
+	}
+	if got := NewCatalogsHandler(nil).Catalogs(); got.Catalogs == nil {
+		t.Fatal("a nil map must become an empty one so the page gets {} not null")
+	}
+}

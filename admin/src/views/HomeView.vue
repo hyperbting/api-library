@@ -80,6 +80,7 @@ async function logout() {
       <template #footer>
         <div class="actions">
           <Button label="Quests" icon="pi pi-list-check" @click="router.push({ name: 'quests' })" />
+          <Button label="Catalogs" icon="pi pi-book" @click="router.push({ name: 'catalogs' })" />
           <Button label="News" icon="pi pi-megaphone" @click="router.push({ name: 'news' })" />
           <Button label="Gold bars" icon="pi pi-gift" @click="router.push({ name: 'gems' })" />
           <Button label="Players" icon="pi pi-users" @click="router.push({ name: 'accounts' })" />
