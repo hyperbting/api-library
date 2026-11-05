@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "rows": {
     "character": {
       "freeIntervalSeconds": 14400,
@@ -54,6 +54,7 @@
     { "id": "Pet_Capybara", "address": "Pet_Capybara", "species": "Capybara", "stars": 2, "category": "Critter", "role": "Cashier" },
     { "id": "Pet_Ragdoll", "address": "Pet_Ragdoll", "species": "Ragdoll", "stars": 3, "category": "Feline", "role": "Concierge", "pool": 2 },
     { "id": "Pet_Exotic", "address": "Pet_Exotic", "species": "Exotic", "stars": 3, "category": "Feline", "role": "Advertiser", "pool": 2, "maxStars": 4 },
+    { "id": "Pet_Shepherd", "address": "Pet_Shepherd", "species": "Shepherd", "stars": 3, "category": "Canine", "role": "Security", "pool": 2, "maxStars": 4 },
     { "id": "Pet_Cheetah", "address": "Pet_Cheetah", "species": "Cheetah", "stars": 3, "category": "Feline", "role": "Advertiser", "pool": 2, "maxStars": 4 },
     { "id": "Pet_Doberman", "address": "Pet_Doberman", "species": "Doberman", "stars": 3, "category": "Canine", "role": "Security", "pool": 2, "maxStars": 5 }
   ],
