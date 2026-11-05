@@ -161,7 +161,7 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 
 		container.InfoHdl = apiinfo.NewHandler(appCfg, map[string]apiinfo.Catalog{
-			"quests": {Version: catalog.Version, Entries: len(catalog.Quests)},
+			"quests": {Version: catalog.Version, Entries: len(catalog.Quests), Steps: questSteps(catalog)},
 			"items":  {Version: items.Version, Entries: len(items.Items)},
 			"gacha":  {Version: pool.Version, Entries: len(pool.Pets) + len(pool.Accessories)},
 		})
@@ -219,4 +219,13 @@ func (c *FirebaseContainer) Close() {
 			log.Printf("failed to close firestore: %v", err)
 		}
 	}
+}
+
+// questSteps counts the steps of every quest in the catalog (shown on the admin info page next to the quest count).
+func questSteps(c *quest.Catalog) int {
+	n := 0
+	for i := range c.Quests {
+		n += len(c.Quests[i].Steps)
+	}
+	return n
 }

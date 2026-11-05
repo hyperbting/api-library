@@ -22,7 +22,7 @@ interface ApiInfo {
   cloudRun: { service: string; revision: string; configuration: string }
   client: { minVersion: string; latestVersion: string }
   admin: { panelEnabled: boolean; loginGoogle: boolean; loginEmail: boolean; registerEmail: boolean; acceptCustomToken: boolean }
-  catalogs: Record<string, { version: number; entries: number }>
+  catalogs: Record<string, { version: number; entries: number; steps?: number }>
 }
 
 const info = ref<ApiInfo | null>(null)
@@ -59,7 +59,7 @@ const rows = computed<[string, string][]>(() => {
     ['Client versions', `minimum ${i.client.minVersion || 'none'}, latest ${i.client.latestVersion || 'not set'}`],
     ['Admin sign-in', `Google ${on(i.admin.loginGoogle)}, email ${on(i.admin.loginEmail)}, register ${on(i.admin.registerEmail)}, custom token ${on(i.admin.acceptCustomToken)}`],
   ]
-  for (const [name, c] of Object.entries(i.catalogs)) out.push([`${name} catalog`, `v${c.version}, ${c.entries} entries`])
+  for (const [name, c] of Object.entries(i.catalogs)) out.push([`${name} catalog`, `v${c.version}, ${c.entries} entries${c.steps ? `, ${c.steps} steps` : ''}`])
   return out
 })
 

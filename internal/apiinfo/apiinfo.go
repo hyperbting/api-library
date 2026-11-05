@@ -18,6 +18,7 @@ import (
 type Catalog struct {
 	Version int `json:"version"`
 	Entries int `json:"entries"`
+	Steps   int `json:"steps,omitempty"` // quests only: the steps inside the entries
 }
 
 // Response is the JSON of GET /admin/info. Nothing secret: no keys, no URLs of other services.
