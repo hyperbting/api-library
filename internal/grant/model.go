@@ -106,6 +106,8 @@ var KnownPets = map[string]bool{
 	"Pet_Pig":        true,
 	"Pet_Woodpecker": true,
 	"Pet_Capybara":   true,
+	// Story pets (granted by a quest step, not drawn): the Parrot joins in Chapter 2 (parrot_joins), the Advertiser.
+	"Pet_Parrot": true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).
