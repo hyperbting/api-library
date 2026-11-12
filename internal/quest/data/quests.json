@@ -1,5 +1,5 @@
 {
-  "version": 26,
+  "version": 27,
   "exportedAt": "2026-11-02T23:58:49.3775520Z",
   "quests": [
     {
@@ -459,32 +459,6 @@
             "target": 1.0
           },
           "rewards": []
-        },
-        {
-          "id": "chore_break",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ActionDone",
-            "key": "store.decor.repaired",
-            "target": 1.0
-          },
-          "rewards": []
-        },
-        {
-          "id": "chore_popup",
-          "checkpoint": true,
-          "condition": {
-            "eventType": "ActionDone",
-            "key": "store.maintenance.answered",
-            "target": 1.0
-          },
-          "rewards": [
-            {
-              "type": "Gem",
-              "key": "",
-              "amount": 5.0
-            }
-          ]
         },
         {
           "id": "first_warp",
