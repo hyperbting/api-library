@@ -46,6 +46,13 @@ type AdsConfig struct {
 	RequireSSV bool `mapstructure:"require_ssv"`
 }
 
+// BondConfig is the pets' hearts (package bond).
+type BondConfig struct {
+	// env BOND_ENABLED: the player bond routes. Off, they answer 503 (the record is kept; the admin routes still work).
+	// The default (true) comes from config.yaml.
+	Enabled bool `mapstructure:"enabled"`
+}
+
 type FirebaseConfig struct {
 	Enabled             bool   `mapstructure:"enabled"`               // 是否啟用 Firebase 服務
 	ProjectID           string `mapstructure:"project_id"`            // GCP/Firebase Project ID
@@ -88,7 +95,8 @@ type AppConfig struct {
 	App        AppDetail                   `mapstructure:"app"`
 	Client     ClientConfig                `mapstructure:"client"`
 	Ads        AdsConfig                   `mapstructure:"ads"`
-	Database  *infrastructure.DBConfig    `mapstructure:"database"`
+	Bond       BondConfig                  `mapstructure:"bond"`
+	Database   *infrastructure.DBConfig    `mapstructure:"database"`
 	Redis      *infrastructure.RedisConfig `mapstructure:"redis"`
 	Elastic    *infrastructure.ESConfig    `mapstructure:"elastic"`
 	SessionJWT *session.Config             `mapstructure:"session"`

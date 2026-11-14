@@ -5,6 +5,7 @@ import (
 	"api-library/internal/adminui"
 	"api-library/internal/app"
 	"api-library/internal/auth"
+	"api-library/internal/bond"
 	"api-library/internal/clientver"
 	"api-library/internal/config"
 	"api-library/internal/gem"
@@ -38,6 +39,7 @@ func RegisterFirebaseCloudFunctionRoutes(app *fiber.App, cfg *config.AppConfig, 
 	setupGemRoutes(api, container)
 	setupGachaRoutes(api, container)
 	setupPetRoutes(api, container)
+	setupBondRoutes(api, container)
 
 	// Admin API (ADMIN_ENABLED) and, on top of it, the embedded panel (ADMIN_PANEL_ENABLED). Both are off on the
 	// public service, which runs the same image.
@@ -105,6 +107,17 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 	mountAdminNewsRoutes(admin, container.NewsHdl)
 	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)
 	mountAdminAccountRoutes(admin, container.AccountHdl)
+	mountAdminBondRoutes(admin, container.BondHdl)
+}
+
+// mountAdminBondRoutes: read and repair a player's hearts (the bond record) by uid. The router must already demand the
+// admin role.
+func mountAdminBondRoutes(admin fiber.Router, h *bond.Handler) {
+	if h == nil {
+		return
+	}
+	admin.Get("/bond", h.AdminGet)
+	admin.Put("/bond", userLimiter(30), h.AdminSet)
 }
 
 // mountAdminAccountRoutes: the panel's Players page, the players linked to Play Games / Game Center. The router must
@@ -190,6 +203,16 @@ func setupPetRoutes(router fiber.Router, container *app.FirebaseContainer) {
 		return
 	}
 	router.Get("/pets", container.FirebaseAuthMw, userLimiter(60), container.PetHdl.List)
+}
+
+// setupBondRoutes: the pets' hearts. GET /bond at boot; POST /bond/report about once per heart, story read and app
+// pause (design D23), so the per-player limit is generous.
+func setupBondRoutes(router fiber.Router, container *app.FirebaseContainer) {
+	if container.Firestore == nil || container.BondHdl == nil {
+		return
+	}
+	router.Get("/bond", container.FirebaseAuthMw, userLimiter(60), container.BondHdl.State)
+	router.Post("/bond/report", container.FirebaseAuthMw, userLimiter(60), container.BondHdl.Report)
 }
 
 // setupGemRoutes: the gem balance and what it buys, and the store purchases that fill it (GDD 5.2.1).

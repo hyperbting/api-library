@@ -249,3 +249,29 @@ func TestLoadConfig_AdminEnvOverrides(t *testing.T) {
 		t.Fatalf("env overrides: %+v", cfg.Admin)
 	}
 }
+
+// bond.enabled comes from config.yaml (true there); BOND_ENABLED=false turns the player routes off.
+func TestLoadConfig_BondEnvOverride(t *testing.T) {
+	dir := t.TempDir()
+	createTempConfigFile(t, dir, "config.yaml", "bond:\n  enabled: true\n")
+	origWd, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(origWd)
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Bond.Enabled {
+		t.Fatalf("default: bond disabled, want enabled")
+	}
+	t.Setenv("BOND_ENABLED", "false")
+	if cfg, err = config.LoadConfig(); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Bond.Enabled {
+		t.Fatalf("BOND_ENABLED=false: still enabled")
+	}
+}

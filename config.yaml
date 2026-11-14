@@ -20,6 +20,10 @@ ads:
   ssv_ad_units: ""
   require_ssv: false
 
+# Pets' hearts (package bond). BOND_ENABLED=false turns the player routes off (503); the record is kept.
+bond:
+  enabled: true
+
 # Admin API and panel. Same image, switched per service by env (all off by default):
 #   neither flag                      game API only                         (deploy.bat)
 #   ADMIN_ENABLED=true                game API + /api/<v>/admin routes      (deploy-admin.bat)

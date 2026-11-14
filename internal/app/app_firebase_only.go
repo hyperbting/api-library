@@ -5,6 +5,7 @@ import (
 	"api-library/internal/adssv"
 	"api-library/internal/apiinfo"
 	"api-library/internal/auth"
+	"api-library/internal/bond"
 	"api-library/internal/config"
 	"api-library/internal/gacha"
 	"api-library/internal/gem"
@@ -48,6 +49,7 @@ type FirebaseContainer struct {
 	AdSsvHdl  *adssv.Handler // AdMob SSV callback; nil unless ADS_SSV_AD_UNITS is set
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
+	BondHdl   *bond.Handler // pets' hearts; its player routes answer 503 when bond.enabled is off
 	// What is running (version, build, revision, catalog versions) for the admin panel.
 	InfoHdl     *apiinfo.Handler
 	CatalogsHdl *apiinfo.CatalogsHandler
@@ -147,6 +149,9 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 		// The owned-pet list, rebuilt from the grants ledger (starter pets + Pet rewards).
 		container.PetHdl = pet.NewHandler(pet.NewService(pet.NewFirestoreRepository(container.Firestore)))
+		// Pets' hearts (bond days) and the stories seen, in users/{uid}/private/bond.
+		container.BondHdl = bond.NewHandler(bond.NewService(bond.NewFirestoreRepository(container.Firestore)), appCfg.Bond.Enabled)
+		log.Printf("[BOOT] bond routes enabled: %v", appCfg.Bond.Enabled)
 		container.IapHdl = iap.NewHandler(iap.NewService(iap.NewFirestoreRepository(container.Firestore), items, iap.NewGooglePlayVerifier(playPackage)))
 		// Email players: stateless access tokens only (no Redis), users in Firestore
 		if appCfg.SessionKeyUnsafe() {
