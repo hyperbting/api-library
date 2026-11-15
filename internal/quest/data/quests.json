@@ -1,6 +1,6 @@
 {
-  "version": 29,
-  "exportedAt": "2026-11-15T11:04:59.9092050Z",
+  "version": 30,
+  "exportedAt": "2026-11-15T11:23:29.1407690Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -159,6 +159,16 @@
           "condition": {
             "eventType": "ActionDone",
             "key": "pet.assign.advertiser",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "memo_one",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.board.memo",
             "target": 1.0
           },
           "rewards": []

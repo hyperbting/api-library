@@ -244,7 +244,7 @@ func TestShippedChapterTwoPartB(t *testing.T) {
 			}
 		}
 	}
-	want := []string{"ad_blitz", "parrot_joins", "parrot_talks", "assign_advertiser"}
+	want := []string{"ad_blitz", "parrot_joins", "parrot_talks", "assign_advertiser", "memo_one"}
 	if len(ids) != len(want) {
 		t.Fatalf("steps = %v, want %v", ids, want)
 	}
