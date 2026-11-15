@@ -1,6 +1,6 @@
 {
-  "version": 28,
-  "exportedAt": "2026-11-15T08:42:37.7712070Z",
+  "version": 29,
+  "exportedAt": "2026-11-15T11:04:59.9092050Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -117,6 +117,16 @@
       "followUp": null,
       "startAfter": null,
       "steps": [
+        {
+          "id": "ad_blitz",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "event.ad_blitz.cleared",
+            "target": 1.0
+          },
+          "rewards": []
+        },
         {
           "id": "parrot_joins",
           "checkpoint": true,
