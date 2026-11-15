@@ -213,3 +213,47 @@ func TestShippedChapterTwoPartA(t *testing.T) {
 		t.Errorf("StartedAfter(power_outage) = %v", got)
 	}
 }
+
+// Chapter 2 part B so far: the Parrot arc only (the Parrot walks in, talks, the player puts it on staff).
+func TestShippedChapterTwoPartB(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, ok := c.Get("sto_ch2_reopening")
+	if !ok || a.FollowUp != "sto_ch2_growing" {
+		t.Fatalf("part A follow-up = %q, want sto_ch2_growing", a.FollowUp)
+	}
+	d, ok := c.Get("sto_ch2_growing")
+	if !ok {
+		t.Fatal("sto_ch2_growing missing")
+	}
+	if d.Type != QuestTypeChapter || d.Initial || d.StartAfter != nil {
+		t.Fatalf("unexpected start: %+v", d)
+	}
+	var ids []string
+	var petReward string
+	for _, s := range d.Steps {
+		ids = append(ids, s.ID)
+		if s.GemReward() != 0 {
+			t.Errorf("step %s pays gems; the chapter pays at its end, which is not built", s.ID)
+		}
+		for _, r := range s.Rewards {
+			if r.Type == RewardPet {
+				petReward = s.ID + ":" + r.Key
+			}
+		}
+	}
+	want := []string{"parrot_joins", "parrot_talks", "assign_advertiser"}
+	if len(ids) != len(want) {
+		t.Fatalf("steps = %v, want %v", ids, want)
+	}
+	for i := range want {
+		if ids[i] != want[i] {
+			t.Fatalf("steps = %v, want %v", ids, want)
+		}
+	}
+	if petReward != "parrot_joins:Pet_Parrot" {
+		t.Errorf("pet reward = %q, want parrot_joins:Pet_Parrot", petReward)
+	}
+}

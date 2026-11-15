@@ -1,6 +1,6 @@
 {
-  "version": 27,
-  "exportedAt": "2026-11-02T23:58:49.3775520Z",
+  "version": 28,
+  "exportedAt": "2026-11-15T08:42:37.7712070Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -111,10 +111,55 @@
       ]
     },
     {
-      "id": "sto_ch2_reopening",
+      "id": "sto_ch2_growing",
       "type": "Chapter",
       "initial": false,
       "followUp": null,
+      "startAfter": null,
+      "steps": [
+        {
+          "id": "parrot_joins",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.parrot",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Parrot",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "parrot_talks",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/ParrotJoins",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "assign_advertiser",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "pet.assign.advertiser",
+            "target": 1.0
+          },
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "sto_ch2_reopening",
+      "type": "Chapter",
+      "initial": false,
+      "followUp": "sto_ch2_growing",
       "startAfter": null,
       "steps": [
         {
