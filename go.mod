@@ -4,8 +4,8 @@ go 1.26.9
 
 require (
 	cloud.google.com/go/firestore v1.29.2
-	cloud.google.com/go/storage v1.70.0
-	firebase.google.com/go/v4 v4.22.0
+	cloud.google.com/go/storage v1.71.0
+	firebase.google.com/go/v4 v4.23.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.7
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/gofiber/fiber/v3 v3.7.0
@@ -18,7 +18,7 @@ require (
 	golang.org/x/crypto v0.59.0
 	golang.org/x/mod v0.43.0
 	golang.org/x/oauth2 v0.38.0
-	google.golang.org/api v0.313.0
+	google.golang.org/api v0.315.0
 	google.golang.org/grpc v1.85.0
 	gorm.io/driver/postgres v1.6.3
 	gorm.io/gorm v1.31.2
@@ -60,7 +60,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.27.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/puddle/v2 v2.2.3 // indirect
+	github.com/jackc/puddle/v2 v2.2.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.20.4 // indirect
@@ -79,7 +79,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.78.0 // indirect
+	github.com/valyala/fasthttp v1.79.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.47.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.72.0 // indirect
@@ -97,7 +97,7 @@ require (
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	google.golang.org/appengine/v2 v2.0.6 // indirect
+	google.golang.org/appengine/v2 v2.1.0 // indirect
 	google.golang.org/genproto v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261110000943-09e21b237f2c // indirect
