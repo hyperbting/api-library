@@ -235,8 +235,13 @@ func TestShippedChapterTwoPartB(t *testing.T) {
 	var petReward string
 	for _, s := range d.Steps {
 		ids = append(ids, s.ID)
-		if s.GemReward() != 0 {
-			t.Errorf("step %s pays gems; the chapter pays at its end, which is not built", s.ID)
+		// The chapter's only gem reward: 20 on its last step (parts A and B).
+		if s.ID == "slow_and_steady" {
+			if s.GemReward() != 20 {
+				t.Errorf("step %s pays %v gems, want 20", s.ID, s.GemReward())
+			}
+		} else if s.GemReward() != 0 {
+			t.Errorf("step %s pays gems; the chapter pays at its end only", s.ID)
 		}
 		for _, r := range s.Rewards {
 			if r.Type == RewardPet {
@@ -244,7 +249,7 @@ func TestShippedChapterTwoPartB(t *testing.T) {
 			}
 		}
 	}
-	want := []string{"ad_blitz", "parrot_joins", "parrot_talks", "assign_advertiser", "memo_one"}
+	want := []string{"ad_blitz", "parrot_joins", "parrot_talks", "assign_advertiser", "memo_one", "black_friday", "slow_and_steady"}
 	if len(ids) != len(want) {
 		t.Fatalf("steps = %v, want %v", ids, want)
 	}
@@ -255,5 +260,8 @@ func TestShippedChapterTwoPartB(t *testing.T) {
 	}
 	if petReward != "parrot_joins:Pet_Parrot" {
 		t.Errorf("pet reward = %q, want parrot_joins:Pet_Parrot", petReward)
+	}
+	if got := c.StartedAfter("sto_ch2_growing", "assign_advertiser"); len(got) != 1 || got[0] != "tut_ch2_advertiser" {
+		t.Errorf("started after assign_advertiser = %v, want tut_ch2_advertiser", got)
 	}
 }

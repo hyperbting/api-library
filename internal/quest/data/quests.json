@@ -1,6 +1,6 @@
 {
-  "version": 30,
-  "exportedAt": "2026-11-15T11:23:29.1407690Z",
+  "version": 31,
+  "exportedAt": "2026-11-16T11:57:31.8022230Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -172,6 +172,32 @@
             "target": 1.0
           },
           "rewards": []
+        },
+        {
+          "id": "black_friday",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "event.black_friday.finished",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "slow_and_steady",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch2/AfterBlackFriday",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 20.0
+            }
+          ]
         }
       ]
     },
@@ -566,6 +592,28 @@
               "amount": 20.0
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "tut_ch2_advertiser",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "sto_ch2_growing",
+        "step": "assign_advertiser"
+      },
+      "steps": [
+        {
+          "id": "more_customers",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "customer.served",
+            "target": 3.0
+          },
+          "rewards": []
         }
       ]
     },
