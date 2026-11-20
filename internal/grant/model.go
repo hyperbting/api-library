@@ -189,6 +189,67 @@ type Doc struct {
 	// Redeem throttle: failed attempts since RedeemWindowStart.
 	RedeemFailures    int       `firestore:"redeemFailures"`
 	RedeemWindowStart time.Time `firestore:"redeemWindowStart"`
+
+	// PetLog records every admin change to the player's pets (package pet), oldest first, the last MaxPetLog kept.
+	// Every package writes this document whole, so the log must be a field here to survive their writes.
+	PetLog []PetLogEntry `firestore:"petLog,omitempty"`
+}
+
+// PetAction is what one PetLog entry did.
+type PetAction string
+
+const (
+	PetAdd    PetAction = "add"
+	PetRemove PetAction = "remove"
+	PetReset  PetAction = "reset"
+
+	// MaxPetLog bounds the log, so the document stays small (an entry of a reset archives a few dozen grants).
+	MaxPetLog = 50
+)
+
+// PetLogEntry is one admin change to a player's pets (panel page "Pets", or the Dev tab on the admin's own account).
+// An add names the grants it created; a remove or a reset archives what it took out of the ledger: a grant that gave
+// only pets is moved here whole (its ID is free again, so a replayed quest or tutorial can grant the pet anew), a
+// grant with other rewards too keeps them and only its pet lines are copied here.
+type PetLogEntry struct {
+	RequestID string    `firestore:"requestId" json:"requestId"`
+	Action    PetAction `firestore:"action" json:"action"`
+	Pets      []string  `firestore:"pets" json:"pets"`
+	By        string    `firestore:"by" json:"by"`
+	Note      string    `firestore:"note,omitempty" json:"note,omitempty"`
+	At        time.Time `firestore:"at" json:"at"`
+	GrantIDs  []string  `firestore:"grantIds,omitempty" json:"grantIds,omitempty"`
+	Archived  []Grant   `firestore:"archived,omitempty" json:"archived,omitempty"`
+}
+
+// AppendPetLog adds e and drops the oldest entries past MaxPetLog.
+func (d *Doc) AppendPetLog(e PetLogEntry) {
+	d.PetLog = append(d.PetLog, e)
+	if over := len(d.PetLog) - MaxPetLog; over > 0 {
+		d.PetLog = append([]PetLogEntry(nil), d.PetLog[over:]...)
+	}
+}
+
+// PetLogEntryFor returns the entry written for requestID, or nil: an admin change is done once per request.
+func (d *Doc) PetLogEntryFor(requestID string) *PetLogEntry {
+	for i := range d.PetLog {
+		if d.PetLog[i].RequestID == requestID {
+			return &d.PetLog[i]
+		}
+	}
+	return nil
+}
+
+// LastPetRemoval is the time of the newest remove or reset (zero if none). A client whose owned list predates it
+// replaces that list with the server's, which is how a removal reaches a device that only ever adds pets.
+func (d *Doc) LastPetRemoval() time.Time {
+	var t time.Time
+	for _, e := range d.PetLog {
+		if (e.Action == PetRemove || e.Action == PetReset) && e.At.After(t) {
+			t = e.At
+		}
+	}
+	return t
 }
 
 func NewDoc() *Doc {

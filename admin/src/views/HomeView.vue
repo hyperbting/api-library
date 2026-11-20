@@ -88,6 +88,7 @@ async function logout() {
           <Button label="News" icon="pi pi-megaphone" @click="router.push({ name: 'news' })" />
           <Button label="Gold bars" icon="pi pi-gift" @click="router.push({ name: 'gems' })" />
           <Button label="Players" icon="pi pi-users" @click="router.push({ name: 'accounts' })" />
+          <Button label="Pets" icon="pi pi-heart" @click="router.push({ name: 'pets' })" />
           <Button v-if="session.hasPassword" label="Change password" severity="secondary" @click="router.push({ name: 'password' })" />
           <Button label="Sign out" severity="secondary" @click="logout" />
         </div>

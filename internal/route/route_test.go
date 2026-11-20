@@ -13,6 +13,7 @@ import (
 	"api-library/internal/buildinfo"
 	"api-library/internal/config"
 	"api-library/internal/news"
+	"api-library/internal/pet"
 	"api-library/internal/quest"
 	"api-library/internal/user"
 	"api-library/pkg/session"
@@ -203,6 +204,27 @@ func TestAdminQuestRoutesStayBehindTheGate(t *testing.T) {
 		{"PUT", "/api/v99/admin/quests/progress"},
 		{"POST", "/api/v99/admin/quests/progress/reset"},
 		{"POST", "/api/v99/admin/quests/reset"},
+	} {
+		res, err := fiberApp.Test(httptest.NewRequest(tc.method, tc.path, nil))
+		if err != nil {
+			t.Fatalf("app.Test: %v", err)
+		}
+		if res.StatusCode != fiber.StatusUnauthorized {
+			t.Fatalf("%s %s got %d want 401", tc.method, tc.path, res.StatusCode)
+		}
+	}
+}
+
+// The pet admin routes sit under the /admin gate (401 without a token), and a missing handler mounts nothing.
+func TestAdminPetRoutesStayBehindTheGate(t *testing.T) {
+	fiberApp := fiber.New()
+	gate := fiberApp.Group("/api/v99/admin", func(c fiber.Ctx) error { return c.SendStatus(fiber.StatusUnauthorized) })
+	mountAdminPetRoutes(gate, pet.NewAdminHandler(nil))
+	mountAdminPetRoutes(gate, nil) // no handler: must not panic
+
+	for _, tc := range []struct{ method, path string }{
+		{"GET", "/api/v99/admin/pets/user?uid=u"},
+		{"POST", "/api/v99/admin/pets/change"},
 	} {
 		res, err := fiberApp.Test(httptest.NewRequest(tc.method, tc.path, nil))
 		if err != nil {

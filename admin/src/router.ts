@@ -13,6 +13,7 @@ export const router = createRouter({
     { path: '/news', name: 'news', component: () => import('./views/NewsView.vue') },
     { path: '/gems', name: 'gems', component: () => import('./views/GemsView.vue') },
     { path: '/accounts', name: 'accounts', component: () => import('./views/AccountsView.vue') },
+    { path: '/pets', name: 'pets', component: () => import('./views/PetsView.vue') },
   ],
 })
 

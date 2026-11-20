@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"sort"
+	"time"
 
 	"api-library/internal/auth"
 	"api-library/internal/grant"
@@ -22,6 +23,9 @@ import (
 // Mirrors DTO.Pets.OwnedPetsResponse in the Unity client.
 type OwnedResponse struct {
 	Owned []string `json:"owned"`
+	// RemovedAt is the newest admin removal or reset of this player's pets (omitted if none). A client whose owned
+	// list is older replaces it with Owned instead of only adding to it.
+	RemovedAt *time.Time `json:"removedAt,omitempty"`
 }
 
 // Owned builds the list from a grants document (nil = a user without grants).
@@ -85,7 +89,11 @@ func (s *service) Owned(ctx context.Context, uid string) (OwnedResponse, error) 
 	if err != nil {
 		return OwnedResponse{}, err
 	}
-	return OwnedResponse{Owned: Owned(grants)}, nil
+	res := OwnedResponse{Owned: Owned(grants)}
+	if t := grants.LastPetRemoval(); !t.IsZero() {
+		res.RemovedAt = &t
+	}
+	return res, nil
 }
 
 // Handler serves GET /pets behind the auth middleware.

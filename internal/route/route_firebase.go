@@ -11,6 +11,7 @@ import (
 	"api-library/internal/gem"
 	"api-library/internal/iap"
 	"api-library/internal/news"
+	"api-library/internal/pet"
 	"api-library/internal/quest"
 	"fmt"
 
@@ -108,6 +109,18 @@ func setupAdminRoutes(router fiber.Router, cfg *config.AppConfig, container *app
 	mountAdminGemRoutes(admin, container.GemHdl, container.IapHdl)
 	mountAdminAccountRoutes(admin, container.AccountHdl)
 	mountAdminBondRoutes(admin, container.BondHdl)
+	mountAdminPetRoutes(admin, container.PetAdmin)
+}
+
+// mountAdminPetRoutes: the panel's Pets page. A player's owned pets with the grants they came from, and add, remove or
+// reset them; every change is recorded in the player's grants ledger (PetLog). The router must already demand the
+// admin role.
+func mountAdminPetRoutes(admin fiber.Router, h *pet.AdminHandler) {
+	if h == nil {
+		return
+	}
+	admin.Get("/pets/user", h.AdminUser)
+	admin.Post("/pets/change", userLimiter(30), h.AdminChange)
 }
 
 // mountAdminBondRoutes: read and repair a player's hearts (the bond record) by uid. The router must already demand the
@@ -203,6 +216,10 @@ func setupPetRoutes(router fiber.Router, container *app.FirebaseContainer) {
 		return
 	}
 	router.Get("/pets", container.FirebaseAuthMw, userLimiter(60), container.PetHdl.List)
+	if container.PetAdmin != nil {
+		// Admin only: add, remove or reset the caller's own pets (the client Dev tab), recorded like a panel change.
+		router.Post("/pets/admin/change", container.FirebaseAuthMw, auth.RequireAdmin(auth.FirestoreAdminChecker(container.Firestore)), userLimiter(30), container.PetAdmin.SelfChange)
+	}
 }
 
 // setupBondRoutes: the pets' hearts. GET /bond at boot; POST /bond/report about once per heart, story read and app

@@ -49,6 +49,7 @@ type FirebaseContainer struct {
 	AdSsvHdl  *adssv.Handler // AdMob SSV callback; nil unless ADS_SSV_AD_UNITS is set
 	IapHdl    *iap.Handler
 	PetHdl    *pet.Handler
+	PetAdmin  *pet.AdminHandler // add, remove and reset a player's pets (panel page Pets, Dev tab), recorded in the ledger
 	BondHdl   *bond.Handler // pets' hearts; its player routes answer 503 when bond.enabled is off
 	// What is running (version, build, revision, catalog versions) for the admin panel.
 	InfoHdl     *apiinfo.Handler
@@ -149,6 +150,7 @@ func NewFirebaseContainer(ctx context.Context, appCfg *config.AppConfig) (*Fireb
 		}
 		// The owned-pet list, rebuilt from the grants ledger (starter pets + Pet rewards).
 		container.PetHdl = pet.NewHandler(pet.NewService(pet.NewFirestoreRepository(container.Firestore)))
+		container.PetAdmin = pet.NewAdminHandler(pet.NewAdminService(pet.NewAdminRepository(container.Firestore)))
 		// Pets' hearts (bond days) and the stories seen, in users/{uid}/private/bond.
 		container.BondHdl = bond.NewHandler(bond.NewService(bond.NewFirestoreRepository(container.Firestore)), appCfg.Bond.Enabled)
 		log.Printf("[BOOT] bond routes enabled: %v", appCfg.Bond.Enabled)
