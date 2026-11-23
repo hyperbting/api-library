@@ -265,3 +265,78 @@ func TestShippedChapterTwoPartB(t *testing.T) {
 		t.Errorf("started after assign_advertiser = %v, want tut_ch2_advertiser", got)
 	}
 }
+
+// Chapter 3 (Main Street), M4a spine: ten steps in their final order, the store unlocks, the Ragdoll, 30 gems at the end, and the two
+// tutorials that start after its steps (story pets are not granted yet: their names are open).
+func TestShippedChapterThree(t *testing.T) {
+	c, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, ok := c.Get("sto_ch2_growing")
+	if !ok || g.FollowUp != "sto_ch3_main_street" {
+		t.Fatalf("Chapter 2 part B follow-up = %q, want sto_ch3_main_street", g.FollowUp)
+	}
+	d, ok := c.Get("sto_ch3_main_street")
+	if !ok {
+		t.Fatal("sto_ch3_main_street missing")
+	}
+	if d.Type != QuestTypeChapter || d.Initial || d.StartAfter != nil {
+		t.Fatalf("unexpected start: %+v", d)
+	}
+	want := []string{"page_two", "arcade_dream", "open_arcade", "motel_needs_host", "open_motel", "cat_joins", "vip_invasion", "hare_late_night", "three_at_t2", "buyout_offer"}
+	var ids []string
+	unlocks := map[string]string{}
+	pets := map[string]string{}
+	for _, s := range d.Steps {
+		ids = append(ids, s.ID)
+		for _, r := range s.Rewards {
+			switch r.Type {
+			case RewardUnlock:
+				unlocks[s.ID] = r.Key
+			case RewardPet:
+				pets[s.ID] = r.Key
+			}
+		}
+		if s.ID == "buyout_offer" {
+			if s.GemReward() != 30 {
+				t.Errorf("step %s pays %v gems, want 30", s.ID, s.GemReward())
+			}
+		} else if s.GemReward() != 0 {
+			t.Errorf("step %s pays gems; the chapter pays at its end only", s.ID)
+		}
+	}
+	if len(ids) != len(want) {
+		t.Fatalf("steps = %v, want %v", ids, want)
+	}
+	for i := range want {
+		if ids[i] != want[i] {
+			t.Fatalf("steps = %v, want %v", ids, want)
+		}
+	}
+	if unlocks["arcade_dream"] != "store.laundromat_arcade" || unlocks["motel_needs_host"] != "store.motel" {
+		t.Errorf("store unlocks = %v", unlocks)
+	}
+	if pets["cat_joins"] != "Pet_Ragdoll" {
+		t.Errorf("pet rewards = %v, want cat_joins:Pet_Ragdoll", pets)
+	}
+	if got := c.StartedAfter("sto_ch3_main_street", "open_arcade"); len(got) != 1 || got[0] != "tut_ch3_main_street" {
+		t.Errorf("started after open_arcade = %v, want tut_ch3_main_street", got)
+	}
+	if got := c.StartedAfter("tut_ch3_main_street", "arcade_staff"); len(got) != 1 || got[0] != "tut_ch3_tier" {
+		t.Errorf("started after arcade_staff = %v, want tut_ch3_tier", got)
+	}
+	for id, gems := range map[string]float64{"tut_ch3_main_street": 10, "tut_ch3_tier": 15} {
+		tq, ok := c.Get(id)
+		if !ok {
+			t.Fatalf("%s missing", id)
+		}
+		var total float64
+		for _, s := range tq.Steps {
+			total += s.GemReward()
+		}
+		if total != gems {
+			t.Errorf("%s pays %v gems, want %v", id, total, gems)
+		}
+	}
+}

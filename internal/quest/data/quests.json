@@ -1,6 +1,6 @@
 {
-  "version": 31,
-  "exportedAt": "2026-11-16T11:57:31.8022230Z",
+  "version": 33,
+  "exportedAt": "2026-11-23T03:31:56.5139340Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -114,7 +114,7 @@
       "id": "sto_ch2_growing",
       "type": "Chapter",
       "initial": false,
-      "followUp": null,
+      "followUp": "sto_ch3_main_street",
       "startAfter": null,
       "steps": [
         {
@@ -283,6 +283,139 @@
             "target": 1.0
           },
           "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "sto_ch3_main_street",
+      "type": "Chapter",
+      "initial": false,
+      "followUp": null,
+      "startAfter": null,
+      "steps": [
+        {
+          "id": "page_two",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "home.board.page",
+            "target": 2.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "arcade_dream",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch3/ArcadeDream",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Unlock",
+              "key": "store.laundromat_arcade",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "open_arcade",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "venue.laundromat_arcade.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "motel_needs_host",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch3/Motel",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Unlock",
+              "key": "store.motel",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "open_motel",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "venue.motel.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "cat_joins",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.ragdoll",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Ragdoll",
+              "amount": 1.0
+            }
+          ]
+        },
+        {
+          "id": "vip_invasion",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "event.vip.finished",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "hare_late_night",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch3/HareCoffee",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "three_at_t2",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.tier2.count",
+            "target": 3.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "buyout_offer",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ConversationEnded",
+            "key": "Ch3/Synergize",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 30.0
+            }
+          ]
         }
       ]
     },
@@ -636,6 +769,72 @@
             "target": 1.0
           },
           "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "tut_ch3_main_street",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "sto_ch3_main_street",
+        "step": "open_arcade"
+      },
+      "steps": [
+        {
+          "id": "to_street",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "ui.mainstreet.open",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "arcade_staff",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "pet.assign.technician.laundromat_arcade",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 10.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tut_ch3_tier",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "tut_ch3_main_street",
+        "step": "arcade_staff"
+      },
+      "steps": [
+        {
+          "id": "tier_two",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "StateChanged",
+            "key": "store.tier2.count",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 15.0
+            }
+          ]
         }
       ]
     },
