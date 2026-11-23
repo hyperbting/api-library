@@ -326,7 +326,10 @@ func TestShippedChapterThree(t *testing.T) {
 	if got := c.StartedAfter("tut_ch3_main_street", "arcade_staff"); len(got) != 1 || got[0] != "tut_ch3_tier" {
 		t.Errorf("started after arcade_staff = %v, want tut_ch3_tier", got)
 	}
-	for id, gems := range map[string]float64{"tut_ch3_main_street": 10, "tut_ch3_tier": 15} {
+	if got := c.StartedAfter("sto_ch3_main_street", "cat_joins"); len(got) != 1 || got[0] != "tut_ch3_concierge" {
+		t.Errorf("started after cat_joins = %v, want tut_ch3_concierge", got)
+	}
+	for id, gems := range map[string]float64{"tut_ch3_main_street": 10, "tut_ch3_tier": 15, "tut_ch3_concierge": 20} {
 		tq, ok := c.Get(id)
 		if !ok {
 			t.Fatalf("%s missing", id)

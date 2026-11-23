@@ -1,6 +1,6 @@
 {
-  "version": 33,
-  "exportedAt": "2026-11-23T03:31:56.5139340Z",
+  "version": 34,
+  "exportedAt": "2026-11-23T03:44:29.7639650Z",
   "quests": [
     {
       "id": "sto_ch1_first_job",
@@ -769,6 +769,44 @@
             "target": 1.0
           },
           "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "tut_ch3_concierge",
+      "type": "Tutorial",
+      "initial": false,
+      "followUp": null,
+      "startAfter": {
+        "quest": "sto_ch3_main_street",
+        "step": "cat_joins"
+      },
+      "steps": [
+        {
+          "id": "concierge_works",
+          "checkpoint": true,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "pet.assign.concierge.motel",
+            "target": 1.0
+          },
+          "rewards": []
+        },
+        {
+          "id": "first_pathfinder",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "CountIncrement",
+            "key": "qte.pathfinder.finished",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Gem",
+              "key": "",
+              "amount": 20.0
+            }
+          ]
         }
       ]
     },
