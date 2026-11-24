@@ -284,7 +284,7 @@ func TestShippedChapterThree(t *testing.T) {
 	if d.Type != QuestTypeChapter || d.Initial || d.StartAfter != nil {
 		t.Fatalf("unexpected start: %+v", d)
 	}
-	want := []string{"page_two", "arcade_dream", "open_arcade", "motel_needs_host", "open_motel", "cat_joins", "vip_invasion", "hare_late_night", "three_at_t2", "buyout_offer"}
+	want := []string{"page_two", "arcade_dream", "open_arcade", "motel_needs_host", "open_motel", "cat_joins", "vip_invasion", "hare_late_night", "three_at_t2", "kimono_inspection", "buyout_offer"}
 	var ids []string
 	unlocks := map[string]string{}
 	pets := map[string]string{}
@@ -318,10 +318,11 @@ func TestShippedChapterThree(t *testing.T) {
 		t.Errorf("store unlocks = %v", unlocks)
 	}
 	wantPets := map[string]string{
-		"arcade_dream":     "Pet_Otter",
-		"motel_needs_host": "Pet_Penguin",
-		"open_motel":       "Pet_Mouse",
-		"cat_joins":        "Pet_Ragdoll",
+		"arcade_dream":      "Pet_Otter",
+		"motel_needs_host":  "Pet_Penguin",
+		"open_motel":        "Pet_Mouse",
+		"cat_joins":         "Pet_Ragdoll",
+		"kimono_inspection": "Pet_Exotic",
 	}
 	if len(pets) != len(wantPets) {
 		t.Errorf("pet rewards = %v, want %v", pets, wantPets)

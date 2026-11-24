@@ -1,5 +1,5 @@
 {
-  "version": 35,
+  "version": 36,
   "exportedAt": "2026-11-23T03:44:29.7639650Z",
   "quests": [
     {
@@ -415,6 +415,22 @@
             "target": 3.0
           },
           "rewards": []
+        },
+        {
+          "id": "kimono_inspection",
+          "checkpoint": false,
+          "condition": {
+            "eventType": "ActionDone",
+            "key": "staff.joined.exotic",
+            "target": 1.0
+          },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Exotic",
+              "amount": 1.0
+            }
+          ]
         },
         {
           "id": "buyout_offer",

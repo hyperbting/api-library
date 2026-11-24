@@ -838,7 +838,7 @@ func TestStoryPetsAreNotInThePool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, story := range []string{"Pet_Parrot", "Pet_Otter", "Pet_Penguin", "Pet_Mouse"} {
+	for _, story := range []string{"Pet_Parrot", "Pet_Otter", "Pet_Penguin", "Pet_Mouse", "Pet_Exotic"} {
 		if !grant.KnownPets[story] {
 			t.Errorf("%s is not in grant.KnownPets", story)
 		}
