@@ -1,5 +1,5 @@
 {
-  "version": 34,
+  "version": 35,
   "exportedAt": "2026-11-23T03:44:29.7639650Z",
   "quests": [
     {
@@ -316,6 +316,11 @@
               "type": "Unlock",
               "key": "store.laundromat_arcade",
               "amount": 1.0
+            },
+            {
+              "type": "Pet",
+              "key": "Pet_Otter",
+              "amount": 1.0
             }
           ]
         },
@@ -342,6 +347,11 @@
               "type": "Unlock",
               "key": "store.motel",
               "amount": 1.0
+            },
+            {
+              "type": "Pet",
+              "key": "Pet_Penguin",
+              "amount": 1.0
             }
           ]
         },
@@ -353,8 +363,13 @@
             "key": "venue.motel.open",
             "target": 1.0
           },
-          "rewards": []
-        },
+          "rewards": [
+            {
+              "type": "Pet",
+              "key": "Pet_Mouse",
+              "amount": 1.0
+            }
+          ]        },
         {
           "id": "cat_joins",
           "checkpoint": true,

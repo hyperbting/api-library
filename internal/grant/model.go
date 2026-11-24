@@ -108,6 +108,10 @@ var KnownPets = map[string]bool{
 	"Pet_Capybara":   true,
 	// Story pets (granted by a quest step, not drawn): the Parrot joins in Chapter 2 (parrot_joins), the Advertiser.
 	"Pet_Parrot": true,
+	// Chapter 3 story pets (quest rewards only, never in the gacha pool): Dip, Pebble and Fuse.
+	"Pet_Otter":   true,
+	"Pet_Penguin": true,
+	"Pet_Mouse":   true,
 }
 
 // Reward mirrors DTO.Quest.GrantedReward in the Unity client ({type, key, amount, itemId, count}).

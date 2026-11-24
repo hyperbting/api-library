@@ -832,6 +832,24 @@ func TestShippedPool(t *testing.T) {
 	}
 }
 
+// Story pets come from quest rewards only: a draw must never hand one out (they are in grant.KnownPets, not in the pool).
+func TestStoryPetsAreNotInThePool(t *testing.T) {
+	cat, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, story := range []string{"Pet_Parrot", "Pet_Otter", "Pet_Penguin", "Pet_Mouse"} {
+		if !grant.KnownPets[story] {
+			t.Errorf("%s is not in grant.KnownPets", story)
+		}
+		for _, p := range cat.Pets {
+			if p.Address == story {
+				t.Errorf("%s is a story pet but is in pool.json", story)
+			}
+		}
+	}
+}
+
 // A row opens when it is asked for: until then it is not reported and its free-draw clock does not run, so the
 // accessory row (hidden by the client until its lesson) starts with one free draw, not with a pile of them.
 func TestRowOpensWhenAsked(t *testing.T) {

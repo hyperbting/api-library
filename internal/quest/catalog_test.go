@@ -317,8 +317,20 @@ func TestShippedChapterThree(t *testing.T) {
 	if unlocks["arcade_dream"] != "store.laundromat_arcade" || unlocks["motel_needs_host"] != "store.motel" {
 		t.Errorf("store unlocks = %v", unlocks)
 	}
-	if pets["cat_joins"] != "Pet_Ragdoll" {
-		t.Errorf("pet rewards = %v, want cat_joins:Pet_Ragdoll", pets)
+	wantPets := map[string]string{
+		"arcade_dream":     "Pet_Otter",
+		"motel_needs_host": "Pet_Penguin",
+		"open_motel":       "Pet_Mouse",
+		"cat_joins":        "Pet_Ragdoll",
+	}
+	if len(pets) != len(wantPets) {
+		t.Errorf("pet rewards = %v, want %v", pets, wantPets)
+	}
+	for step, pet := range wantPets {
+		if pets[step] != pet {
+			t.Errorf("pet rewards = %v, want %v", pets, wantPets)
+			break
+		}
 	}
 	if got := c.StartedAfter("sto_ch3_main_street", "open_arcade"); len(got) != 1 || got[0] != "tut_ch3_main_street" {
 		t.Errorf("started after open_arcade = %v, want tut_ch3_main_street", got)
