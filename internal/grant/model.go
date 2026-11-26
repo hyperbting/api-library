@@ -98,7 +98,8 @@ var KnownPets = map[string]bool{
 	"Pet_Owl":        true,
 	"Pet_Shepherd":   true,
 	"Pet_Ragdoll":    true,
-	"Pet_Exotic":     true,
+	"Pet_Exotic":     true, // the kimono cat: a Chapter 3 story pet since catalog v36 (kimono_inspection), no longer drawn
+	"Pet_ExoticBlue": true, // the gacha Exotic Shorthair (pool 2 since pool v11): bare, blue-grey, so it can wear accessories
 	"Pet_Sheep":      true,
 	"Pet_Duck":       true,
 	"Pet_Beaver":     true,

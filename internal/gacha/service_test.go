@@ -850,6 +850,27 @@ func TestStoryPetsAreNotInThePool(t *testing.T) {
 	}
 }
 
+// The kimono Exotic left the pool for the story (catalog v36); the gacha draws its own Exotic Shorthair instead (pool v11), in
+// pool 2 and known to the grants.
+func TestGachaExoticIsInPoolTwo(t *testing.T) {
+	cat, err := LoadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !grant.KnownPets["Pet_ExoticBlue"] {
+		t.Error("Pet_ExoticBlue is not in grant.KnownPets")
+	}
+	for _, p := range cat.Pets {
+		if p.Address == "Pet_ExoticBlue" {
+			if p.Pool != 2 {
+				t.Errorf("Pet_ExoticBlue is in pool %d, want 2", p.Pool)
+			}
+			return
+		}
+	}
+	t.Error("Pet_ExoticBlue is not in pool.json")
+}
+
 // A row opens when it is asked for: until then it is not reported and its free-draw clock does not run, so the
 // accessory row (hidden by the client until its lesson) starts with one free draw, not with a pile of them.
 func TestRowOpensWhenAsked(t *testing.T) {
